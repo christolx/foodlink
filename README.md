@@ -15,3 +15,5 @@ Monorepo for FoodLink demo app.
 - monolith-first backend
 - service-ready later
 - one repo, separate deploys
+- in-app map uses Leaflet + OpenStreetMap
+- volunteer routing can hand off to Google Maps links

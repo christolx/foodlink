@@ -6,6 +6,8 @@
 - UI: React + TypeScript + Tailwind
 - Backend: Go core service
 - Database: PostgreSQL
+- Map UI: Leaflet with OpenStreetMap tiles
+- Navigation handoff: Google Maps deep links for volunteers
 - Repo: one monorepo
 - Deploy: one frontend deploy, one backend deploy, managed DB
 

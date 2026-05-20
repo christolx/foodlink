@@ -19,6 +19,8 @@
 ## Core UX Decisions
 
 - Real map with static pins
+- In-app map uses Leaflet + OpenStreetMap
+- Volunteer can open donation pin in Google Maps for route and navigation
 - Live form plus seeded records
 - Manual approve
 - Manual volunteer assign
@@ -40,9 +42,8 @@
 
 - Auto volunteer matching
 - Push notifications
-- Route map or navigation
+- Route map or navigation inside app
 - Pickup scheduling
 - Bilingual polish
 - Audit/history
 - Social/admin pages
-
