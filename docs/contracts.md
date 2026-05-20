@@ -34,6 +34,5 @@
 
 ## Contract Rule
 
-- Keep frontend and backend aligned through shared contract docs or generated schema
+- Keep frontend and backend aligned through `contracts/` docs or generated schema
 - Prefer one source of truth
-

@@ -24,9 +24,9 @@
 
 ## Planned Repo Shape
 
-- `apps/web` for Next.js
-- `apps/api` for Go service
-- `packages/contracts` for shared API contracts
+- `frontend/` for Next.js
+- `backend/` for Go service
+- `contracts/` for shared API contracts
 - `docs` for scope and decisions
 
 ## Future Split Candidates
@@ -36,4 +36,3 @@
 - Search
 - Analytics
 - Admin tooling
-

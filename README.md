@@ -6,6 +6,7 @@ Monorepo for FoodLink demo app.
 
 - `frontend` - Next.js app shell
 - `backend` - Go API service
+- `contracts` - shared API contracts
 - `docs` - scope, architecture, contracts
 
 ## Current Rules
