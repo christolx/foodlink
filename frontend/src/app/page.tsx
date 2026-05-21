@@ -128,10 +128,115 @@ export default function Home() {
             className="activity-stack"
             aria-label="Recent FoodLink activity"
           >
-            Documentation
-          </a>
+            {activity.map(([status, place, time], index) => (
+              <article className="activity-card" key={status}>
+                <span className={`activity-icon activity-icon-${index + 1}`} />
+                <div>
+                  <strong>{status}</strong>
+                  <span>{place}</span>
+                  <small>{time}</small>
+                </div>
+              </article>
+            ))}
+          </aside>
         </div>
-      </main>
-    </div>
+      </section>
+
+      <section className="impact-band" id="impact" aria-label="FoodLink impact">
+        <div className="impact-mark">
+          <LeafIcon />
+        </div>
+        <div className="impact-number">
+          <strong>1,200</strong>
+          <span>meals rescued</span>
+          <small>Real impact from real neighbors.</small>
+        </div>
+        <div className="impact-item">
+          <span className="round-icon">
+            <LeafIcon />
+          </span>
+          <p>
+            <strong>Less waste, more plates filled</strong>
+            Good food stays in community and plates stay full.
+          </p>
+        </div>
+        <div className="impact-item">
+          <span className="round-icon location-dot" />
+          <p>
+            <strong>Nearby help, coordinated faster</strong>
+            Real-time connections get food where it is needed.
+          </p>
+        </div>
+        <a className="text-link" href="#roles">
+          See our impact
+          <ArrowIcon />
+        </a>
+      </section>
+
+      <section className="roles-map" id="roles">
+        <div className="roles-copy">
+          <p className="hand-note">Every role makes a difference</p>
+          <h2>Give, receive, volunteer.</h2>
+          <p>Stronger together.</p>
+        </div>
+
+        <div className="role-cards">
+          {roles.map((role, index) => (
+            <article className="role-card" key={role.eyebrow}>
+              <div className="role-text">
+                <span className={`role-icon role-icon-${index + 1}`} />
+                <p className="role-eyebrow">{role.eyebrow}</p>
+                <h3>{role.title}</h3>
+                <p>{role.body}</p>
+                <a href="#get-involved">
+                  {role.action}
+                  <ArrowIcon />
+                </a>
+              </div>
+              <div className="role-media" aria-hidden="true">
+                <Image
+                  src={role.image}
+                  alt=""
+                  fill
+                  quality={90}
+                  sizes="(max-width: 560px) 100vw, (max-width: 820px) 32vw, 18vw"
+                />
+              </div>
+            </article>
+          ))}
+        </div>
+
+        <aside className="map-panel" id="how" aria-label="Live community map">
+          <div className="map-copy">
+            <span>Live community map</span>
+            <h2>See FoodLink in action</h2>
+            <p>
+              Real-time map of available food, open requests, and volunteer
+              activity in your area.
+            </p>
+            <a href="#get-involved">
+              Explore map
+              <ArrowIcon />
+            </a>
+          </div>
+          <div className="map-art" aria-hidden="true">
+            <span className="river" />
+            <span className="route" />
+            {pins.map((pin) => (
+              <span className={pin.className} key={pin.label} />
+            ))}
+          </div>
+        </aside>
+      </section>
+
+      <section className="final-cta" id="get-involved">
+        <h2>Small actions. Big community impact.</h2>
+        <a className="button button-primary" href="mailto:hello@foodlink.local">
+          Get involved today
+          <ArrowIcon />
+        </a>
+        <LeafIcon />
+      </section>
+    </main>
   );
 }
