@@ -1,30 +1,48 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"net/http"
-	"os"
+
+	"foodlink-be/internal/config"
+	"foodlink-be/internal/db"
+	"foodlink-be/internal/server"
+	"foodlink-be/internal/store"
 )
 
 func main() {
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
+	runMigrate := flag.Bool("migrate", false, "run database migrations and seed demo data")
+	flag.Parse()
+
+	cfg := config.Load()
+	if cfg.DatabaseURL == "" {
+		log.Fatal("DATABASE_URL is required")
 	}
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte("ok"))
-	})
-
-	server := &http.Server{
-		Addr:    ":" + port,
-		Handler: mux,
+	conn, err := db.Open(cfg.DatabaseURL)
+	if err != nil {
+		log.Fatal(err)
+	}
+	st := store.New(conn)
+	if *runMigrate {
+		if err := st.AutoMigrate(); err != nil {
+			log.Fatal(err)
+		}
+		if err := st.SeedDemoData(); err != nil {
+			log.Fatal(err)
+		}
+		log.Print("database migrated and demo data seeded")
+		return
 	}
 
-	log.Printf("FoodLink API listening on :%s", port)
-	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+	apiServer := &http.Server{
+		Addr:    ":" + cfg.Port,
+		Handler: server.Handler(st, cfg.JWTSecret),
+	}
+
+	log.Printf("FoodLink API listening on :%s", cfg.Port)
+	if err := apiServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatal(err)
 	}
 }
