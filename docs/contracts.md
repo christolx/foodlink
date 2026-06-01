@@ -3,16 +3,20 @@
 ## Core Enums
 
 - `UserRole`: `donor | receiver | volunteer`
-- `DonationStatus`: `posted | claimed | approved | volunteer_assigned | picked_up | delivered | rejected | canceled | expired`
-- `PickupStatus`: `unassigned | assigned | picked_up | delivered | canceled`
-- `NotificationType`: `donation_posted | claim_requested | claim_approved | volunteer_assigned | status_updated`
+- `ContactMethod`: `whatsapp | instagram | phone | email | other`
+- `EntityType`: `charity | orphanage | shelter | family | restaurant | warteg | individual | other`
+- `DonationStatus`: `available | proposal_pending | pickup_assigned | picked_up | delivered | canceled`
+- `ProposalStatus`: `pending | accepted | rejected | canceled`
+- `PickupStatus`: `assigned | picked_up | delivered | canceled`
+- `NotificationType`: `donation_created | proposal_created | proposal_accepted | proposal_rejected | pickup_assigned | pickup_completed`
 
 ## Core DTOs
 
 - `UserDTO`
+- `ProfileDTO`
 - `LocationDTO`
 - `DonationDTO`
-- `ClaimDTO`
+- `DeliveryProposalDTO`
 - `PickupDTO`
 - `NotificationDTO`
 
@@ -20,19 +24,24 @@
 
 - `POST /auth/demo-login`
 - `GET /me`
+- `GET /me/profile`
+- `PUT /me/profile`
 - `POST /donations`
 - `GET /donations`
 - `GET /donations/:id`
-- `POST /donations/:id/claim`
-- `POST /claims/:id/approve`
-- `POST /claims/:id/reject`
-- `POST /pickups/:id/assign-volunteer`
+- `GET /receivers`
+- `POST /delivery-proposals`
+- `GET /delivery-proposals`
+- `POST /delivery-proposals/:id/accept`
+- `POST /delivery-proposals/:id/reject`
 - `POST /pickups/:id/pickup`
 - `POST /pickups/:id/deliver`
 - `GET /notifications`
 - `POST /notifications/:id/read`
+- `GET /notifications/stream`
 
 ## Contract Rule
 
-- Keep frontend and backend aligned through `contracts/` docs or generated schema
-- Prefer one source of truth
+- `contracts/openapi.yaml` is source of truth.
+- Backend generated types and strict server interfaces come from OpenAPI.
+- Frontend integration later should generate or mirror types from same contract.
