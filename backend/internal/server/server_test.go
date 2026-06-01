@@ -16,24 +16,24 @@ import (
 	"gorm.io/gorm"
 )
 
-func TestAuthAndDonationFlow(t *testing.T) {
+func TestVolunteerProposalFlow(t *testing.T) {
 	handler := newTestHandler(t)
 
 	donorToken := login(t, handler, api.Donor)
 	receiverToken := login(t, handler, api.Receiver)
+	volunteerToken := login(t, handler, api.Volunteer)
 
-	meStatus, _ := doJSON(t, handler, http.MethodGet, "/api/v1/me", nil, "")
-	if meStatus != http.StatusUnauthorized {
-		t.Fatalf("GET /me without token status = %d, want %d", meStatus, http.StatusUnauthorized)
+	status, body := doJSON(t, handler, http.MethodGet, "/api/v1/me/profile", nil, receiverToken)
+	if status != http.StatusOK {
+		t.Fatalf("GET /me/profile status = %d body = %s", status, body)
+	}
+	var receiverProfile api.Profile
+	decode(t, body, &receiverProfile)
+	if receiverProfile.Role != api.Receiver {
+		t.Fatalf("receiver profile role = %s", receiverProfile.Role)
 	}
 
-	location := api.Location{
-		AddressLine1: "Jl. Sudirman 1",
-		City:         "Jakarta",
-		Region:       "DKI Jakarta",
-		PostalCode:   "10220",
-		Country:      "ID",
-	}
+	location := testLocation()
 	createBody := api.CreateDonationRequest{
 		Title:          "Lunch boxes",
 		Description:    "Fresh boxed meals",
@@ -42,7 +42,7 @@ func TestAuthAndDonationFlow(t *testing.T) {
 		AvailableFrom:  time.Now().UTC(),
 		AvailableUntil: time.Now().UTC().Add(2 * time.Hour),
 	}
-	status, body := doJSON(t, handler, http.MethodPost, "/api/v1/donations", createBody, donorToken)
+	status, body = doJSON(t, handler, http.MethodPost, "/api/v1/donations", createBody, donorToken)
 	if status != http.StatusCreated {
 		t.Fatalf("create donation status = %d body = %s", status, body)
 	}
@@ -52,65 +52,94 @@ func TestAuthAndDonationFlow(t *testing.T) {
 		t.Fatalf("donation status = %s", donation.Status)
 	}
 
-	status, body = doJSON(t, handler, http.MethodPost, "/api/v1/donations/"+donation.Id+"/claim", api.ClaimDonationRequest{Note: ptr("Can pick up soon")}, receiverToken)
+	status, body = doJSON(t, handler, http.MethodGet, "/api/v1/receivers", nil, volunteerToken)
+	if status != http.StatusOK {
+		t.Fatalf("list receivers status = %d body = %s", status, body)
+	}
+	var receivers api.ProfileListResponse
+	decode(t, body, &receivers)
+	if receivers.Total == 0 {
+		t.Fatal("expected seeded receiver profile")
+	}
+
+	status, body = doJSON(t, handler, http.MethodPost, "/api/v1/delivery-proposals", api.CreateDeliveryProposalRequest{
+		DonationId: donation.Id,
+		ReceiverId: "user_receiver",
+	}, volunteerToken)
 	if status != http.StatusCreated {
-		t.Fatalf("claim donation status = %d body = %s", status, body)
+		t.Fatalf("create proposal status = %d body = %s", status, body)
 	}
-	var claim api.Claim
-	decode(t, body, &claim)
-	if claim.Status != api.ClaimStatusPending {
-		t.Fatalf("claim status = %s", claim.Status)
+	var proposal api.DeliveryProposal
+	decode(t, body, &proposal)
+	if proposal.Status != api.ProposalStatusPending {
+		t.Fatalf("proposal status = %s", proposal.Status)
 	}
 
-	status, body = doJSON(t, handler, http.MethodPost, "/api/v1/claims/"+claim.Id+"/approve", api.ApproveClaimRequest{DeliveryLocation: location}, donorToken)
+	status, body = doJSON(t, handler, http.MethodPost, "/api/v1/delivery-proposals/"+proposal.Id+"/accept", nil, donorToken)
 	if status != http.StatusOK {
-		t.Fatalf("approve claim status = %d body = %s", status, body)
+		t.Fatalf("donor accept status = %d body = %s", status, body)
 	}
-	var approved api.ApproveClaimResponse
-	decode(t, body, &approved)
-	if approved.Pickup.Status != api.PendingAssignment {
-		t.Fatalf("pickup status = %s", approved.Pickup.Status)
+	var donorAccepted api.DeliveryProposalAcceptResponse
+	decode(t, body, &donorAccepted)
+	if donorAccepted.Pickup != nil {
+		t.Fatal("pickup created before receiver accepted")
 	}
 
-	assign := api.AssignVolunteerRequest{VolunteerId: "user_volunteer"}
-	status, body = doJSON(t, handler, http.MethodPost, "/api/v1/pickups/"+approved.Pickup.Id+"/assign-volunteer", assign, donorToken)
+	status, body = doJSON(t, handler, http.MethodPost, "/api/v1/delivery-proposals/"+proposal.Id+"/accept", nil, receiverToken)
 	if status != http.StatusOK {
-		t.Fatalf("assign volunteer status = %d body = %s", status, body)
+		t.Fatalf("receiver accept status = %d body = %s", status, body)
+	}
+	var receiverAccepted api.DeliveryProposalAcceptResponse
+	decode(t, body, &receiverAccepted)
+	if receiverAccepted.Proposal.Status != api.ProposalStatusAccepted {
+		t.Fatalf("proposal status after both accept = %s", receiverAccepted.Proposal.Status)
+	}
+	if receiverAccepted.Pickup == nil {
+		t.Fatal("pickup missing after both accept")
+	}
+	if receiverAccepted.Pickup.Status != api.PickupStatusAssigned {
+		t.Fatalf("pickup status = %s", receiverAccepted.Pickup.Status)
 	}
 
-	status, body = doJSON(t, handler, http.MethodPost, "/api/v1/pickups/"+approved.Pickup.Id+"/pickup", api.UpdatePickupStatusRequest{}, donorToken)
+	status, body = doJSON(t, handler, http.MethodPost, "/api/v1/pickups/"+receiverAccepted.Pickup.Id+"/pickup", api.UpdatePickupStatusRequest{}, volunteerToken)
 	if status != http.StatusOK {
 		t.Fatalf("mark picked up status = %d body = %s", status, body)
 	}
 
-	status, body = doJSON(t, handler, http.MethodPost, "/api/v1/pickups/"+approved.Pickup.Id+"/deliver", api.UpdatePickupStatusRequest{}, donorToken)
+	status, body = doJSON(t, handler, http.MethodPost, "/api/v1/pickups/"+receiverAccepted.Pickup.Id+"/deliver", api.UpdatePickupStatusRequest{}, volunteerToken)
 	if status != http.StatusOK {
 		t.Fatalf("mark delivered status = %d body = %s", status, body)
 	}
 	var delivered api.Pickup
 	decode(t, body, &delivered)
-	if delivered.Status != api.Delivered {
+	if delivered.Status != api.PickupStatusDelivered {
 		t.Fatalf("delivered pickup status = %s", delivered.Status)
 	}
 }
 
-func TestClaimUnavailableDonationReturnsConflict(t *testing.T) {
+func TestRoleGatesAndProposalRejection(t *testing.T) {
 	handler := newTestHandler(t)
 	donorToken := login(t, handler, api.Donor)
 	receiverToken := login(t, handler, api.Receiver)
+	volunteerToken := login(t, handler, api.Volunteer)
 
-	location := api.Location{
-		AddressLine1: "Jl. Sudirman 1",
-		City:         "Jakarta",
-		Region:       "DKI Jakarta",
-		PostalCode:   "10220",
-		Country:      "ID",
+	status, _ := doJSON(t, handler, http.MethodPost, "/api/v1/donations", api.CreateDonationRequest{
+		Title:          "Dinner boxes",
+		Description:    "Fresh meals",
+		Quantity:       "8 boxes",
+		PickupLocation: testLocation(),
+		AvailableFrom:  time.Now().UTC(),
+		AvailableUntil: time.Now().UTC().Add(time.Hour),
+	}, receiverToken)
+	if status != http.StatusForbidden {
+		t.Fatalf("receiver create donation status = %d, want %d", status, http.StatusForbidden)
 	}
+
 	status, body := doJSON(t, handler, http.MethodPost, "/api/v1/donations", api.CreateDonationRequest{
 		Title:          "Dinner boxes",
 		Description:    "Fresh meals",
 		Quantity:       "8 boxes",
-		PickupLocation: location,
+		PickupLocation: testLocation(),
 		AvailableFrom:  time.Now().UTC(),
 		AvailableUntil: time.Now().UTC().Add(time.Hour),
 	}, donorToken)
@@ -120,14 +149,45 @@ func TestClaimUnavailableDonationReturnsConflict(t *testing.T) {
 	var donation api.Donation
 	decode(t, body, &donation)
 
-	status, body = doJSON(t, handler, http.MethodPost, "/api/v1/donations/"+donation.Id+"/claim", api.ClaimDonationRequest{}, receiverToken)
-	if status != http.StatusCreated {
-		t.Fatalf("first claim status = %d body = %s", status, body)
+	status, _ = doJSON(t, handler, http.MethodGet, "/api/v1/receivers", nil, donorToken)
+	if status != http.StatusForbidden {
+		t.Fatalf("donor list receivers status = %d, want %d", status, http.StatusForbidden)
 	}
 
-	status, _ = doJSON(t, handler, http.MethodPost, "/api/v1/donations/"+donation.Id+"/claim", api.ClaimDonationRequest{}, receiverToken)
-	if status != http.StatusConflict {
-		t.Fatalf("second claim status = %d, want %d", status, http.StatusConflict)
+	status, _ = doJSON(t, handler, http.MethodPost, "/api/v1/delivery-proposals", api.CreateDeliveryProposalRequest{
+		DonationId: donation.Id,
+		ReceiverId: "user_receiver",
+	}, donorToken)
+	if status != http.StatusForbidden {
+		t.Fatalf("donor create proposal status = %d, want %d", status, http.StatusForbidden)
+	}
+
+	status, body = doJSON(t, handler, http.MethodPost, "/api/v1/delivery-proposals", api.CreateDeliveryProposalRequest{
+		DonationId: donation.Id,
+		ReceiverId: "user_receiver",
+	}, volunteerToken)
+	if status != http.StatusCreated {
+		t.Fatalf("create proposal status = %d body = %s", status, body)
+	}
+	var proposal api.DeliveryProposal
+	decode(t, body, &proposal)
+
+	status, body = doJSON(t, handler, http.MethodPost, "/api/v1/delivery-proposals/"+proposal.Id+"/reject", nil, receiverToken)
+	if status != http.StatusOK {
+		t.Fatalf("receiver reject status = %d body = %s", status, body)
+	}
+	var rejected api.DeliveryProposal
+	decode(t, body, &rejected)
+	if rejected.Status != api.ProposalStatusRejected {
+		t.Fatalf("proposal status = %s", rejected.Status)
+	}
+
+	status, body = doJSON(t, handler, http.MethodPost, "/api/v1/delivery-proposals", api.CreateDeliveryProposalRequest{
+		DonationId: donation.Id,
+		ReceiverId: "user_receiver",
+	}, volunteerToken)
+	if status != http.StatusCreated {
+		t.Fatalf("create proposal after rejection status = %d body = %s", status, body)
 	}
 }
 
@@ -185,6 +245,12 @@ func decode(t *testing.T, body []byte, value any) {
 	}
 }
 
-func ptr(value string) *string {
-	return &value
+func testLocation() api.Location {
+	return api.Location{
+		AddressLine1: "Jl. Sudirman 1",
+		City:         "Jakarta",
+		Region:       "DKI Jakarta",
+		PostalCode:   "10220",
+		Country:      "ID",
+	}
 }
