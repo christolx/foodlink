@@ -37,21 +37,39 @@ type Donation struct {
 	UpdatedAt           time.Time
 }
 
-type Claim struct {
-	ID         string `gorm:"primaryKey"`
-	DonationID string `gorm:"index"`
-	ReceiverID string `gorm:"index"`
-	Status     string `gorm:"index"`
-	Note       *string
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
+type Profile struct {
+	UserID           string `gorm:"primaryKey"`
+	DisplayName      string
+	Role             string `gorm:"index"`
+	ContactMethod    string
+	ContactValue     string
+	Location         LocationFields `gorm:"embedded;embeddedPrefix:location_"`
+	EntityType       *string
+	OperationalHours *string
+	Notes            *string
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
+}
+
+type DeliveryProposal struct {
+	ID                 string `gorm:"primaryKey"`
+	DonationID         string `gorm:"index"`
+	ReceiverID         string `gorm:"index"`
+	VolunteerID        string `gorm:"index"`
+	Status             string `gorm:"index"`
+	DonorAcceptedAt    *time.Time
+	ReceiverAcceptedAt *time.Time
+	RejectedByUserID   *string
+	CreatedAt          time.Time
+	UpdatedAt          time.Time
 }
 
 type Pickup struct {
 	ID               string         `gorm:"primaryKey"`
 	DonationID       string         `gorm:"index"`
-	ClaimID          string         `gorm:"index"`
-	VolunteerID      *string        `gorm:"index"`
+	ProposalID       string         `gorm:"index"`
+	ReceiverID       string         `gorm:"index"`
+	VolunteerID      string         `gorm:"index"`
 	Status           string         `gorm:"index"`
 	PickupLocation   LocationFields `gorm:"embedded;embeddedPrefix:pickup_"`
 	DeliveryLocation LocationFields `gorm:"embedded;embeddedPrefix:delivery_"`
@@ -69,7 +87,7 @@ type Notification struct {
 	Body       string
 	Read       bool `gorm:"index"`
 	DonationID *string
-	ClaimID    *string
+	ProposalID *string
 	PickupID   *string
 	CreatedAt  time.Time
 	ReadAt     *time.Time
