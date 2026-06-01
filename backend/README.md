@@ -13,5 +13,5 @@ Go core service for FoodLink.
 - OpenAPI-generated types and strict server interface from `contracts/openapi.yaml`
 - Demo JWT auth
 - PostgreSQL via GORM
-- Donation, claim, pickup, and notification happy path
+- Profile, donation, delivery proposal, pickup, and notification happy path
 - `GET /health`

@@ -5,6 +5,6 @@ Go core service for FoodLink.
 Planned contents:
 - REST API
 - auth
-- donation flow
+- volunteer-driven proposal flow
 - pickup flow
 - PostgreSQL access
