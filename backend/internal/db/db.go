@@ -14,8 +14,9 @@ func Open(databaseURL string) (*gorm.DB, error) {
 func AutoMigrate(conn *gorm.DB) error {
 	return conn.AutoMigrate(
 		&models.User{},
+		&models.Profile{},
 		&models.Donation{},
-		&models.Claim{},
+		&models.DeliveryProposal{},
 		&models.Pickup{},
 		&models.Notification{},
 	)
