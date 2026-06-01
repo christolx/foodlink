@@ -107,6 +107,47 @@ func (s *Server) GetMe(ctx context.Context, request api.GetMeRequestObject) (api
 	return api.GetMe200JSONResponse(userDTO(user)), nil
 }
 
+func (s *Server) GetMyProfile(ctx context.Context, request api.GetMyProfileRequestObject) (api.GetMyProfileResponseObject, error) {
+	user, ok := s.authUser(ctx)
+	if !ok {
+		return api.GetMyProfile401JSONResponse{UnauthorizedJSONResponse: unauthorized()}, nil
+	}
+	profile, err := s.store.ProfileByUserID(user.ID)
+	if errors.Is(err, store.ErrNotFound) {
+		return api.GetMyProfile404JSONResponse{NotFoundJSONResponse: notFound("profile not found")}, nil
+	}
+	if err != nil {
+		return api.GetMyProfile500JSONResponse{InternalServerErrorJSONResponse: internalError()}, nil
+	}
+	return api.GetMyProfile200JSONResponse(profileDTO(profile)), nil
+}
+
+func (s *Server) UpdateMyProfile(ctx context.Context, request api.UpdateMyProfileRequestObject) (api.UpdateMyProfileResponseObject, error) {
+	user, ok := s.authUser(ctx)
+	if !ok {
+		return api.UpdateMyProfile401JSONResponse{UnauthorizedJSONResponse: unauthorized()}, nil
+	}
+	if request.Body == nil || strings.TrimSpace(request.Body.DisplayName) == "" || strings.TrimSpace(request.Body.ContactValue) == "" {
+		return api.UpdateMyProfile400JSONResponse{BadRequestJSONResponse: badRequest("displayName and contactValue are required")}, nil
+	}
+	profile := models.Profile{
+		UserID:           user.ID,
+		DisplayName:      request.Body.DisplayName,
+		Role:             user.Role,
+		ContactMethod:    string(request.Body.ContactMethod),
+		ContactValue:     request.Body.ContactValue,
+		Location:         locationModel(request.Body.Location),
+		EntityType:       entityTypeString(request.Body.EntityType),
+		OperationalHours: request.Body.OperationalHours,
+		Notes:            request.Body.Notes,
+	}
+	updated, err := s.store.UpsertProfile(profile)
+	if err != nil {
+		return api.UpdateMyProfile500JSONResponse{InternalServerErrorJSONResponse: internalError()}, nil
+	}
+	return api.UpdateMyProfile200JSONResponse(profileDTO(updated)), nil
+}
+
 func (s *Server) ListDonations(ctx context.Context, request api.ListDonationsRequestObject) (api.ListDonationsResponseObject, error) {
 	user, ok := s.authUser(ctx)
 	if !ok {
@@ -116,7 +157,7 @@ func (s *Server) ListDonations(ctx context.Context, request api.ListDonationsReq
 	if err != nil {
 		return api.ListDonations400JSONResponse{BadRequestJSONResponse: badRequest(err.Error())}, nil
 	}
-	donations, total, err := s.store.ListDonations(page, pageSize, request.Params.Status, request.Params.Role, user.ID)
+	donations, total, err := s.store.ListDonations(page, pageSize, request.Params.Status, user)
 	if err != nil {
 		return api.ListDonations500JSONResponse{InternalServerErrorJSONResponse: internalError()}, nil
 	}
@@ -131,6 +172,9 @@ func (s *Server) CreateDonation(ctx context.Context, request api.CreateDonationR
 	user, ok := s.authUser(ctx)
 	if !ok {
 		return api.CreateDonation401JSONResponse{UnauthorizedJSONResponse: unauthorized()}, nil
+	}
+	if user.Role != string(api.Donor) {
+		return api.CreateDonation403JSONResponse{ForbiddenJSONResponse: forbidden("donor role required")}, nil
 	}
 	if request.Body == nil || strings.TrimSpace(request.Body.Title) == "" || strings.TrimSpace(request.Body.Quantity) == "" {
 		return api.CreateDonation400JSONResponse{BadRequestJSONResponse: badRequest("title and quantity are required")}, nil
@@ -173,100 +217,138 @@ func (s *Server) GetDonation(ctx context.Context, request api.GetDonationRequest
 	return api.GetDonation200JSONResponse(donationDTO(donation)), nil
 }
 
-func (s *Server) ClaimDonation(ctx context.Context, request api.ClaimDonationRequestObject) (api.ClaimDonationResponseObject, error) {
+func (s *Server) ListReceivers(ctx context.Context, request api.ListReceiversRequestObject) (api.ListReceiversResponseObject, error) {
 	user, ok := s.authUser(ctx)
 	if !ok {
-		return api.ClaimDonation401JSONResponse{UnauthorizedJSONResponse: unauthorized()}, nil
+		return api.ListReceivers401JSONResponse{UnauthorizedJSONResponse: unauthorized()}, nil
 	}
-	var note *string
-	if request.Body != nil {
-		note = request.Body.Note
+	if user.Role != string(api.Volunteer) {
+		return api.ListReceivers403JSONResponse{ForbiddenJSONResponse: forbidden("volunteer role required")}, nil
 	}
-	claim, err := s.store.CreateClaim(request.Id, user.ID, note)
-	if errors.Is(err, store.ErrNotFound) {
-		return api.ClaimDonation404JSONResponse{NotFoundJSONResponse: notFound("donation not found")}, nil
-	}
-	if isConflict(err) {
-		return api.ClaimDonation409JSONResponse{ConflictJSONResponse: conflict(err.Error())}, nil
-	}
+	page, pageSize, err := pagination(request.Params.Page, request.Params.PageSize)
 	if err != nil {
-		return api.ClaimDonation500JSONResponse{InternalServerErrorJSONResponse: internalError()}, nil
+		return api.ListReceivers400JSONResponse{BadRequestJSONResponse: badRequest(err.Error())}, nil
 	}
-	return api.ClaimDonation201JSONResponse(claimDTO(claim)), nil
+	profiles, total, err := s.store.ListReceivers(page, pageSize)
+	if err != nil {
+		return api.ListReceivers500JSONResponse{InternalServerErrorJSONResponse: internalError()}, nil
+	}
+	items := make([]api.Profile, 0, len(profiles))
+	for _, profile := range profiles {
+		items = append(items, profileDTO(profile))
+	}
+	return api.ListReceivers200JSONResponse{Items: items, Page: page, PageSize: pageSize, Total: int(total)}, nil
 }
 
-func (s *Server) ApproveClaim(ctx context.Context, request api.ApproveClaimRequestObject) (api.ApproveClaimResponseObject, error) {
-	if _, ok := s.authUser(ctx); !ok {
-		return api.ApproveClaim401JSONResponse{UnauthorizedJSONResponse: unauthorized()}, nil
+func (s *Server) ListDeliveryProposals(ctx context.Context, request api.ListDeliveryProposalsRequestObject) (api.ListDeliveryProposalsResponseObject, error) {
+	user, ok := s.authUser(ctx)
+	if !ok {
+		return api.ListDeliveryProposals401JSONResponse{UnauthorizedJSONResponse: unauthorized()}, nil
 	}
-	if request.Body == nil {
-		return api.ApproveClaim400JSONResponse{BadRequestJSONResponse: badRequest("deliveryLocation is required")}, nil
-	}
-	claim, pickup, err := s.store.ApproveClaim(request.Id, locationModel(request.Body.DeliveryLocation))
-	if errors.Is(err, store.ErrNotFound) {
-		return api.ApproveClaim404JSONResponse{NotFoundJSONResponse: notFound("claim not found")}, nil
-	}
-	if isConflict(err) {
-		return api.ApproveClaim409JSONResponse{ConflictJSONResponse: conflict(err.Error())}, nil
-	}
+	page, pageSize, err := pagination(request.Params.Page, request.Params.PageSize)
 	if err != nil {
-		return api.ApproveClaim500JSONResponse{InternalServerErrorJSONResponse: internalError()}, nil
+		return api.ListDeliveryProposals400JSONResponse{BadRequestJSONResponse: badRequest(err.Error())}, nil
 	}
-	return api.ApproveClaim200JSONResponse{Claim: claimDTO(claim), Pickup: pickupDTO(pickup)}, nil
+	proposals, total, err := s.store.ListDeliveryProposals(page, pageSize, request.Params.Status, user)
+	if err != nil {
+		return api.ListDeliveryProposals500JSONResponse{InternalServerErrorJSONResponse: internalError()}, nil
+	}
+	items := make([]api.DeliveryProposal, 0, len(proposals))
+	for _, proposal := range proposals {
+		items = append(items, deliveryProposalDTO(proposal))
+	}
+	return api.ListDeliveryProposals200JSONResponse{Items: items, Page: page, PageSize: pageSize, Total: int(total)}, nil
 }
 
-func (s *Server) RejectClaim(ctx context.Context, request api.RejectClaimRequestObject) (api.RejectClaimResponseObject, error) {
-	if _, ok := s.authUser(ctx); !ok {
-		return api.RejectClaim401JSONResponse{UnauthorizedJSONResponse: unauthorized()}, nil
+func (s *Server) CreateDeliveryProposal(ctx context.Context, request api.CreateDeliveryProposalRequestObject) (api.CreateDeliveryProposalResponseObject, error) {
+	user, ok := s.authUser(ctx)
+	if !ok {
+		return api.CreateDeliveryProposal401JSONResponse{UnauthorizedJSONResponse: unauthorized()}, nil
 	}
-	var reason *string
-	if request.Body != nil {
-		reason = request.Body.Reason
+	if user.Role != string(api.Volunteer) {
+		return api.CreateDeliveryProposal403JSONResponse{ForbiddenJSONResponse: forbidden("volunteer role required")}, nil
 	}
-	claim, err := s.store.RejectClaim(request.Id, reason)
+	if request.Body == nil || request.Body.DonationId == "" || request.Body.ReceiverId == "" {
+		return api.CreateDeliveryProposal400JSONResponse{BadRequestJSONResponse: badRequest("donationId and receiverId are required")}, nil
+	}
+	proposal, err := s.store.CreateDeliveryProposal(request.Body.DonationId, request.Body.ReceiverId, user.ID)
 	if errors.Is(err, store.ErrNotFound) {
-		return api.RejectClaim404JSONResponse{NotFoundJSONResponse: notFound("claim not found")}, nil
+		return api.CreateDeliveryProposal404JSONResponse{NotFoundJSONResponse: notFound("donation or receiver not found")}, nil
 	}
 	if isConflict(err) {
-		return api.RejectClaim409JSONResponse{ConflictJSONResponse: conflict(err.Error())}, nil
+		return api.CreateDeliveryProposal409JSONResponse{ConflictJSONResponse: conflict(err.Error())}, nil
 	}
 	if err != nil {
-		return api.RejectClaim500JSONResponse{InternalServerErrorJSONResponse: internalError()}, nil
+		return api.CreateDeliveryProposal500JSONResponse{InternalServerErrorJSONResponse: internalError()}, nil
 	}
-	return api.RejectClaim200JSONResponse(claimDTO(claim)), nil
+	return api.CreateDeliveryProposal201JSONResponse(deliveryProposalDTO(proposal)), nil
 }
 
-func (s *Server) AssignPickupVolunteer(ctx context.Context, request api.AssignPickupVolunteerRequestObject) (api.AssignPickupVolunteerResponseObject, error) {
-	if _, ok := s.authUser(ctx); !ok {
-		return api.AssignPickupVolunteer401JSONResponse{UnauthorizedJSONResponse: unauthorized()}, nil
+func (s *Server) AcceptDeliveryProposal(ctx context.Context, request api.AcceptDeliveryProposalRequestObject) (api.AcceptDeliveryProposalResponseObject, error) {
+	user, ok := s.authUser(ctx)
+	if !ok {
+		return api.AcceptDeliveryProposal401JSONResponse{UnauthorizedJSONResponse: unauthorized()}, nil
 	}
-	if request.Body == nil || request.Body.VolunteerId == "" {
-		return api.AssignPickupVolunteer400JSONResponse{BadRequestJSONResponse: badRequest("volunteerId is required")}, nil
-	}
-	pickup, err := s.store.AssignVolunteer(request.Id, request.Body.VolunteerId)
+	proposal, pickup, err := s.store.AcceptDeliveryProposal(request.Id, user)
 	if errors.Is(err, store.ErrNotFound) {
-		return api.AssignPickupVolunteer404JSONResponse{NotFoundJSONResponse: notFound("pickup or volunteer not found")}, nil
+		return api.AcceptDeliveryProposal404JSONResponse{NotFoundJSONResponse: notFound("proposal not found")}, nil
+	}
+	if isForbidden(err) {
+		return api.AcceptDeliveryProposal403JSONResponse{ForbiddenJSONResponse: forbidden(err.Error())}, nil
 	}
 	if isConflict(err) {
-		return api.AssignPickupVolunteer409JSONResponse{ConflictJSONResponse: conflict(err.Error())}, nil
+		return api.AcceptDeliveryProposal409JSONResponse{ConflictJSONResponse: conflict(err.Error())}, nil
 	}
 	if err != nil {
-		return api.AssignPickupVolunteer500JSONResponse{InternalServerErrorJSONResponse: internalError()}, nil
+		return api.AcceptDeliveryProposal500JSONResponse{InternalServerErrorJSONResponse: internalError()}, nil
 	}
-	return api.AssignPickupVolunteer200JSONResponse(pickupDTO(pickup)), nil
+	response := api.DeliveryProposalAcceptResponse{Proposal: deliveryProposalDTO(proposal)}
+	if pickup != nil {
+		dto := pickupDTO(*pickup)
+		response.Pickup = &dto
+	}
+	return api.AcceptDeliveryProposal200JSONResponse(response), nil
+}
+
+func (s *Server) RejectDeliveryProposal(ctx context.Context, request api.RejectDeliveryProposalRequestObject) (api.RejectDeliveryProposalResponseObject, error) {
+	user, ok := s.authUser(ctx)
+	if !ok {
+		return api.RejectDeliveryProposal401JSONResponse{UnauthorizedJSONResponse: unauthorized()}, nil
+	}
+	proposal, err := s.store.RejectDeliveryProposal(request.Id, user)
+	if errors.Is(err, store.ErrNotFound) {
+		return api.RejectDeliveryProposal404JSONResponse{NotFoundJSONResponse: notFound("proposal not found")}, nil
+	}
+	if isForbidden(err) {
+		return api.RejectDeliveryProposal403JSONResponse{ForbiddenJSONResponse: forbidden(err.Error())}, nil
+	}
+	if isConflict(err) {
+		return api.RejectDeliveryProposal409JSONResponse{ConflictJSONResponse: conflict(err.Error())}, nil
+	}
+	if err != nil {
+		return api.RejectDeliveryProposal500JSONResponse{InternalServerErrorJSONResponse: internalError()}, nil
+	}
+	return api.RejectDeliveryProposal200JSONResponse(deliveryProposalDTO(proposal)), nil
 }
 
 func (s *Server) MarkPickupPickedUp(ctx context.Context, request api.MarkPickupPickedUpRequestObject) (api.MarkPickupPickedUpResponseObject, error) {
-	if _, ok := s.authUser(ctx); !ok {
+	user, ok := s.authUser(ctx)
+	if !ok {
 		return api.MarkPickupPickedUp401JSONResponse{UnauthorizedJSONResponse: unauthorized()}, nil
+	}
+	if user.Role != string(api.Volunteer) {
+		return api.MarkPickupPickedUp403JSONResponse{ForbiddenJSONResponse: forbidden("volunteer role required")}, nil
 	}
 	occurredAt := time.Now().UTC()
 	if request.Body != nil && request.Body.OccurredAt != nil {
 		occurredAt = *request.Body.OccurredAt
 	}
-	pickup, err := s.store.MarkPickedUp(request.Id, occurredAt)
+	pickup, err := s.store.MarkPickedUp(request.Id, user.ID, occurredAt)
 	if errors.Is(err, store.ErrNotFound) {
 		return api.MarkPickupPickedUp404JSONResponse{NotFoundJSONResponse: notFound("pickup not found")}, nil
+	}
+	if isForbidden(err) {
+		return api.MarkPickupPickedUp403JSONResponse{ForbiddenJSONResponse: forbidden(err.Error())}, nil
 	}
 	if isConflict(err) {
 		return api.MarkPickupPickedUp409JSONResponse{ConflictJSONResponse: conflict(err.Error())}, nil
@@ -278,16 +360,23 @@ func (s *Server) MarkPickupPickedUp(ctx context.Context, request api.MarkPickupP
 }
 
 func (s *Server) MarkPickupDelivered(ctx context.Context, request api.MarkPickupDeliveredRequestObject) (api.MarkPickupDeliveredResponseObject, error) {
-	if _, ok := s.authUser(ctx); !ok {
+	user, ok := s.authUser(ctx)
+	if !ok {
 		return api.MarkPickupDelivered401JSONResponse{UnauthorizedJSONResponse: unauthorized()}, nil
+	}
+	if user.Role != string(api.Volunteer) {
+		return api.MarkPickupDelivered403JSONResponse{ForbiddenJSONResponse: forbidden("volunteer role required")}, nil
 	}
 	occurredAt := time.Now().UTC()
 	if request.Body != nil && request.Body.OccurredAt != nil {
 		occurredAt = *request.Body.OccurredAt
 	}
-	pickup, err := s.store.MarkDelivered(request.Id, occurredAt)
+	pickup, err := s.store.MarkDelivered(request.Id, user.ID, occurredAt)
 	if errors.Is(err, store.ErrNotFound) {
 		return api.MarkPickupDelivered404JSONResponse{NotFoundJSONResponse: notFound("pickup not found")}, nil
+	}
+	if isForbidden(err) {
+		return api.MarkPickupDelivered403JSONResponse{ForbiddenJSONResponse: forbidden(err.Error())}, nil
 	}
 	if isConflict(err) {
 		return api.MarkPickupDelivered409JSONResponse{ConflictJSONResponse: conflict(err.Error())}, nil
@@ -422,6 +511,22 @@ func userDTO(user models.User) api.User {
 	}
 }
 
+func profileDTO(profile models.Profile) api.Profile {
+	return api.Profile{
+		UserId:           profile.UserID,
+		DisplayName:      profile.DisplayName,
+		Role:             api.UserRole(profile.Role),
+		ContactMethod:    api.ContactMethod(profile.ContactMethod),
+		ContactValue:     profile.ContactValue,
+		Location:         locationDTO(profile.Location),
+		EntityType:       entityTypeDTO(profile.EntityType),
+		OperationalHours: profile.OperationalHours,
+		Notes:            profile.Notes,
+		CreatedAt:        profile.CreatedAt,
+		UpdatedAt:        profile.UpdatedAt,
+	}
+}
+
 func donationDTO(donation models.Donation) api.Donation {
 	return api.Donation{
 		Id:                  donation.ID,
@@ -439,15 +544,18 @@ func donationDTO(donation models.Donation) api.Donation {
 	}
 }
 
-func claimDTO(claim models.Claim) api.Claim {
-	return api.Claim{
-		Id:         claim.ID,
-		DonationId: claim.DonationID,
-		ReceiverId: claim.ReceiverID,
-		Status:     api.ClaimStatus(claim.Status),
-		Note:       claim.Note,
-		CreatedAt:  claim.CreatedAt,
-		UpdatedAt:  claim.UpdatedAt,
+func deliveryProposalDTO(proposal models.DeliveryProposal) api.DeliveryProposal {
+	return api.DeliveryProposal{
+		Id:                 proposal.ID,
+		DonationId:         proposal.DonationID,
+		ReceiverId:         proposal.ReceiverID,
+		VolunteerId:        proposal.VolunteerID,
+		Status:             api.ProposalStatus(proposal.Status),
+		DonorAcceptedAt:    proposal.DonorAcceptedAt,
+		ReceiverAcceptedAt: proposal.ReceiverAcceptedAt,
+		RejectedByUserId:   proposal.RejectedByUserID,
+		CreatedAt:          proposal.CreatedAt,
+		UpdatedAt:          proposal.UpdatedAt,
 	}
 }
 
@@ -455,7 +563,8 @@ func pickupDTO(pickup models.Pickup) api.Pickup {
 	return api.Pickup{
 		Id:               pickup.ID,
 		DonationId:       pickup.DonationID,
-		ClaimId:          pickup.ClaimID,
+		ProposalId:       pickup.ProposalID,
+		ReceiverId:       pickup.ReceiverID,
 		VolunteerId:      pickup.VolunteerID,
 		Status:           api.PickupStatus(pickup.Status),
 		PickupLocation:   locationDTO(pickup.PickupLocation),
@@ -476,7 +585,7 @@ func notificationDTO(notification models.Notification) api.Notification {
 		Body:       notification.Body,
 		Read:       notification.Read,
 		DonationId: notification.DonationID,
-		ClaimId:    notification.ClaimID,
+		ProposalId: notification.ProposalID,
 		PickupId:   notification.PickupID,
 		CreatedAt:  notification.CreatedAt,
 		ReadAt:     notification.ReadAt,
@@ -509,12 +618,32 @@ func locationModel(location api.Location) models.LocationFields {
 	}
 }
 
+func entityTypeDTO(value *string) *api.EntityType {
+	if value == nil {
+		return nil
+	}
+	entityType := api.EntityType(*value)
+	return &entityType
+}
+
+func entityTypeString(value *api.EntityType) *string {
+	if value == nil {
+		return nil
+	}
+	stringValue := string(*value)
+	return &stringValue
+}
+
 func badRequest(message string) api.BadRequestJSONResponse {
 	return api.BadRequestJSONResponse(api.ErrorResponse{Code: "bad_request", Message: message})
 }
 
 func unauthorized() api.UnauthorizedJSONResponse {
 	return api.UnauthorizedJSONResponse(api.ErrorResponse{Code: "unauthorized", Message: "missing or invalid bearer token"})
+}
+
+func forbidden(message string) api.ForbiddenJSONResponse {
+	return api.ForbiddenJSONResponse(api.ErrorResponse{Code: "forbidden", Message: message})
 }
 
 func notFound(message string) api.NotFoundJSONResponse {
@@ -532,6 +661,11 @@ func internalError() api.InternalServerErrorJSONResponse {
 func isConflict(err error) bool {
 	var conflictErr store.ConflictError
 	return errors.As(err, &conflictErr)
+}
+
+func isForbidden(err error) bool {
+	var forbiddenErr store.ForbiddenError
+	return errors.As(err, &forbiddenErr)
 }
 
 func writeJSON(w http.ResponseWriter, status int, value any) {
