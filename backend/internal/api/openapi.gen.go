@@ -22,11 +22,13 @@ const (
 	BearerAuthScopes = "bearerAuth.Scopes"
 )
 
-// Defines values for ClaimStatus.
+// Defines values for ContactMethod.
 const (
-	ClaimStatusApproved ClaimStatus = "approved"
-	ClaimStatusPending  ClaimStatus = "pending"
-	ClaimStatusRejected ClaimStatus = "rejected"
+	ContactMethodEmail     ContactMethod = "email"
+	ContactMethodInstagram ContactMethod = "instagram"
+	ContactMethodOther     ContactMethod = "other"
+	ContactMethodPhone     ContactMethod = "phone"
+	ContactMethodWhatsapp  ContactMethod = "whatsapp"
 )
 
 // Defines values for DemoLoginResponseTokenType.
@@ -36,32 +38,50 @@ const (
 
 // Defines values for DonationStatus.
 const (
-	DonationStatusApproved       DonationStatus = "approved"
-	DonationStatusAvailable      DonationStatus = "available"
-	DonationStatusCanceled       DonationStatus = "canceled"
-	DonationStatusClaimed        DonationStatus = "claimed"
-	DonationStatusDelivered      DonationStatus = "delivered"
-	DonationStatusPickedUp       DonationStatus = "picked_up"
-	DonationStatusPickupAssigned DonationStatus = "pickup_assigned"
+	DonationStatusAvailable       DonationStatus = "available"
+	DonationStatusCanceled        DonationStatus = "canceled"
+	DonationStatusDelivered       DonationStatus = "delivered"
+	DonationStatusPickedUp        DonationStatus = "picked_up"
+	DonationStatusPickupAssigned  DonationStatus = "pickup_assigned"
+	DonationStatusProposalPending DonationStatus = "proposal_pending"
+)
+
+// Defines values for EntityType.
+const (
+	EntityTypeCharity    EntityType = "charity"
+	EntityTypeFamily     EntityType = "family"
+	EntityTypeIndividual EntityType = "individual"
+	EntityTypeOrphanage  EntityType = "orphanage"
+	EntityTypeOther      EntityType = "other"
+	EntityTypeRestaurant EntityType = "restaurant"
+	EntityTypeShelter    EntityType = "shelter"
+	EntityTypeWarteg     EntityType = "warteg"
 )
 
 // Defines values for NotificationType.
 const (
-	ClaimApproved   NotificationType = "claim_approved"
-	ClaimCreated    NotificationType = "claim_created"
-	ClaimRejected   NotificationType = "claim_rejected"
-	DonationCreated NotificationType = "donation_created"
-	PickupAssigned  NotificationType = "pickup_assigned"
-	PickupCompleted NotificationType = "pickup_completed"
+	NotificationTypeDonationCreated  NotificationType = "donation_created"
+	NotificationTypePickupAssigned   NotificationType = "pickup_assigned"
+	NotificationTypePickupCompleted  NotificationType = "pickup_completed"
+	NotificationTypeProposalAccepted NotificationType = "proposal_accepted"
+	NotificationTypeProposalCreated  NotificationType = "proposal_created"
+	NotificationTypeProposalRejected NotificationType = "proposal_rejected"
 )
 
 // Defines values for PickupStatus.
 const (
-	Assigned          PickupStatus = "assigned"
-	Canceled          PickupStatus = "canceled"
-	Delivered         PickupStatus = "delivered"
-	PendingAssignment PickupStatus = "pending_assignment"
-	PickedUp          PickupStatus = "picked_up"
+	PickupStatusAssigned  PickupStatus = "assigned"
+	PickupStatusCanceled  PickupStatus = "canceled"
+	PickupStatusDelivered PickupStatus = "delivered"
+	PickupStatusPickedUp  PickupStatus = "picked_up"
+)
+
+// Defines values for ProposalStatus.
+const (
+	ProposalStatusAccepted ProposalStatus = "accepted"
+	ProposalStatusCanceled ProposalStatus = "canceled"
+	ProposalStatusPending  ProposalStatus = "pending"
+	ProposalStatusRejected ProposalStatus = "rejected"
 )
 
 // Defines values for UserRole.
@@ -71,40 +91,14 @@ const (
 	Volunteer UserRole = "volunteer"
 )
 
-// ApproveClaimRequest defines model for ApproveClaimRequest.
-type ApproveClaimRequest struct {
-	DeliveryLocation Location `json:"deliveryLocation"`
-}
+// ContactMethod defines model for ContactMethod.
+type ContactMethod string
 
-// ApproveClaimResponse defines model for ApproveClaimResponse.
-type ApproveClaimResponse struct {
-	Claim  Claim  `json:"claim"`
-	Pickup Pickup `json:"pickup"`
+// CreateDeliveryProposalRequest defines model for CreateDeliveryProposalRequest.
+type CreateDeliveryProposalRequest struct {
+	DonationId string `json:"donationId"`
+	ReceiverId string `json:"receiverId"`
 }
-
-// AssignVolunteerRequest defines model for AssignVolunteerRequest.
-type AssignVolunteerRequest struct {
-	VolunteerId string `json:"volunteerId"`
-}
-
-// Claim defines model for Claim.
-type Claim struct {
-	CreatedAt  time.Time   `json:"createdAt"`
-	DonationId string      `json:"donationId"`
-	Id         string      `json:"id"`
-	Note       *string     `json:"note,omitempty"`
-	ReceiverId string      `json:"receiverId"`
-	Status     ClaimStatus `json:"status"`
-	UpdatedAt  time.Time   `json:"updatedAt"`
-}
-
-// ClaimDonationRequest defines model for ClaimDonationRequest.
-type ClaimDonationRequest struct {
-	Note *string `json:"note,omitempty"`
-}
-
-// ClaimStatus defines model for ClaimStatus.
-type ClaimStatus string
 
 // CreateDonationRequest defines model for CreateDonationRequest.
 type CreateDonationRequest struct {
@@ -117,12 +111,38 @@ type CreateDonationRequest struct {
 	Title               string    `json:"title"`
 }
 
+// DeliveryProposal defines model for DeliveryProposal.
+type DeliveryProposal struct {
+	CreatedAt          time.Time      `json:"createdAt"`
+	DonationId         string         `json:"donationId"`
+	DonorAcceptedAt    *time.Time     `json:"donorAcceptedAt,omitempty"`
+	Id                 string         `json:"id"`
+	ReceiverAcceptedAt *time.Time     `json:"receiverAcceptedAt,omitempty"`
+	ReceiverId         string         `json:"receiverId"`
+	RejectedByUserId   *string        `json:"rejectedByUserId,omitempty"`
+	Status             ProposalStatus `json:"status"`
+	UpdatedAt          time.Time      `json:"updatedAt"`
+	VolunteerId        string         `json:"volunteerId"`
+}
+
+// DeliveryProposalAcceptResponse defines model for DeliveryProposalAcceptResponse.
+type DeliveryProposalAcceptResponse struct {
+	Pickup   *Pickup          `json:"pickup,omitempty"`
+	Proposal DeliveryProposal `json:"proposal"`
+}
+
+// DeliveryProposalListResponse defines model for DeliveryProposalListResponse.
+type DeliveryProposalListResponse struct {
+	Items    []DeliveryProposal `json:"items"`
+	Page     int                `json:"page"`
+	PageSize int                `json:"pageSize"`
+	Total    int                `json:"total"`
+}
+
 // DemoLoginRequest defines model for DemoLoginRequest.
 type DemoLoginRequest struct {
-	Role *UserRole `json:"role,omitempty"`
-
-	// UserId Existing demo user ID.
-	UserId *string `json:"userId,omitempty"`
+	Role   *UserRole `json:"role,omitempty"`
+	UserId *string   `json:"userId,omitempty"`
 }
 
 // DemoLoginResponse defines model for DemoLoginResponse.
@@ -137,15 +157,13 @@ type DemoLoginResponseTokenType string
 
 // Donation defines model for Donation.
 type Donation struct {
-	AvailableFrom  time.Time `json:"availableFrom"`
-	AvailableUntil time.Time `json:"availableUntil"`
-	CreatedAt      time.Time `json:"createdAt"`
-	Description    string    `json:"description"`
-	DonorId        string    `json:"donorId"`
-	Id             string    `json:"id"`
-	PickupLocation Location  `json:"pickupLocation"`
-
-	// Quantity Human-readable food quantity for demo scope.
+	AvailableFrom       time.Time      `json:"availableFrom"`
+	AvailableUntil      time.Time      `json:"availableUntil"`
+	CreatedAt           time.Time      `json:"createdAt"`
+	Description         string         `json:"description"`
+	DonorId             string         `json:"donorId"`
+	Id                  string         `json:"id"`
+	PickupLocation      Location       `json:"pickupLocation"`
 	Quantity            string         `json:"quantity"`
 	SpecialInstructions *string        `json:"specialInstructions,omitempty"`
 	Status              DonationStatus `json:"status"`
@@ -164,18 +182,12 @@ type DonationListResponse struct {
 // DonationStatus defines model for DonationStatus.
 type DonationStatus string
 
+// EntityType defines model for EntityType.
+type EntityType string
+
 // ErrorResponse defines model for ErrorResponse.
 type ErrorResponse struct {
-	// Code Stable machine-readable error code.
-	Code string `json:"code"`
-
-	// Details Optional field errors or domain-specific context.
-	Details *struct {
-		Context     *map[string]string   `json:"context,omitempty"`
-		FieldErrors *map[string][]string `json:"fieldErrors,omitempty"`
-	} `json:"details,omitempty"`
-
-	// Message Human-readable error message.
+	Code    string `json:"code"`
 	Message string `json:"message"`
 }
 
@@ -194,11 +206,11 @@ type Location struct {
 // Notification defines model for Notification.
 type Notification struct {
 	Body       string           `json:"body"`
-	ClaimId    *string          `json:"claimId,omitempty"`
 	CreatedAt  time.Time        `json:"createdAt"`
 	DonationId *string          `json:"donationId,omitempty"`
 	Id         string           `json:"id"`
 	PickupId   *string          `json:"pickupId,omitempty"`
+	ProposalId *string          `json:"proposalId,omitempty"`
 	Read       bool             `json:"read"`
 	ReadAt     *time.Time       `json:"readAt,omitempty"`
 	Title      string           `json:"title"`
@@ -219,7 +231,6 @@ type NotificationType string
 
 // Pickup defines model for Pickup.
 type Pickup struct {
-	ClaimId          string       `json:"claimId"`
 	CreatedAt        time.Time    `json:"createdAt"`
 	DeliveredAt      *time.Time   `json:"deliveredAt,omitempty"`
 	DeliveryLocation Location     `json:"deliveryLocation"`
@@ -227,23 +238,56 @@ type Pickup struct {
 	Id               string       `json:"id"`
 	PickedUpAt       *time.Time   `json:"pickedUpAt,omitempty"`
 	PickupLocation   Location     `json:"pickupLocation"`
+	ProposalId       string       `json:"proposalId"`
+	ReceiverId       string       `json:"receiverId"`
 	Status           PickupStatus `json:"status"`
 	UpdatedAt        time.Time    `json:"updatedAt"`
-	VolunteerId      *string      `json:"volunteerId,omitempty"`
+	VolunteerId      string       `json:"volunteerId"`
 }
 
 // PickupStatus defines model for PickupStatus.
 type PickupStatus string
 
-// RejectClaimRequest defines model for RejectClaimRequest.
-type RejectClaimRequest struct {
-	Reason *string `json:"reason,omitempty"`
+// Profile defines model for Profile.
+type Profile struct {
+	ContactMethod    ContactMethod `json:"contactMethod"`
+	ContactValue     string        `json:"contactValue"`
+	CreatedAt        time.Time     `json:"createdAt"`
+	DisplayName      string        `json:"displayName"`
+	EntityType       *EntityType   `json:"entityType,omitempty"`
+	Location         Location      `json:"location"`
+	Notes            *string       `json:"notes,omitempty"`
+	OperationalHours *string       `json:"operationalHours,omitempty"`
+	Role             UserRole      `json:"role"`
+	UpdatedAt        time.Time     `json:"updatedAt"`
+	UserId           string        `json:"userId"`
 }
+
+// ProfileListResponse defines model for ProfileListResponse.
+type ProfileListResponse struct {
+	Items    []Profile `json:"items"`
+	Page     int       `json:"page"`
+	PageSize int       `json:"pageSize"`
+	Total    int       `json:"total"`
+}
+
+// ProposalStatus defines model for ProposalStatus.
+type ProposalStatus string
 
 // UpdatePickupStatusRequest defines model for UpdatePickupStatusRequest.
 type UpdatePickupStatusRequest struct {
-	Note       *string    `json:"note,omitempty"`
 	OccurredAt *time.Time `json:"occurredAt,omitempty"`
+}
+
+// UpdateProfileRequest defines model for UpdateProfileRequest.
+type UpdateProfileRequest struct {
+	ContactMethod    ContactMethod `json:"contactMethod"`
+	ContactValue     string        `json:"contactValue"`
+	DisplayName      string        `json:"displayName"`
+	EntityType       *EntityType   `json:"entityType,omitempty"`
+	Location         Location      `json:"location"`
+	Notes            *string       `json:"notes,omitempty"`
+	OperationalHours *string       `json:"operationalHours,omitempty"`
 }
 
 // User defines model for User.
@@ -286,45 +330,43 @@ type NotFound = ErrorResponse
 // Unauthorized defines model for Unauthorized.
 type Unauthorized = ErrorResponse
 
+// ListDeliveryProposalsParams defines parameters for ListDeliveryProposals.
+type ListDeliveryProposalsParams struct {
+	Page     *Page           `form:"page,omitempty" json:"page,omitempty"`
+	PageSize *PageSize       `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+	Status   *ProposalStatus `form:"status,omitempty" json:"status,omitempty"`
+}
+
 // ListDonationsParams defines parameters for ListDonations.
 type ListDonationsParams struct {
-	// Page One-based page number.
-	Page *Page `form:"page,omitempty" json:"page,omitempty"`
-
-	// PageSize Number of items per page.
+	Page     *Page           `form:"page,omitempty" json:"page,omitempty"`
 	PageSize *PageSize       `form:"pageSize,omitempty" json:"pageSize,omitempty"`
 	Status   *DonationStatus `form:"status,omitempty" json:"status,omitempty"`
-
-	// Role Filter donations for a demo role-specific view.
-	Role *UserRole `form:"role,omitempty" json:"role,omitempty"`
 }
 
 // ListNotificationsParams defines parameters for ListNotifications.
 type ListNotificationsParams struct {
-	// Page One-based page number.
-	Page *Page `form:"page,omitempty" json:"page,omitempty"`
+	Page     *Page     `form:"page,omitempty" json:"page,omitempty"`
+	PageSize *PageSize `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+}
 
-	// PageSize Number of items per page.
+// ListReceiversParams defines parameters for ListReceivers.
+type ListReceiversParams struct {
+	Page     *Page     `form:"page,omitempty" json:"page,omitempty"`
 	PageSize *PageSize `form:"pageSize,omitempty" json:"pageSize,omitempty"`
 }
 
 // DemoLoginJSONRequestBody defines body for DemoLogin for application/json ContentType.
 type DemoLoginJSONRequestBody = DemoLoginRequest
 
-// ApproveClaimJSONRequestBody defines body for ApproveClaim for application/json ContentType.
-type ApproveClaimJSONRequestBody = ApproveClaimRequest
-
-// RejectClaimJSONRequestBody defines body for RejectClaim for application/json ContentType.
-type RejectClaimJSONRequestBody = RejectClaimRequest
+// CreateDeliveryProposalJSONRequestBody defines body for CreateDeliveryProposal for application/json ContentType.
+type CreateDeliveryProposalJSONRequestBody = CreateDeliveryProposalRequest
 
 // CreateDonationJSONRequestBody defines body for CreateDonation for application/json ContentType.
 type CreateDonationJSONRequestBody = CreateDonationRequest
 
-// ClaimDonationJSONRequestBody defines body for ClaimDonation for application/json ContentType.
-type ClaimDonationJSONRequestBody = ClaimDonationRequest
-
-// AssignPickupVolunteerJSONRequestBody defines body for AssignPickupVolunteer for application/json ContentType.
-type AssignPickupVolunteerJSONRequestBody = AssignVolunteerRequest
+// UpdateMyProfileJSONRequestBody defines body for UpdateMyProfile for application/json ContentType.
+type UpdateMyProfileJSONRequestBody = UpdateProfileRequest
 
 // MarkPickupDeliveredJSONRequestBody defines body for MarkPickupDelivered for application/json ContentType.
 type MarkPickupDeliveredJSONRequestBody = UpdatePickupStatusRequest
@@ -334,48 +376,57 @@ type MarkPickupPickedUpJSONRequestBody = UpdatePickupStatusRequest
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// Log in as a demo user.
+	// Log in as a seeded demo user.
 	// (POST /auth/demo-login)
 	DemoLogin(w http.ResponseWriter, r *http.Request)
-	// Approve a claim and create or return its pickup.
-	// (POST /claims/{id}/approve)
-	ApproveClaim(w http.ResponseWriter, r *http.Request, id Id)
-	// Reject a claim.
-	// (POST /claims/{id}/reject)
-	RejectClaim(w http.ResponseWriter, r *http.Request, id Id)
-	// List donations.
+	// List delivery proposals visible to current role.
+	// (GET /delivery-proposals)
+	ListDeliveryProposals(w http.ResponseWriter, r *http.Request, params ListDeliveryProposalsParams)
+	// Create a delivery proposal. Volunteer only.
+	// (POST /delivery-proposals)
+	CreateDeliveryProposal(w http.ResponseWriter, r *http.Request)
+	// Accept delivery proposal as donor or receiver.
+	// (POST /delivery-proposals/{id}/accept)
+	AcceptDeliveryProposal(w http.ResponseWriter, r *http.Request, id Id)
+	// Reject delivery proposal as donor or receiver.
+	// (POST /delivery-proposals/{id}/reject)
+	RejectDeliveryProposal(w http.ResponseWriter, r *http.Request, id Id)
+	// List donations visible to current role.
 	// (GET /donations)
 	ListDonations(w http.ResponseWriter, r *http.Request, params ListDonationsParams)
-	// Create a donation.
+	// Create a donation. Donor only.
 	// (POST /donations)
 	CreateDonation(w http.ResponseWriter, r *http.Request)
-	// Get a donation by ID.
+	// Get donation by ID.
 	// (GET /donations/{id})
 	GetDonation(w http.ResponseWriter, r *http.Request, id Id)
-	// Claim a donation.
-	// (POST /donations/{id}/claim)
-	ClaimDonation(w http.ResponseWriter, r *http.Request, id Id)
-	// Get the current authenticated user.
+	// Get current authenticated user.
 	// (GET /me)
 	GetMe(w http.ResponseWriter, r *http.Request)
+	// Get current user's profile.
+	// (GET /me/profile)
+	GetMyProfile(w http.ResponseWriter, r *http.Request)
+	// Update current user's profile.
+	// (PUT /me/profile)
+	UpdateMyProfile(w http.ResponseWriter, r *http.Request)
 	// List notifications.
 	// (GET /notifications)
 	ListNotifications(w http.ResponseWriter, r *http.Request, params ListNotificationsParams)
-	// Stream live notifications with Server-Sent Events.
+	// Stream current notifications as Server-Sent Events.
 	// (GET /notifications/stream)
 	StreamNotifications(w http.ResponseWriter, r *http.Request)
-	// Mark a notification as read.
+	// Mark notification read.
 	// (POST /notifications/{id}/read)
 	MarkNotificationRead(w http.ResponseWriter, r *http.Request, id Id)
-	// Assign a volunteer to a pickup.
-	// (POST /pickups/{id}/assign-volunteer)
-	AssignPickupVolunteer(w http.ResponseWriter, r *http.Request, id Id)
-	// Mark a pickup as delivered.
+	// Mark pickup as delivered. Assigned volunteer only.
 	// (POST /pickups/{id}/deliver)
 	MarkPickupDelivered(w http.ResponseWriter, r *http.Request, id Id)
-	// Mark a pickup as picked up.
+	// Mark pickup as picked up. Assigned volunteer only.
 	// (POST /pickups/{id}/pickup)
 	MarkPickupPickedUp(w http.ResponseWriter, r *http.Request, id Id)
+	// List receiver profiles. Volunteer only.
+	// (GET /receivers)
+	ListReceivers(w http.ResponseWriter, r *http.Request, params ListReceiversParams)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -401,19 +452,10 @@ func (siw *ServerInterfaceWrapper) DemoLogin(w http.ResponseWriter, r *http.Requ
 	handler.ServeHTTP(w, r)
 }
 
-// ApproveClaim operation middleware
-func (siw *ServerInterfaceWrapper) ApproveClaim(w http.ResponseWriter, r *http.Request) {
+// ListDeliveryProposals operation middleware
+func (siw *ServerInterfaceWrapper) ListDeliveryProposals(w http.ResponseWriter, r *http.Request) {
 
 	var err error
-
-	// ------------- Path parameter "id" -------------
-	var id Id
-
-	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
-		return
-	}
 
 	ctx := r.Context()
 
@@ -421,8 +463,35 @@ func (siw *ServerInterfaceWrapper) ApproveClaim(w http.ResponseWriter, r *http.R
 
 	r = r.WithContext(ctx)
 
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListDeliveryProposalsParams
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "page", r.URL.Query(), &params.Page)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "pageSize" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "pageSize", r.URL.Query(), &params.PageSize)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "pageSize", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "status" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "status", r.URL.Query(), &params.Status)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "status", Err: err})
+		return
+	}
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ApproveClaim(w, r, id)
+		siw.Handler.ListDeliveryProposals(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -432,8 +501,28 @@ func (siw *ServerInterfaceWrapper) ApproveClaim(w http.ResponseWriter, r *http.R
 	handler.ServeHTTP(w, r)
 }
 
-// RejectClaim operation middleware
-func (siw *ServerInterfaceWrapper) RejectClaim(w http.ResponseWriter, r *http.Request) {
+// CreateDeliveryProposal operation middleware
+func (siw *ServerInterfaceWrapper) CreateDeliveryProposal(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateDeliveryProposal(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AcceptDeliveryProposal operation middleware
+func (siw *ServerInterfaceWrapper) AcceptDeliveryProposal(w http.ResponseWriter, r *http.Request) {
 
 	var err error
 
@@ -453,7 +542,38 @@ func (siw *ServerInterfaceWrapper) RejectClaim(w http.ResponseWriter, r *http.Re
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.RejectClaim(w, r, id)
+		siw.Handler.AcceptDeliveryProposal(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RejectDeliveryProposal operation middleware
+func (siw *ServerInterfaceWrapper) RejectDeliveryProposal(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RejectDeliveryProposal(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -498,14 +618,6 @@ func (siw *ServerInterfaceWrapper) ListDonations(w http.ResponseWriter, r *http.
 	err = runtime.BindQueryParameter("form", true, false, "status", r.URL.Query(), &params.Status)
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "status", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "role" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "role", r.URL.Query(), &params.Role)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "role", Err: err})
 		return
 	}
 
@@ -571,37 +683,6 @@ func (siw *ServerInterfaceWrapper) GetDonation(w http.ResponseWriter, r *http.Re
 	handler.ServeHTTP(w, r)
 }
 
-// ClaimDonation operation middleware
-func (siw *ServerInterfaceWrapper) ClaimDonation(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "id" -------------
-	var id Id
-
-	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ClaimDonation(w, r, id)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
 // GetMe operation middleware
 func (siw *ServerInterfaceWrapper) GetMe(w http.ResponseWriter, r *http.Request) {
 
@@ -613,6 +694,46 @@ func (siw *ServerInterfaceWrapper) GetMe(w http.ResponseWriter, r *http.Request)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetMe(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetMyProfile operation middleware
+func (siw *ServerInterfaceWrapper) GetMyProfile(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetMyProfile(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateMyProfile operation middleware
+func (siw *ServerInterfaceWrapper) UpdateMyProfile(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateMyProfile(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -714,37 +835,6 @@ func (siw *ServerInterfaceWrapper) MarkNotificationRead(w http.ResponseWriter, r
 	handler.ServeHTTP(w, r)
 }
 
-// AssignPickupVolunteer operation middleware
-func (siw *ServerInterfaceWrapper) AssignPickupVolunteer(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "id" -------------
-	var id Id
-
-	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.AssignPickupVolunteer(w, r, id)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
 // MarkPickupDelivered operation middleware
 func (siw *ServerInterfaceWrapper) MarkPickupDelivered(w http.ResponseWriter, r *http.Request) {
 
@@ -798,6 +888,47 @@ func (siw *ServerInterfaceWrapper) MarkPickupPickedUp(w http.ResponseWriter, r *
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.MarkPickupPickedUp(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListReceivers operation middleware
+func (siw *ServerInterfaceWrapper) ListReceivers(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListReceiversParams
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "page", r.URL.Query(), &params.Page)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "pageSize" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "pageSize", r.URL.Query(), &params.PageSize)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "pageSize", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListReceivers(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -928,19 +1059,22 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	}
 
 	m.HandleFunc("POST "+options.BaseURL+"/auth/demo-login", wrapper.DemoLogin)
-	m.HandleFunc("POST "+options.BaseURL+"/claims/{id}/approve", wrapper.ApproveClaim)
-	m.HandleFunc("POST "+options.BaseURL+"/claims/{id}/reject", wrapper.RejectClaim)
+	m.HandleFunc("GET "+options.BaseURL+"/delivery-proposals", wrapper.ListDeliveryProposals)
+	m.HandleFunc("POST "+options.BaseURL+"/delivery-proposals", wrapper.CreateDeliveryProposal)
+	m.HandleFunc("POST "+options.BaseURL+"/delivery-proposals/{id}/accept", wrapper.AcceptDeliveryProposal)
+	m.HandleFunc("POST "+options.BaseURL+"/delivery-proposals/{id}/reject", wrapper.RejectDeliveryProposal)
 	m.HandleFunc("GET "+options.BaseURL+"/donations", wrapper.ListDonations)
 	m.HandleFunc("POST "+options.BaseURL+"/donations", wrapper.CreateDonation)
 	m.HandleFunc("GET "+options.BaseURL+"/donations/{id}", wrapper.GetDonation)
-	m.HandleFunc("POST "+options.BaseURL+"/donations/{id}/claim", wrapper.ClaimDonation)
 	m.HandleFunc("GET "+options.BaseURL+"/me", wrapper.GetMe)
+	m.HandleFunc("GET "+options.BaseURL+"/me/profile", wrapper.GetMyProfile)
+	m.HandleFunc("PUT "+options.BaseURL+"/me/profile", wrapper.UpdateMyProfile)
 	m.HandleFunc("GET "+options.BaseURL+"/notifications", wrapper.ListNotifications)
 	m.HandleFunc("GET "+options.BaseURL+"/notifications/stream", wrapper.StreamNotifications)
 	m.HandleFunc("POST "+options.BaseURL+"/notifications/{id}/read", wrapper.MarkNotificationRead)
-	m.HandleFunc("POST "+options.BaseURL+"/pickups/{id}/assign-volunteer", wrapper.AssignPickupVolunteer)
 	m.HandleFunc("POST "+options.BaseURL+"/pickups/{id}/deliver", wrapper.MarkPickupDelivered)
 	m.HandleFunc("POST "+options.BaseURL+"/pickups/{id}/pickup", wrapper.MarkPickupPickedUp)
+	m.HandleFunc("GET "+options.BaseURL+"/receivers", wrapper.ListReceivers)
 
 	return m
 }
@@ -994,148 +1128,247 @@ func (response DemoLogin500JSONResponse) VisitDemoLoginResponse(w http.ResponseW
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ApproveClaimRequestObject struct {
-	Id   Id `json:"id"`
-	Body *ApproveClaimJSONRequestBody
+type ListDeliveryProposalsRequestObject struct {
+	Params ListDeliveryProposalsParams
 }
 
-type ApproveClaimResponseObject interface {
-	VisitApproveClaimResponse(w http.ResponseWriter) error
+type ListDeliveryProposalsResponseObject interface {
+	VisitListDeliveryProposalsResponse(w http.ResponseWriter) error
 }
 
-type ApproveClaim200JSONResponse ApproveClaimResponse
+type ListDeliveryProposals200JSONResponse DeliveryProposalListResponse
 
-func (response ApproveClaim200JSONResponse) VisitApproveClaimResponse(w http.ResponseWriter) error {
+func (response ListDeliveryProposals200JSONResponse) VisitListDeliveryProposalsResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ApproveClaim400JSONResponse struct{ BadRequestJSONResponse }
+type ListDeliveryProposals400JSONResponse struct{ BadRequestJSONResponse }
 
-func (response ApproveClaim400JSONResponse) VisitApproveClaimResponse(w http.ResponseWriter) error {
+func (response ListDeliveryProposals400JSONResponse) VisitListDeliveryProposalsResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(400)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ApproveClaim401JSONResponse struct{ UnauthorizedJSONResponse }
+type ListDeliveryProposals401JSONResponse struct{ UnauthorizedJSONResponse }
 
-func (response ApproveClaim401JSONResponse) VisitApproveClaimResponse(w http.ResponseWriter) error {
+func (response ListDeliveryProposals401JSONResponse) VisitListDeliveryProposalsResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(401)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ApproveClaim403JSONResponse struct{ ForbiddenJSONResponse }
-
-func (response ApproveClaim403JSONResponse) VisitApproveClaimResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(403)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type ApproveClaim404JSONResponse struct{ NotFoundJSONResponse }
-
-func (response ApproveClaim404JSONResponse) VisitApproveClaimResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(404)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type ApproveClaim409JSONResponse struct{ ConflictJSONResponse }
-
-func (response ApproveClaim409JSONResponse) VisitApproveClaimResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(409)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type ApproveClaim500JSONResponse struct {
+type ListDeliveryProposals500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
 
-func (response ApproveClaim500JSONResponse) VisitApproveClaimResponse(w http.ResponseWriter) error {
+func (response ListDeliveryProposals500JSONResponse) VisitListDeliveryProposalsResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type RejectClaimRequestObject struct {
-	Id   Id `json:"id"`
-	Body *RejectClaimJSONRequestBody
+type CreateDeliveryProposalRequestObject struct {
+	Body *CreateDeliveryProposalJSONRequestBody
 }
 
-type RejectClaimResponseObject interface {
-	VisitRejectClaimResponse(w http.ResponseWriter) error
+type CreateDeliveryProposalResponseObject interface {
+	VisitCreateDeliveryProposalResponse(w http.ResponseWriter) error
 }
 
-type RejectClaim200JSONResponse Claim
+type CreateDeliveryProposal201JSONResponse DeliveryProposal
 
-func (response RejectClaim200JSONResponse) VisitRejectClaimResponse(w http.ResponseWriter) error {
+func (response CreateDeliveryProposal201JSONResponse) VisitCreateDeliveryProposalResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+	w.WriteHeader(201)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type RejectClaim400JSONResponse struct{ BadRequestJSONResponse }
+type CreateDeliveryProposal400JSONResponse struct{ BadRequestJSONResponse }
 
-func (response RejectClaim400JSONResponse) VisitRejectClaimResponse(w http.ResponseWriter) error {
+func (response CreateDeliveryProposal400JSONResponse) VisitCreateDeliveryProposalResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(400)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type RejectClaim401JSONResponse struct{ UnauthorizedJSONResponse }
+type CreateDeliveryProposal401JSONResponse struct{ UnauthorizedJSONResponse }
 
-func (response RejectClaim401JSONResponse) VisitRejectClaimResponse(w http.ResponseWriter) error {
+func (response CreateDeliveryProposal401JSONResponse) VisitCreateDeliveryProposalResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(401)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type RejectClaim403JSONResponse struct{ ForbiddenJSONResponse }
+type CreateDeliveryProposal403JSONResponse struct{ ForbiddenJSONResponse }
 
-func (response RejectClaim403JSONResponse) VisitRejectClaimResponse(w http.ResponseWriter) error {
+func (response CreateDeliveryProposal403JSONResponse) VisitCreateDeliveryProposalResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(403)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type RejectClaim404JSONResponse struct{ NotFoundJSONResponse }
+type CreateDeliveryProposal404JSONResponse struct{ NotFoundJSONResponse }
 
-func (response RejectClaim404JSONResponse) VisitRejectClaimResponse(w http.ResponseWriter) error {
+func (response CreateDeliveryProposal404JSONResponse) VisitCreateDeliveryProposalResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(404)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type RejectClaim409JSONResponse struct{ ConflictJSONResponse }
+type CreateDeliveryProposal409JSONResponse struct{ ConflictJSONResponse }
 
-func (response RejectClaim409JSONResponse) VisitRejectClaimResponse(w http.ResponseWriter) error {
+func (response CreateDeliveryProposal409JSONResponse) VisitCreateDeliveryProposalResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(409)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type RejectClaim500JSONResponse struct {
+type CreateDeliveryProposal500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
 
-func (response RejectClaim500JSONResponse) VisitRejectClaimResponse(w http.ResponseWriter) error {
+func (response CreateDeliveryProposal500JSONResponse) VisitCreateDeliveryProposalResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AcceptDeliveryProposalRequestObject struct {
+	Id Id `json:"id"`
+}
+
+type AcceptDeliveryProposalResponseObject interface {
+	VisitAcceptDeliveryProposalResponse(w http.ResponseWriter) error
+}
+
+type AcceptDeliveryProposal200JSONResponse DeliveryProposalAcceptResponse
+
+func (response AcceptDeliveryProposal200JSONResponse) VisitAcceptDeliveryProposalResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AcceptDeliveryProposal401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response AcceptDeliveryProposal401JSONResponse) VisitAcceptDeliveryProposalResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AcceptDeliveryProposal403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response AcceptDeliveryProposal403JSONResponse) VisitAcceptDeliveryProposalResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AcceptDeliveryProposal404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response AcceptDeliveryProposal404JSONResponse) VisitAcceptDeliveryProposalResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AcceptDeliveryProposal409JSONResponse struct{ ConflictJSONResponse }
+
+func (response AcceptDeliveryProposal409JSONResponse) VisitAcceptDeliveryProposalResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AcceptDeliveryProposal500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response AcceptDeliveryProposal500JSONResponse) VisitAcceptDeliveryProposalResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type RejectDeliveryProposalRequestObject struct {
+	Id Id `json:"id"`
+}
+
+type RejectDeliveryProposalResponseObject interface {
+	VisitRejectDeliveryProposalResponse(w http.ResponseWriter) error
+}
+
+type RejectDeliveryProposal200JSONResponse DeliveryProposal
+
+func (response RejectDeliveryProposal200JSONResponse) VisitRejectDeliveryProposalResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type RejectDeliveryProposal401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response RejectDeliveryProposal401JSONResponse) VisitRejectDeliveryProposalResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type RejectDeliveryProposal403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response RejectDeliveryProposal403JSONResponse) VisitRejectDeliveryProposalResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type RejectDeliveryProposal404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response RejectDeliveryProposal404JSONResponse) VisitRejectDeliveryProposalResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type RejectDeliveryProposal409JSONResponse struct{ ConflictJSONResponse }
+
+func (response RejectDeliveryProposal409JSONResponse) VisitRejectDeliveryProposalResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type RejectDeliveryProposal500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response RejectDeliveryProposal500JSONResponse) VisitRejectDeliveryProposalResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(500)
 
@@ -1223,6 +1456,15 @@ func (response CreateDonation401JSONResponse) VisitCreateDonationResponse(w http
 	return json.NewEncoder(w).Encode(response)
 }
 
+type CreateDonation403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response CreateDonation403JSONResponse) VisitCreateDonationResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
 type CreateDonation500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -1280,71 +1522,6 @@ func (response GetDonation500JSONResponse) VisitGetDonationResponse(w http.Respo
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ClaimDonationRequestObject struct {
-	Id   Id `json:"id"`
-	Body *ClaimDonationJSONRequestBody
-}
-
-type ClaimDonationResponseObject interface {
-	VisitClaimDonationResponse(w http.ResponseWriter) error
-}
-
-type ClaimDonation201JSONResponse Claim
-
-func (response ClaimDonation201JSONResponse) VisitClaimDonationResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(201)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type ClaimDonation400JSONResponse struct{ BadRequestJSONResponse }
-
-func (response ClaimDonation400JSONResponse) VisitClaimDonationResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(400)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type ClaimDonation401JSONResponse struct{ UnauthorizedJSONResponse }
-
-func (response ClaimDonation401JSONResponse) VisitClaimDonationResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(401)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type ClaimDonation404JSONResponse struct{ NotFoundJSONResponse }
-
-func (response ClaimDonation404JSONResponse) VisitClaimDonationResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(404)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type ClaimDonation409JSONResponse struct{ ConflictJSONResponse }
-
-func (response ClaimDonation409JSONResponse) VisitClaimDonationResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(409)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type ClaimDonation500JSONResponse struct {
-	InternalServerErrorJSONResponse
-}
-
-func (response ClaimDonation500JSONResponse) VisitClaimDonationResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(500)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
 type GetMeRequestObject struct {
 }
 
@@ -1375,6 +1552,97 @@ type GetMe500JSONResponse struct {
 }
 
 func (response GetMe500JSONResponse) VisitGetMeResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetMyProfileRequestObject struct {
+}
+
+type GetMyProfileResponseObject interface {
+	VisitGetMyProfileResponse(w http.ResponseWriter) error
+}
+
+type GetMyProfile200JSONResponse Profile
+
+func (response GetMyProfile200JSONResponse) VisitGetMyProfileResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetMyProfile401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response GetMyProfile401JSONResponse) VisitGetMyProfileResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetMyProfile404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response GetMyProfile404JSONResponse) VisitGetMyProfileResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetMyProfile500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response GetMyProfile500JSONResponse) VisitGetMyProfileResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateMyProfileRequestObject struct {
+	Body *UpdateMyProfileJSONRequestBody
+}
+
+type UpdateMyProfileResponseObject interface {
+	VisitUpdateMyProfileResponse(w http.ResponseWriter) error
+}
+
+type UpdateMyProfile200JSONResponse Profile
+
+func (response UpdateMyProfile200JSONResponse) VisitUpdateMyProfileResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateMyProfile400JSONResponse struct{ BadRequestJSONResponse }
+
+func (response UpdateMyProfile400JSONResponse) VisitUpdateMyProfileResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateMyProfile401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response UpdateMyProfile401JSONResponse) VisitUpdateMyProfileResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateMyProfile500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response UpdateMyProfile500JSONResponse) VisitUpdateMyProfileResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(500)
 
@@ -1519,80 +1787,6 @@ func (response MarkNotificationRead500JSONResponse) VisitMarkNotificationReadRes
 	return json.NewEncoder(w).Encode(response)
 }
 
-type AssignPickupVolunteerRequestObject struct {
-	Id   Id `json:"id"`
-	Body *AssignPickupVolunteerJSONRequestBody
-}
-
-type AssignPickupVolunteerResponseObject interface {
-	VisitAssignPickupVolunteerResponse(w http.ResponseWriter) error
-}
-
-type AssignPickupVolunteer200JSONResponse Pickup
-
-func (response AssignPickupVolunteer200JSONResponse) VisitAssignPickupVolunteerResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type AssignPickupVolunteer400JSONResponse struct{ BadRequestJSONResponse }
-
-func (response AssignPickupVolunteer400JSONResponse) VisitAssignPickupVolunteerResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(400)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type AssignPickupVolunteer401JSONResponse struct{ UnauthorizedJSONResponse }
-
-func (response AssignPickupVolunteer401JSONResponse) VisitAssignPickupVolunteerResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(401)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type AssignPickupVolunteer403JSONResponse struct{ ForbiddenJSONResponse }
-
-func (response AssignPickupVolunteer403JSONResponse) VisitAssignPickupVolunteerResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(403)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type AssignPickupVolunteer404JSONResponse struct{ NotFoundJSONResponse }
-
-func (response AssignPickupVolunteer404JSONResponse) VisitAssignPickupVolunteerResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(404)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type AssignPickupVolunteer409JSONResponse struct{ ConflictJSONResponse }
-
-func (response AssignPickupVolunteer409JSONResponse) VisitAssignPickupVolunteerResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(409)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type AssignPickupVolunteer500JSONResponse struct {
-	InternalServerErrorJSONResponse
-}
-
-func (response AssignPickupVolunteer500JSONResponse) VisitAssignPickupVolunteerResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(500)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
 type MarkPickupDeliveredRequestObject struct {
 	Id   Id `json:"id"`
 	Body *MarkPickupDeliveredJSONRequestBody
@@ -1607,15 +1801,6 @@ type MarkPickupDelivered200JSONResponse Pickup
 func (response MarkPickupDelivered200JSONResponse) VisitMarkPickupDeliveredResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type MarkPickupDelivered400JSONResponse struct{ BadRequestJSONResponse }
-
-func (response MarkPickupDelivered400JSONResponse) VisitMarkPickupDeliveredResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(400)
 
 	return json.NewEncoder(w).Encode(response)
 }
@@ -1685,15 +1870,6 @@ func (response MarkPickupPickedUp200JSONResponse) VisitMarkPickupPickedUpRespons
 	return json.NewEncoder(w).Encode(response)
 }
 
-type MarkPickupPickedUp400JSONResponse struct{ BadRequestJSONResponse }
-
-func (response MarkPickupPickedUp400JSONResponse) VisitMarkPickupPickedUpResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(400)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
 type MarkPickupPickedUp401JSONResponse struct{ UnauthorizedJSONResponse }
 
 func (response MarkPickupPickedUp401JSONResponse) VisitMarkPickupPickedUpResponse(w http.ResponseWriter) error {
@@ -1741,50 +1917,114 @@ func (response MarkPickupPickedUp500JSONResponse) VisitMarkPickupPickedUpRespons
 	return json.NewEncoder(w).Encode(response)
 }
 
+type ListReceiversRequestObject struct {
+	Params ListReceiversParams
+}
+
+type ListReceiversResponseObject interface {
+	VisitListReceiversResponse(w http.ResponseWriter) error
+}
+
+type ListReceivers200JSONResponse ProfileListResponse
+
+func (response ListReceivers200JSONResponse) VisitListReceiversResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListReceivers400JSONResponse struct{ BadRequestJSONResponse }
+
+func (response ListReceivers400JSONResponse) VisitListReceiversResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListReceivers401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response ListReceivers401JSONResponse) VisitListReceiversResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListReceivers403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response ListReceivers403JSONResponse) VisitListReceiversResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListReceivers500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response ListReceivers500JSONResponse) VisitListReceiversResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
-	// Log in as a demo user.
+	// Log in as a seeded demo user.
 	// (POST /auth/demo-login)
 	DemoLogin(ctx context.Context, request DemoLoginRequestObject) (DemoLoginResponseObject, error)
-	// Approve a claim and create or return its pickup.
-	// (POST /claims/{id}/approve)
-	ApproveClaim(ctx context.Context, request ApproveClaimRequestObject) (ApproveClaimResponseObject, error)
-	// Reject a claim.
-	// (POST /claims/{id}/reject)
-	RejectClaim(ctx context.Context, request RejectClaimRequestObject) (RejectClaimResponseObject, error)
-	// List donations.
+	// List delivery proposals visible to current role.
+	// (GET /delivery-proposals)
+	ListDeliveryProposals(ctx context.Context, request ListDeliveryProposalsRequestObject) (ListDeliveryProposalsResponseObject, error)
+	// Create a delivery proposal. Volunteer only.
+	// (POST /delivery-proposals)
+	CreateDeliveryProposal(ctx context.Context, request CreateDeliveryProposalRequestObject) (CreateDeliveryProposalResponseObject, error)
+	// Accept delivery proposal as donor or receiver.
+	// (POST /delivery-proposals/{id}/accept)
+	AcceptDeliveryProposal(ctx context.Context, request AcceptDeliveryProposalRequestObject) (AcceptDeliveryProposalResponseObject, error)
+	// Reject delivery proposal as donor or receiver.
+	// (POST /delivery-proposals/{id}/reject)
+	RejectDeliveryProposal(ctx context.Context, request RejectDeliveryProposalRequestObject) (RejectDeliveryProposalResponseObject, error)
+	// List donations visible to current role.
 	// (GET /donations)
 	ListDonations(ctx context.Context, request ListDonationsRequestObject) (ListDonationsResponseObject, error)
-	// Create a donation.
+	// Create a donation. Donor only.
 	// (POST /donations)
 	CreateDonation(ctx context.Context, request CreateDonationRequestObject) (CreateDonationResponseObject, error)
-	// Get a donation by ID.
+	// Get donation by ID.
 	// (GET /donations/{id})
 	GetDonation(ctx context.Context, request GetDonationRequestObject) (GetDonationResponseObject, error)
-	// Claim a donation.
-	// (POST /donations/{id}/claim)
-	ClaimDonation(ctx context.Context, request ClaimDonationRequestObject) (ClaimDonationResponseObject, error)
-	// Get the current authenticated user.
+	// Get current authenticated user.
 	// (GET /me)
 	GetMe(ctx context.Context, request GetMeRequestObject) (GetMeResponseObject, error)
+	// Get current user's profile.
+	// (GET /me/profile)
+	GetMyProfile(ctx context.Context, request GetMyProfileRequestObject) (GetMyProfileResponseObject, error)
+	// Update current user's profile.
+	// (PUT /me/profile)
+	UpdateMyProfile(ctx context.Context, request UpdateMyProfileRequestObject) (UpdateMyProfileResponseObject, error)
 	// List notifications.
 	// (GET /notifications)
 	ListNotifications(ctx context.Context, request ListNotificationsRequestObject) (ListNotificationsResponseObject, error)
-	// Stream live notifications with Server-Sent Events.
+	// Stream current notifications as Server-Sent Events.
 	// (GET /notifications/stream)
 	StreamNotifications(ctx context.Context, request StreamNotificationsRequestObject) (StreamNotificationsResponseObject, error)
-	// Mark a notification as read.
+	// Mark notification read.
 	// (POST /notifications/{id}/read)
 	MarkNotificationRead(ctx context.Context, request MarkNotificationReadRequestObject) (MarkNotificationReadResponseObject, error)
-	// Assign a volunteer to a pickup.
-	// (POST /pickups/{id}/assign-volunteer)
-	AssignPickupVolunteer(ctx context.Context, request AssignPickupVolunteerRequestObject) (AssignPickupVolunteerResponseObject, error)
-	// Mark a pickup as delivered.
+	// Mark pickup as delivered. Assigned volunteer only.
 	// (POST /pickups/{id}/deliver)
 	MarkPickupDelivered(ctx context.Context, request MarkPickupDeliveredRequestObject) (MarkPickupDeliveredResponseObject, error)
-	// Mark a pickup as picked up.
+	// Mark pickup as picked up. Assigned volunteer only.
 	// (POST /pickups/{id}/pickup)
 	MarkPickupPickedUp(ctx context.Context, request MarkPickupPickedUpRequestObject) (MarkPickupPickedUpResponseObject, error)
+	// List receiver profiles. Volunteer only.
+	// (GET /receivers)
+	ListReceivers(ctx context.Context, request ListReceiversRequestObject) (ListReceiversResponseObject, error)
 }
 
 type StrictHandlerFunc = strictnethttp.StrictHTTPHandlerFunc
@@ -1847,32 +2087,25 @@ func (sh *strictHandler) DemoLogin(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// ApproveClaim operation middleware
-func (sh *strictHandler) ApproveClaim(w http.ResponseWriter, r *http.Request, id Id) {
-	var request ApproveClaimRequestObject
+// ListDeliveryProposals operation middleware
+func (sh *strictHandler) ListDeliveryProposals(w http.ResponseWriter, r *http.Request, params ListDeliveryProposalsParams) {
+	var request ListDeliveryProposalsRequestObject
 
-	request.Id = id
-
-	var body ApproveClaimJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
-		return
-	}
-	request.Body = &body
+	request.Params = params
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.ApproveClaim(ctx, request.(ApproveClaimRequestObject))
+		return sh.ssi.ListDeliveryProposals(ctx, request.(ListDeliveryProposalsRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "ApproveClaim")
+		handler = middleware(handler, "ListDeliveryProposals")
 	}
 
 	response, err := handler(r.Context(), w, r, request)
 
 	if err != nil {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(ApproveClaimResponseObject); ok {
-		if err := validResponse.VisitApproveClaimResponse(w); err != nil {
+	} else if validResponse, ok := response.(ListDeliveryProposalsResponseObject); ok {
+		if err := validResponse.VisitListDeliveryProposalsResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -1880,13 +2113,11 @@ func (sh *strictHandler) ApproveClaim(w http.ResponseWriter, r *http.Request, id
 	}
 }
 
-// RejectClaim operation middleware
-func (sh *strictHandler) RejectClaim(w http.ResponseWriter, r *http.Request, id Id) {
-	var request RejectClaimRequestObject
+// CreateDeliveryProposal operation middleware
+func (sh *strictHandler) CreateDeliveryProposal(w http.ResponseWriter, r *http.Request) {
+	var request CreateDeliveryProposalRequestObject
 
-	request.Id = id
-
-	var body RejectClaimJSONRequestBody
+	var body CreateDeliveryProposalJSONRequestBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
 		return
@@ -1894,18 +2125,70 @@ func (sh *strictHandler) RejectClaim(w http.ResponseWriter, r *http.Request, id 
 	request.Body = &body
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.RejectClaim(ctx, request.(RejectClaimRequestObject))
+		return sh.ssi.CreateDeliveryProposal(ctx, request.(CreateDeliveryProposalRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "RejectClaim")
+		handler = middleware(handler, "CreateDeliveryProposal")
 	}
 
 	response, err := handler(r.Context(), w, r, request)
 
 	if err != nil {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(RejectClaimResponseObject); ok {
-		if err := validResponse.VisitRejectClaimResponse(w); err != nil {
+	} else if validResponse, ok := response.(CreateDeliveryProposalResponseObject); ok {
+		if err := validResponse.VisitCreateDeliveryProposalResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AcceptDeliveryProposal operation middleware
+func (sh *strictHandler) AcceptDeliveryProposal(w http.ResponseWriter, r *http.Request, id Id) {
+	var request AcceptDeliveryProposalRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AcceptDeliveryProposal(ctx, request.(AcceptDeliveryProposalRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AcceptDeliveryProposal")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AcceptDeliveryProposalResponseObject); ok {
+		if err := validResponse.VisitAcceptDeliveryProposalResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RejectDeliveryProposal operation middleware
+func (sh *strictHandler) RejectDeliveryProposal(w http.ResponseWriter, r *http.Request, id Id) {
+	var request RejectDeliveryProposalRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RejectDeliveryProposal(ctx, request.(RejectDeliveryProposalRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RejectDeliveryProposal")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RejectDeliveryProposalResponseObject); ok {
+		if err := validResponse.VisitRejectDeliveryProposalResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -1996,39 +2279,6 @@ func (sh *strictHandler) GetDonation(w http.ResponseWriter, r *http.Request, id 
 	}
 }
 
-// ClaimDonation operation middleware
-func (sh *strictHandler) ClaimDonation(w http.ResponseWriter, r *http.Request, id Id) {
-	var request ClaimDonationRequestObject
-
-	request.Id = id
-
-	var body ClaimDonationJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
-		return
-	}
-	request.Body = &body
-
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.ClaimDonation(ctx, request.(ClaimDonationRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "ClaimDonation")
-	}
-
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(ClaimDonationResponseObject); ok {
-		if err := validResponse.VisitClaimDonationResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
-	}
-}
-
 // GetMe operation middleware
 func (sh *strictHandler) GetMe(w http.ResponseWriter, r *http.Request) {
 	var request GetMeRequestObject
@@ -2046,6 +2296,61 @@ func (sh *strictHandler) GetMe(w http.ResponseWriter, r *http.Request) {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(GetMeResponseObject); ok {
 		if err := validResponse.VisitGetMeResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetMyProfile operation middleware
+func (sh *strictHandler) GetMyProfile(w http.ResponseWriter, r *http.Request) {
+	var request GetMyProfileRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetMyProfile(ctx, request.(GetMyProfileRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetMyProfile")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetMyProfileResponseObject); ok {
+		if err := validResponse.VisitGetMyProfileResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateMyProfile operation middleware
+func (sh *strictHandler) UpdateMyProfile(w http.ResponseWriter, r *http.Request) {
+	var request UpdateMyProfileRequestObject
+
+	var body UpdateMyProfileJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateMyProfile(ctx, request.(UpdateMyProfileRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateMyProfile")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateMyProfileResponseObject); ok {
+		if err := validResponse.VisitUpdateMyProfileResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -2129,39 +2434,6 @@ func (sh *strictHandler) MarkNotificationRead(w http.ResponseWriter, r *http.Req
 	}
 }
 
-// AssignPickupVolunteer operation middleware
-func (sh *strictHandler) AssignPickupVolunteer(w http.ResponseWriter, r *http.Request, id Id) {
-	var request AssignPickupVolunteerRequestObject
-
-	request.Id = id
-
-	var body AssignPickupVolunteerJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
-		return
-	}
-	request.Body = &body
-
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.AssignPickupVolunteer(ctx, request.(AssignPickupVolunteerRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "AssignPickupVolunteer")
-	}
-
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(AssignPickupVolunteerResponseObject); ok {
-		if err := validResponse.VisitAssignPickupVolunteerResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
-	}
-}
-
 // MarkPickupDelivered operation middleware
 func (sh *strictHandler) MarkPickupDelivered(w http.ResponseWriter, r *http.Request, id Id) {
 	var request MarkPickupDeliveredRequestObject
@@ -2221,6 +2493,32 @@ func (sh *strictHandler) MarkPickupPickedUp(w http.ResponseWriter, r *http.Reque
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(MarkPickupPickedUpResponseObject); ok {
 		if err := validResponse.VisitMarkPickupPickedUpResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListReceivers operation middleware
+func (sh *strictHandler) ListReceivers(w http.ResponseWriter, r *http.Request, params ListReceiversParams) {
+	var request ListReceiversRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListReceivers(ctx, request.(ListReceiversRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListReceivers")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListReceiversResponseObject); ok {
+		if err := validResponse.VisitListReceiversResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
