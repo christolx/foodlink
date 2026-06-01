@@ -26,7 +26,7 @@ types and handlers instead of duplicating request or response structs.
 - JSON endpoints use `application/json`.
 - `POST /auth/demo-login` is public. Other business endpoints require
   `Authorization: Bearer <token>`.
-- Errors use `ErrorResponse` with `code`, `message`, and optional `details`.
+- Errors use `ErrorResponse` with `code` and `message`.
 - Lists return `{ items, page, pageSize, total }`.
 - Timestamps use RFC3339 `date-time`.
 - IDs are strings until database ID type is fixed.
