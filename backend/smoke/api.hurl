@@ -87,7 +87,7 @@ POST {{base_url}}/api/v1/donations
 Authorization: Bearer {{donor_token}}
 Content-Type: application/json
 {
-  "title": "Hurl smoke test rice and vegetables",
+  "title": "[SMOKE_TEST] Hurl smoke test rice and vegetables",
   "description": "API smoke test donation",
   "quantity": "10 portions",
   "pickupLocation": {
@@ -107,7 +107,7 @@ donation_id: jsonpath "$.id"
 [Asserts]
 jsonpath "$.donorId" == "user_donor"
 jsonpath "$.status" == "available"
-jsonpath "$.title" == "Hurl smoke test rice and vegetables"
+jsonpath "$.title" == "[SMOKE_TEST] Hurl smoke test rice and vegetables"
 
 POST {{base_url}}/api/v1/delivery-proposals
 Authorization: Bearer {{volunteer_token}}
