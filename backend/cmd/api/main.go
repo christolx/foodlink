@@ -13,6 +13,7 @@ import (
 
 func main() {
 	runMigrate := flag.Bool("migrate", false, "run database migrations and seed demo data")
+	cleanupSmoke := flag.Bool("cleanup-smoke", false, "delete smoke test records")
 	flag.Parse()
 
 	cfg := config.Load()
@@ -33,6 +34,13 @@ func main() {
 			log.Fatal(err)
 		}
 		log.Print("database migrated and demo data seeded")
+		return
+	}
+	if *cleanupSmoke {
+		if err := st.CleanupSmokeData(); err != nil {
+			log.Fatal(err)
+		}
+		log.Print("smoke test data cleaned")
 		return
 	}
 
