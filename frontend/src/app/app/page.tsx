@@ -812,7 +812,7 @@ function DonorDashboard({
             </div>
 
             <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_13rem]">
-              <label className="grid gap-2 text-xs font-black text-[#1a281f]">
+              <label className="grid gap-2 text-sm font-bold text-[#1a281f]">
                 Title
                 <input
                   className={input}
@@ -821,7 +821,7 @@ function DonorDashboard({
                   required
                 />
               </label>
-              <label className="grid gap-2 text-xs font-black text-[#1a281f]">
+              <label className="grid gap-2 text-sm font-bold text-[#1a281f]">
                 Quantity
                 <input
                   className={input}
@@ -832,7 +832,7 @@ function DonorDashboard({
               </label>
             </div>
 
-            <label className="grid gap-2 text-xs font-black text-[#1a281f]">
+            <label className="grid gap-2 text-sm font-bold text-[#1a281f]">
               Description
               <textarea
                 className={cx(input, "min-h-20 resize-y")}
@@ -842,9 +842,9 @@ function DonorDashboard({
               />
             </label>
 
-            <label className="grid gap-2 text-xs font-black text-[#1a281f]">
+            <label className="grid gap-2 text-sm font-bold text-[#1a281f]">
               Pickup location
-              <span className="grid grid-cols-[2.5rem_1fr_2.5rem] overflow-hidden rounded-md border border-[#cfc8ba] bg-[#fffdf8]">
+              <span className="grid grid-cols-[2.5rem_1fr_2.5rem] overflow-hidden rounded-[0.65rem] border border-[#cfc8ba] bg-[#fffdf8]">
                 <span className="grid place-items-center text-[#064c25]">
                   <AppIcon name="map" className="h-5 w-5" />
                 </span>
@@ -860,7 +860,7 @@ function DonorDashboard({
             </label>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <label className="grid gap-2 text-xs font-black text-[#1a281f]">
+              <label className="grid gap-2 text-sm font-bold text-[#1a281f]">
                 Available from
                 <input
                   className={input}
@@ -869,7 +869,7 @@ function DonorDashboard({
                   defaultValue={defaultFrom}
                 />
               </label>
-              <label className="grid gap-2 text-xs font-black text-[#1a281f]">
+              <label className="grid gap-2 text-sm font-bold text-[#1a281f]">
                 Available until
                 <input
                   className={input}
@@ -880,7 +880,7 @@ function DonorDashboard({
               </label>
             </div>
 
-            <label className="grid gap-2 text-xs font-black text-[#1a281f]">
+            <label className="grid gap-2 text-sm font-bold text-[#1a281f]">
               Special instructions (optional)
               <textarea
                 className={cx(input, "min-h-16 resize-y")}
@@ -2362,7 +2362,7 @@ function ProposalQueue({
   );
 
   return (
-    <section className={cx(panel, "min-h-full p-4")} id="proposal-queue">
+    <section className={cx(panel, "min-h-full p-6")} id="proposal-queue">
       <header className="mb-4 flex items-start justify-between gap-4">
         <div className="flex items-center gap-4">
           <span className="grid h-12 w-12 place-items-center rounded-full bg-[#e5f1df] text-[#064c25]">
@@ -2540,7 +2540,7 @@ function DonationsTable({
 }) {
   return (
     <section
-      className={cx(panel, "p-5", compact && "min-h-full")}
+      className={cx(panel, "p-6", compact && "min-h-full")}
       id="my-donations"
     >
       <header className="mb-4 flex items-center justify-between gap-4">
@@ -2675,7 +2675,7 @@ function NotificationsPanel({
     <aside
       className={cx(
         panel,
-        "sticky top-5 p-4",
+        "sticky top-5 p-6",
         receiverVariant &&
           "rounded-none border-y-0 border-r-0 bg-[#fffdf8]/72 shadow-none xl:-my-7 xl:min-h-screen xl:pt-7",
       )}

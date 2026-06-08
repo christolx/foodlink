@@ -50,13 +50,14 @@ export const panel =
 export const heading =
   "font-serif text-[1.55rem] font-normal leading-none tracking-[-0.035em] text-[#061e0e]";
 export const input =
-  "min-h-10 w-full rounded-md border border-[#cfc8ba] bg-[#fffdf8] px-3 py-2 text-sm font-bold text-[#111a14] outline-none transition placeholder:text-[#7a817b] focus:border-[#116b35] focus:ring-2 focus:ring-[#116b35]/15";
+  "min-h-10 w-full rounded-[0.65rem] border border-[#cfc8ba] bg-[#fffdf8] px-3 py-2 text-sm font-bold text-[#111a14] outline-none transition placeholder:text-[#7a817b] focus:border-[#116b35] focus:ring-2 focus:ring-[#116b35]/15";
 export const primaryButton =
-  "inline-flex min-h-12 items-center justify-center gap-3 rounded-md bg-[#ffbd1a] px-5 font-black text-[#10140d] shadow-[0_0.75rem_1.5rem_rgba(167,111,2,0.16)] transition hover:-translate-y-0.5 hover:bg-[#f4b30e] disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:translate-y-0";
+  "inline-flex min-h-12 items-center justify-center gap-3 rounded-[0.65rem] bg-[#ffbd1a] px-5 font-black text-[#10140d] shadow-[0_0.75rem_1.5rem_rgba(167,111,2,0.16)] transition hover:-translate-y-0.5 hover:bg-[#f4b30e] disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:translate-y-0";
 export const ghostButton =
-  "inline-flex min-h-10 items-center justify-center rounded-md border border-[#9eb69f] bg-[#fffdf8] px-4 text-sm font-black text-[#064c25] transition hover:-translate-y-0.5 hover:bg-[#f6fbf3] disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:translate-y-0";
+  "inline-flex min-h-10 items-center justify-center rounded-[0.65rem] border border-[#9eb69f] bg-[#fffdf8] px-4 text-sm font-black text-[#064c25] transition hover:-translate-y-0.5 hover:bg-[#f6fbf3] disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:translate-y-0";
 export const badgeBase =
-  "inline-flex min-h-6 items-center rounded-md px-2.5 text-xs font-black";
+  "inline-flex min-h-6 items-center rounded-[0.45rem] px-2.5 text-xs font-black";
+
 export const defaultDonationImage = "/landing/cards/donate-card.webp";
 
 export function cx(...classes: Array<string | false | null | undefined>) {
