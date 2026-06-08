@@ -1,17 +1,25 @@
 "use client";
 
 import {
+  ArrowRight,
   Bell,
   Box,
+  CalendarDays,
   ChartColumn,
   Check,
+  ChevronDown,
   CircleUserRound,
+  Clock3,
+  Filter,
   LayoutDashboard,
   Leaf,
   type LucideIcon,
   MapIcon,
+  MapPin,
   MessageSquare,
+  Navigation,
   Package,
+  Search,
   Settings,
   ShoppingBag,
   Truck,
@@ -128,36 +136,52 @@ function emptyCopy(value: string) {
 }
 
 type IconName =
+  | "arrow"
   | "bag"
   | "bell"
   | "box"
+  | "calendar"
   | "chart"
   | "check"
+  | "chevron"
+  | "clock"
   | "close"
   | "dashboard"
+  | "filter"
   | "leaf"
   | "map"
+  | "marker"
   | "message"
+  | "navigation"
   | "package"
   | "pickup"
   | "profile"
+  | "search"
   | "settings"
   | "team";
 
 const icons: Record<IconName, LucideIcon> = {
+  arrow: ArrowRight,
   bag: ShoppingBag,
   bell: Bell,
   box: Box,
+  calendar: CalendarDays,
   chart: ChartColumn,
   check: Check,
+  chevron: ChevronDown,
+  clock: Clock3,
   close: X,
   dashboard: LayoutDashboard,
+  filter: Filter,
   leaf: Leaf,
   map: MapIcon,
+  marker: MapPin,
   message: MessageSquare,
+  navigation: Navigation,
   package: Package,
   pickup: Truck,
   profile: CircleUserRound,
+  search: Search,
   settings: Settings,
   team: Users,
 };
@@ -308,7 +332,9 @@ export default function AppPage() {
         ) : null}
         {data.user.role !== "donor" ? (
           <>
-            <StatusStrip data={data} />
+            {data.user.role !== "volunteer" ? (
+              <StatusStrip data={data} />
+            ) : null}
             <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
               <div className="grid gap-4" id="work">
                 {data.user.role === "volunteer" ? (
@@ -405,6 +431,68 @@ function DashboardTopbar({ data }: { data: DashboardData }) {
     .slice(0, 2)
     .toUpperCase();
 
+  if (data.user.role === "volunteer") {
+    return (
+      <header
+        className="mb-4 grid gap-4 border-b border-[#ded7c9] pb-4 xl:grid-cols-[max-content_1fr_auto] xl:items-center"
+        id="overview"
+      >
+        <Link
+          className="font-serif text-[2.35rem] leading-none tracking-[-0.055em] text-[#061e0e]"
+          href="/"
+        >
+          FoodLink
+        </Link>
+        <div className="grid gap-3 md:grid-cols-[10.5rem_13rem_minmax(16rem,1fr)_auto] md:items-end xl:justify-self-end">
+          <TopbarSelect
+            icon="team"
+            label="Role"
+            value={roleLabels[data.user.role]}
+          />
+          <TopbarSelect
+            icon="marker"
+            label="Location"
+            value={data.profile.location.city || "Jakarta Selatan"}
+          />
+          <label className="grid gap-1 text-xs font-bold text-[#5d675f]">
+            <span className="sr-only">Search</span>
+            <span className="grid min-h-11 grid-cols-[2.5rem_1fr] items-center rounded-lg border border-[#d7d0c2] bg-[#fffdf8] shadow-sm">
+              <span className="grid place-items-center text-[#526158]">
+                <AppIcon name="search" className="h-5 w-5" />
+              </span>
+              <input
+                className="h-full bg-transparent pr-3 text-sm font-bold text-[#111a14] outline-none placeholder:text-[#7b837c]"
+                placeholder="Search donations, receivers, or locations..."
+              />
+            </span>
+          </label>
+          <button
+            className="relative inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-[#d7d0c2] bg-[#fffdf8] px-4 text-sm font-black text-[#111a14] shadow-sm"
+            type="button"
+          >
+            <AppIcon name="filter" className="h-5 w-5" />
+            Filters
+            <span className="absolute -right-2 -top-2 grid h-5 min-w-5 place-items-center rounded-full bg-[#ffbd1a] px-1 text-[0.65rem] font-black">
+              2
+            </span>
+          </button>
+        </div>
+        <a
+          className="relative justify-self-start border-l border-[#ded7c9] pl-6 text-[#101812] xl:justify-self-end"
+          href="#notifications"
+          aria-label="Notifications"
+        >
+          <AppIcon name="bell" className="h-8 w-8" />
+          {unread > 0 ? (
+            <span className="absolute -right-2 -top-2 grid h-5 min-w-5 place-items-center rounded-full bg-[#ffbd1a] px-1 text-xs font-black text-[#10140d]">
+              {unread}
+            </span>
+          ) : null}
+        </a>
+      </header>
+    );
+  }
+
   return (
     <header
       className="mb-6 grid gap-4 md:grid-cols-[1fr_auto_auto] md:items-center"
@@ -459,6 +547,30 @@ function DashboardTopbar({ data }: { data: DashboardData }) {
         </div>
       </div>
     </header>
+  );
+}
+
+function TopbarSelect({
+  icon,
+  label,
+  value,
+}: {
+  icon: IconName;
+  label: string;
+  value: string;
+}) {
+  return (
+    <button
+      className="grid gap-1 justify-self-start text-left text-xs font-bold text-[#5d675f]"
+      type="button"
+    >
+      <span>{label}</span>
+      <span className="grid min-h-11 grid-cols-[1.75rem_1fr_1rem] items-center gap-2 rounded-lg border border-[#d7d0c2] bg-[#fffdf8] px-3 text-sm font-black text-[#111a14] shadow-sm">
+        <AppIcon name={icon} className="h-5 w-5 text-[#101812]" />
+        <span className="truncate">{value}</span>
+        <AppIcon name="chevron" className="h-4 w-4 text-[#101812]" />
+      </span>
+    </button>
   );
 }
 
@@ -710,6 +822,12 @@ function VolunteerDashboard({
     () => data.notifications.find((item) => item.pickupId)?.pickupId,
     [data.notifications],
   );
+  const pendingProposals = data.proposals.filter(
+    (proposal) => proposal.status === "pending",
+  ).length;
+  const availableDonations = data.donations.filter(
+    (donation) => donation.status === "available",
+  );
 
   async function handleCreateProposal() {
     if (!availableDonation || !receiver) {
@@ -723,125 +841,644 @@ function VolunteerDashboard({
   }
 
   return (
-    <>
-      <section className="grid gap-4 lg:grid-cols-2">
-        <DonationsTable
+    <div className="grid gap-3">
+      <section className="grid min-h-[41rem] gap-0 overflow-hidden rounded-xl border border-[#ded7c9] bg-[#fffdf8]/78 shadow-[0_1rem_2.8rem_rgba(49,43,24,0.08)] 2xl:grid-cols-[minmax(23rem,1.04fr)_minmax(21rem,0.96fr)_minmax(19rem,0.78fr)]">
+        <VolunteerDonationsPanel
           donations={data.donations}
-          title="Available donations"
-          compact
+          selectedDonation={availableDonation}
         />
-        <section className={panel}>
-          <p className={kicker}>Receiver directory</p>
-          <h2 className={heading}>Match food to need.</h2>
-          <div className="mt-4 grid gap-3">
-            {data.receivers.length > 0 ? (
-              data.receivers.map((item) => (
-                <article
-                  className="grid gap-1 rounded-lg border border-[#d8cfba] bg-[#f7f4e9]/75 p-4"
-                  key={item.userId}
-                >
-                  <strong className="text-[#0e1b14]">{item.displayName}</strong>
-                  <span className="font-bold text-[#34443a]">
-                    {item.entityType ?? "receiver"} / {item.location.city}
-                  </span>
-                  <small className="font-bold text-[#5a6259]">
-                    {item.operationalHours ?? "Hours on request"}
-                  </small>
-                </article>
-              ))
-            ) : (
-              <p className="font-bold text-[#34443a]">
-                No receiver profiles available.
-              </p>
-            )}
-          </div>
-        </section>
+        <VolunteerMapPanel donation={availableDonation} receiver={receiver} />
+        <VolunteerReceiversPanel
+          receivers={data.receivers}
+          selectedReceiver={receiver}
+        />
       </section>
 
-      <section
-        className={cx(
-          panel,
-          "grid gap-4 lg:grid-cols-[1fr_max-content] lg:items-center",
-        )}
-      >
-        <div>
-          <p className={kicker}>Create delivery proposal</p>
-          <h2 className={heading}>
-            {availableDonation && receiver
-              ? `${availableDonation.title} to ${receiver.displayName}`
-              : "Select available donation and receiver"}
-          </h2>
-          <p className="mt-3 max-w-2xl font-bold leading-7 text-[#34443a]">
-            Volunteers pair one available donation with one receiver. Donor and
-            receiver both accept before pickup is assigned.
-          </p>
-        </div>
-        <button
-          className={primaryButton}
-          type="button"
-          onClick={() =>
+      <section className="grid gap-3 xl:grid-cols-[minmax(0,1.35fr)_18rem]">
+        <VolunteerProposalPanel
+          donation={availableDonation}
+          receiver={receiver}
+          onCreate={() =>
             runAction(handleCreateProposal, "Delivery proposal created.")
           }
           disabled={!availableDonation || !receiver}
-        >
-          Create proposal
-        </button>
+        />
+        <VolunteerPickupPanel
+          activePickup={activePickup}
+          token={token}
+          runAction={runAction}
+        />
       </section>
 
-      <section
-        className={cx(
-          panel,
-          "grid gap-4 lg:grid-cols-[minmax(12rem,0.7fr)_1fr_max-content] lg:items-center",
-        )}
-      >
-        <div>
-          <p className={kicker}>Pickup workflow</p>
-          <h2 className={heading}>
-            {activePickup ? "Pickup assigned" : "Waiting for acceptance"}
-          </h2>
-        </div>
-        <ol className="grid gap-2 [counter-reset:steps]">
-          {["Assigned", "Picked up", "Delivered"].map((step) => (
-            <li
-              className="flex items-center gap-3 font-black text-[#34443a] before:grid before:h-7 before:w-7 before:place-items-center before:rounded-full before:border before:border-[#d8cfba] before:content-[counter(steps)] before:[counter-increment:steps] first:before:border-[#2f7a46] first:before:bg-[#2f7a46] first:before:text-white"
-              key={step}
-            >
-              {step}
-            </li>
-          ))}
-        </ol>
+      <VolunteerGlancePanel
+        availableCount={availableDonations.length}
+        pendingCount={pendingProposals}
+        pickupCount={activePickup ? 1 : 0}
+      />
+    </div>
+  );
+}
+
+function VolunteerDonationsPanel({
+  donations,
+  selectedDonation,
+}: {
+  donations: Donation[];
+  selectedDonation?: Donation;
+}) {
+  const sortedDonations = [...donations].sort((a, b) =>
+    a.status === "available" && b.status !== "available" ? -1 : 1,
+  );
+
+  return (
+    <section className="grid content-start gap-4 border-[#ded7c9] p-5 2xl:border-r">
+      <header className="flex items-center justify-between gap-3">
+        <h2 className="font-serif text-[1.35rem] leading-none tracking-[-0.045em] text-[#061e0e]">
+          Available donations
+        </h2>
+        <span className="rounded-full bg-[#dcebd5] px-3 py-1 text-xs font-black text-[#14351f]">
+          {donations.length}
+        </span>
+      </header>
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap gap-2">
-          <button
-            className={ghostButton}
-            type="button"
-            disabled={!activePickup}
-            onClick={() =>
-              activePickup
-                ? runAction(async () => {
-                    await markPickupPickedUp(token, activePickup);
-                  }, "Pickup marked picked up.")
-                : undefined
-            }
-          >
-            Mark picked up
-          </button>
-          <button
-            className={primaryButton}
-            type="button"
-            disabled={!activePickup}
-            onClick={() =>
-              activePickup
-                ? runAction(async () => {
-                    await markPickupDelivered(token, activePickup);
-                  }, "Pickup marked delivered.")
-                : undefined
-            }
-          >
-            Mark delivered
-          </button>
+          {["All", "Available", "Proposal pending"].map((item, index) => (
+            <button
+              className={cx(
+                "min-h-9 rounded-full border px-4 text-xs font-black",
+                index === 0
+                  ? "border-[#2f7a46] bg-[#3f7d48] text-white"
+                  : "border-[#d9d1c2] bg-[#fffdf8] text-[#1f2a23]",
+              )}
+              key={item}
+              type="button"
+            >
+              {item}
+            </button>
+          ))}
         </div>
-      </section>
-    </>
+        <button
+          className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-[#d9d1c2] bg-[#fffdf8] px-3 text-xs font-black"
+          type="button"
+        >
+          Nearest <AppIcon name="chevron" className="h-4 w-4" />
+        </button>
+      </div>
+      <div className="grid gap-2">
+        {sortedDonations.length > 0
+          ? sortedDonations
+              .slice(0, 5)
+              .map((donation, index) => (
+                <VolunteerDonationCard
+                  donation={donation}
+                  key={donation.id}
+                  selected={donation.id === selectedDonation?.id}
+                  index={index}
+                />
+              ))
+          : emptyCopy("No donations visible yet.")}
+      </div>
+      <a
+        className="mt-2 flex min-h-11 items-center justify-center gap-3 rounded-lg border border-[#ded7c9] bg-[#fffdf8] text-sm font-black"
+        href="#my-donations"
+      >
+        View all donations <AppIcon name="arrow" className="h-4 w-4" />
+      </a>
+    </section>
+  );
+}
+
+function VolunteerDonationCard({
+  donation,
+  selected,
+  index,
+}: {
+  donation: Donation;
+  selected: boolean;
+  index: number;
+}) {
+  const distance = `${(1.2 + index * 0.6).toFixed(1)} km`;
+
+  return (
+    <article
+      className={cx(
+        "grid grid-cols-[1.75rem_5.4rem_1fr_auto] items-center gap-3 rounded-lg border bg-[#fffdf8] p-3 transition",
+        selected
+          ? "border-[#2f7a46] bg-[#f8fbf3] shadow-[0_0.7rem_1.7rem_rgba(47,122,70,0.09)]"
+          : "border-[#e4ddcf]",
+      )}
+    >
+      <span
+        className={cx(
+          "grid h-6 w-6 place-items-center rounded-full border",
+          selected
+            ? "border-[#14733a] bg-[#14733a] text-white"
+            : "border-[#b8b8ae] bg-white",
+        )}
+        aria-hidden="true"
+      >
+        {selected ? <AppIcon name="check" className="h-4 w-4" /> : null}
+      </span>
+      <DonationThumbnail donation={donation} size="lg" />
+      <div className="min-w-0">
+        <strong className="block truncate text-sm font-black text-[#101812]">
+          {donation.title}
+        </strong>
+        <span className="mt-1 block truncate text-xs font-bold text-[#46534a]">
+          {donation.description || "Food ready for pickup"}
+        </span>
+        <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs font-bold text-[#46534a]">
+          <span className="inline-flex items-center gap-1">
+            <AppIcon name="package" className="h-3.5 w-3.5" />
+            {donation.quantity}
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <AppIcon name="clock" className="h-3.5 w-3.5" />
+            {formatTime(donation.availableUntil)}
+          </span>
+        </div>
+      </div>
+      <div className="grid justify-items-end gap-5">
+        <span className="text-xs font-bold text-[#46534a]">{distance}</span>
+        <span className={cx(badgeBase, statusClass(donation.status))}>
+          {donation.status === "proposal_pending"
+            ? "Proposal pending"
+            : donation.status.replace("_", " ")}
+        </span>
+      </div>
+    </article>
+  );
+}
+
+function VolunteerMapPanel({
+  donation,
+  receiver,
+}: {
+  donation?: Donation;
+  receiver?: Profile;
+}) {
+  return (
+    <section className="grid min-h-[41rem] grid-rows-[auto_1fr_auto] border-[#ded7c9] 2xl:border-r">
+      <header className="flex items-center justify-between p-5 pb-3">
+        <h2 className="font-serif text-[1.35rem] leading-none tracking-[-0.045em] text-[#061e0e]">
+          Live map
+        </h2>
+      </header>
+      <div className="relative mx-4 min-h-[28rem] overflow-hidden rounded-lg border border-[#e4ddcf] bg-[#eef0ea]">
+        <div className="absolute inset-0 bg-[linear-gradient(30deg,rgba(255,255,255,0.62)_12%,transparent_12%,transparent_88%,rgba(255,255,255,0.62)_88%),linear-gradient(120deg,rgba(255,255,255,0.5)_9%,transparent_9%,transparent_91%,rgba(255,255,255,0.5)_91%),linear-gradient(#d9dfd5_1px,transparent_1px),linear-gradient(90deg,#d9dfd5_1px,transparent_1px)] bg-[length:7rem_4rem,8rem_5rem,2.1rem_2.1rem,2.1rem_2.1rem] opacity-80" />
+        <div className="absolute left-[34%] top-[15%] h-[18rem] w-[9rem] rotate-[-18deg] rounded-[60%] border-r-[6px] border-dashed border-[#0b4c25]" />
+        <span className="absolute left-[34%] top-[16%] grid rounded-lg border border-[#d9d1c2] bg-[#fffdf8] p-3 shadow-[0_0.8rem_1.8rem_rgba(49,43,24,0.12)]">
+          <span className="flex items-center gap-3">
+            <span className="grid h-8 w-8 place-items-center rounded-full bg-[#2f7a46] text-white">
+              <AppIcon name="package" className="h-4 w-4" />
+            </span>
+            <span className="grid text-xs font-bold">
+              <strong className="text-sm font-black text-[#101812]">
+                {donation?.description?.split(" ")[0] ?? "Warteg"} Berkah
+              </strong>
+              Donor
+            </span>
+          </span>
+        </span>
+        <span className="absolute left-[35%] top-[43%] grid h-5 w-5 place-items-center rounded-full border-4 border-white bg-[#287bd5] shadow-md" />
+        <span className="absolute left-[55%] top-[66%] grid rounded-lg border border-[#d9d1c2] bg-[#fffdf8] p-3 shadow-[0_0.8rem_1.8rem_rgba(49,43,24,0.12)]">
+          <span className="flex items-center gap-3">
+            <span className="grid h-10 w-10 place-items-center rounded-full bg-[#ffb91f] text-white">
+              <AppIcon name="marker" className="h-5 w-5" />
+            </span>
+            <span className="grid text-xs font-bold">
+              <strong className="text-sm font-black text-[#101812]">
+                {receiver?.displayName ?? "Panti Harapan"}
+              </strong>
+              Receiver
+            </span>
+          </span>
+        </span>
+        <div className="absolute right-4 top-4 grid overflow-hidden rounded-lg border border-[#d9d1c2] bg-[#fffdf8] shadow-sm">
+          {["+", "-", "⌖"].map((item) => (
+            <button
+              className="grid h-11 w-11 place-items-center border-b border-[#d9d1c2] text-xl font-bold last:border-b-0"
+              key={item}
+              type="button"
+            >
+              {item}
+            </button>
+          ))}
+        </div>
+        {donation ? (
+          <article className="absolute inset-x-4 bottom-4 grid grid-cols-[4.8rem_1fr_auto] items-center gap-3 rounded-lg border border-[#d9d1c2] bg-[#fffdf8] p-3 shadow-[0_0.8rem_1.8rem_rgba(49,43,24,0.12)]">
+            <DonationThumbnail donation={donation} size="lg" />
+            <div className="min-w-0">
+              <strong className="block truncate text-sm font-black">
+                {donation.title}
+              </strong>
+              <span className="block truncate text-xs font-bold text-[#46534a]">
+                {donation.description || "Donor"}
+              </span>
+              <div className="mt-2 flex flex-wrap gap-3 text-xs font-bold text-[#46534a]">
+                <span className="inline-flex items-center gap-1">
+                  <AppIcon name="package" className="h-3.5 w-3.5" />
+                  {donation.quantity}
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <AppIcon name="clock" className="h-3.5 w-3.5" />
+                  {formatTime(donation.availableUntil)}
+                </span>
+              </div>
+            </div>
+            <span className="rounded-lg bg-[#dcebd5] px-3 py-2 text-xs font-black text-[#14351f]">
+              1.2 km
+            </span>
+          </article>
+        ) : null}
+      </div>
+      <footer className="mx-4 mb-4 grid min-h-16 grid-cols-3 items-center rounded-lg border border-[#e4ddcf] bg-[#fffdf8] px-7 text-xs font-bold">
+        {[
+          ["#2f7a46", "Donor"],
+          ["#ffb91f", "Receiver"],
+          ["#287bd5", "You"],
+        ].map(([color, label]) => (
+          <span className="inline-flex items-center gap-3" key={label}>
+            <span
+              className="h-3 w-3 rounded-full"
+              style={{ backgroundColor: color }}
+            />
+            {label}
+          </span>
+        ))}
+      </footer>
+    </section>
+  );
+}
+
+function VolunteerReceiversPanel({
+  receivers,
+  selectedReceiver,
+}: {
+  receivers: Profile[];
+  selectedReceiver?: Profile;
+}) {
+  return (
+    <section className="grid content-start gap-4 p-5">
+      <header className="flex items-center justify-between gap-3">
+        <h2 className="font-serif text-[1.35rem] leading-none tracking-[-0.045em] text-[#061e0e]">
+          Receiver directory
+        </h2>
+        <span className="rounded-full bg-[#dcebd5] px-3 py-1 text-xs font-black text-[#14351f]">
+          {receivers.length}
+        </span>
+      </header>
+      <label className="grid min-h-11 grid-cols-[2.5rem_1fr] items-center rounded-lg border border-[#d7d0c2] bg-[#fffdf8] shadow-sm">
+        <span className="grid place-items-center text-[#526158]">
+          <AppIcon name="search" className="h-5 w-5" />
+        </span>
+        <input
+          className="h-full bg-transparent pr-3 text-sm font-bold outline-none placeholder:text-[#7b837c]"
+          placeholder="Search receivers..."
+        />
+      </label>
+      <div className="grid gap-2">
+        {receivers.length > 0
+          ? receivers
+              .slice(0, 4)
+              .map((receiver, index) => (
+                <VolunteerReceiverCard
+                  key={receiver.userId}
+                  receiver={receiver}
+                  selected={receiver.userId === selectedReceiver?.userId}
+                  index={index}
+                />
+              ))
+          : emptyCopy("No receiver profiles available.")}
+      </div>
+      <a
+        className="mt-1 flex min-h-11 items-center justify-center gap-3 rounded-lg border border-[#ded7c9] bg-[#fffdf8] text-sm font-black"
+        href="#work"
+      >
+        View all receivers <AppIcon name="arrow" className="h-4 w-4" />
+      </a>
+    </section>
+  );
+}
+
+function VolunteerReceiverCard({
+  receiver,
+  selected,
+  index,
+}: {
+  receiver: Profile;
+  selected: boolean;
+  index: number;
+}) {
+  const accent = ["#2f7a46", "#e18a18", "#2f7a46", "#d8841a"][index % 4];
+
+  return (
+    <article
+      className={cx(
+        "grid grid-cols-[1.5rem_4.2rem_1fr] gap-3 rounded-lg border bg-[#fffdf8] p-4",
+        selected ? "border-[#2f7a46] bg-[#f8fbf3]" : "border-[#e4ddcf]",
+      )}
+    >
+      <span
+        className={cx(
+          "mt-7 grid h-6 w-6 place-items-center rounded-full border",
+          selected
+            ? "border-[#14733a] bg-[#14733a] text-white"
+            : "border-[#b8b8ae] bg-white",
+        )}
+        aria-hidden="true"
+      >
+        {selected ? <AppIcon name="check" className="h-4 w-4" /> : null}
+      </span>
+      <span
+        className="grid h-14 w-14 place-items-center rounded-full bg-[#e5f1df]"
+        style={{ color: accent }}
+      >
+        <AppIcon
+          name={index === 3 ? "pickup" : index === 2 ? "leaf" : "team"}
+          className="h-7 w-7"
+        />
+      </span>
+      <div className="min-w-0">
+        <strong className="block truncate text-sm font-black text-[#101812]">
+          {receiver.displayName}
+        </strong>
+        <span className="mt-1 block text-xs font-bold capitalize text-[#46534a]">
+          {receiver.entityType ?? "Receiver"}
+        </span>
+        <div className="mt-2 flex flex-wrap gap-3 text-xs font-bold text-[#46534a]">
+          <span>{receiver.contactMethod}</span>
+          <span>•</span>
+          <span>{(1.6 + index * 0.5).toFixed(1)} km</span>
+        </div>
+        <p className="mt-3 rounded-md bg-[#e7f0df] p-2 text-xs font-bold leading-5 text-[#1f2a23]">
+          Needs: {receiver.notes ?? "Nasi box, lauk, sayur, buah"}
+        </p>
+      </div>
+    </article>
+  );
+}
+
+function VolunteerProposalPanel({
+  donation,
+  receiver,
+  disabled,
+  onCreate,
+}: {
+  donation?: Donation;
+  receiver?: Profile;
+  disabled: boolean;
+  onCreate: () => void;
+}) {
+  return (
+    <section
+      className={cx(
+        panel,
+        "grid gap-4 p-5 lg:grid-cols-[minmax(0,1fr)_2.5rem_minmax(0,1fr)]",
+      )}
+    >
+      <header className="lg:col-span-3">
+        <h2 className="font-serif text-[1.35rem] leading-none tracking-[-0.045em] text-[#061e0e]">
+          Create delivery proposal
+        </h2>
+      </header>
+      <SelectedDonationSummary donation={donation} />
+      <div className="grid place-items-center text-[#061e0e]">
+        <AppIcon name="arrow" className="h-7 w-7" />
+      </div>
+      <SelectedReceiverSummary receiver={receiver} />
+      <footer className="grid gap-3 rounded-lg border border-[#e4ddcf] bg-[#fbfaf3] p-3 lg:col-span-3 xl:grid-cols-[repeat(4,1fr)_max-content] xl:items-center">
+        <MiniMetric icon="navigation" label="Est. distance" value="4.1 km" />
+        <MiniMetric icon="clock" label="Est. time" value="18 min" />
+        <MiniMetric icon="profile" label="Volunteer" value="Budi Relawan" />
+        <MiniMetric icon="message" label="Contact" value="WhatsApp" />
+        <button
+          className={primaryButton}
+          type="button"
+          onClick={onCreate}
+          disabled={disabled}
+        >
+          Create proposal <AppIcon name="arrow" className="h-5 w-5" />
+        </button>
+      </footer>
+    </section>
+  );
+}
+
+function SelectedDonationSummary({ donation }: { donation?: Donation }) {
+  return (
+    <article className="grid grid-cols-[5rem_1fr] items-center gap-3">
+      <DonationThumbnail donation={donation} size="lg" />
+      <div className="min-w-0">
+        <span className="text-xs font-bold text-[#46534a]">
+          Selected donation
+        </span>
+        <strong className="mt-2 block truncate text-sm font-black">
+          {donation?.title ?? "Select available donation"}
+        </strong>
+        <div className="mt-2 flex flex-wrap gap-3 text-xs font-bold text-[#46534a]">
+          <span className="inline-flex items-center gap-1">
+            <AppIcon name="package" className="h-3.5 w-3.5" />
+            {donation?.quantity ?? "No quantity"}
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <AppIcon name="clock" className="h-3.5 w-3.5" />
+            {donation ? formatTime(donation.availableUntil) : "No time"}
+          </span>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function SelectedReceiverSummary({ receiver }: { receiver?: Profile }) {
+  return (
+    <article className="grid grid-cols-[4rem_1fr] items-center gap-3">
+      <span className="grid h-14 w-14 place-items-center rounded-full bg-[#e5f1df] text-[#2f7a46]">
+        <AppIcon name="team" className="h-7 w-7" />
+      </span>
+      <div className="min-w-0">
+        <span className="text-xs font-bold text-[#46534a]">
+          Selected receiver
+        </span>
+        <strong className="mt-2 block truncate text-sm font-black">
+          {receiver?.displayName ?? "Select receiver"}
+        </strong>
+        <div className="mt-2 flex flex-wrap gap-3 text-xs font-bold text-[#46534a]">
+          <span>{receiver?.entityType ?? "Receiver"}</span>
+          <span>{receiver?.contactMethod ?? "Contact"}</span>
+          <span>1.6 km</span>
+        </div>
+        <p className="mt-3 rounded-md bg-[#e7f0df] p-2 text-xs font-bold leading-5 text-[#1f2a23]">
+          Needs: {receiver?.notes ?? "Nasi box, lauk, sayur, buah"}
+        </p>
+      </div>
+    </article>
+  );
+}
+
+function MiniMetric({
+  icon,
+  label,
+  value,
+}: {
+  icon: IconName;
+  label: string;
+  value: string;
+}) {
+  return (
+    <span className="inline-flex items-center gap-3 text-xs font-bold text-[#46534a]">
+      <AppIcon name={icon} className="h-4 w-4 text-[#0b5b2b]" />
+      <span className="grid">
+        <strong className="text-[#101812]">{label}</strong>
+        {value}
+      </span>
+    </span>
+  );
+}
+
+function VolunteerPickupPanel({
+  activePickup,
+  token,
+  runAction,
+}: {
+  activePickup?: string;
+  token: string;
+  runAction: (callback: () => Promise<void>, success: string) => Promise<void>;
+}) {
+  return (
+    <section className={cx(panel, "grid gap-4 p-5")}>
+      <header className="flex items-center justify-between gap-3">
+        <h2 className="font-serif text-[1.35rem] leading-none tracking-[-0.045em] text-[#061e0e]">
+          Active pickup
+        </h2>
+        <span className="rounded-full bg-[#fee6bf] px-3 py-1 text-xs font-black text-[#9d5b00]">
+          Assigned
+        </span>
+      </header>
+      <div>
+        <strong className="block text-lg font-black">
+          {activePickup ? `Pickup #${activePickup.slice(0, 6)}` : "No pickup"}
+        </strong>
+        <span className="text-xs font-bold text-[#46534a]">
+          {activePickup ? "Assigned today" : "Waiting for accepted proposal"}
+        </span>
+      </div>
+      <ol className="grid gap-3">
+        {["Assigned", "Picked up", "Delivered"].map((step, index) => (
+          <li className="grid grid-cols-[1.75rem_1fr_auto] gap-3" key={step}>
+            <span
+              className={cx(
+                "grid h-7 w-7 place-items-center rounded-full text-xs font-black",
+                index === 0
+                  ? "bg-[#14733a] text-white"
+                  : "bg-[#eeece3] text-[#46534a]",
+              )}
+            >
+              {index + 1}
+            </span>
+            <span className="grid text-xs font-bold text-[#46534a]">
+              <strong className="text-sm font-black text-[#101812]">
+                {step}
+              </strong>
+              {index === 0 ? "You accepted task" : "Not started"}
+            </span>
+            {index === 0 ? (
+              <span className="text-xs font-bold text-[#46534a]">10:24</span>
+            ) : null}
+          </li>
+        ))}
+      </ol>
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          className={ghostButton}
+          type="button"
+          disabled={!activePickup}
+          onClick={() =>
+            activePickup
+              ? runAction(async () => {
+                  await markPickupPickedUp(token, activePickup);
+                }, "Pickup marked picked up.")
+              : undefined
+          }
+        >
+          Mark picked up
+        </button>
+        <button
+          className={primaryButton}
+          type="button"
+          disabled={!activePickup}
+          onClick={() =>
+            activePickup
+              ? runAction(async () => {
+                  await markPickupDelivered(token, activePickup);
+                }, "Pickup marked delivered.")
+              : undefined
+          }
+        >
+          Mark delivered
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function VolunteerGlancePanel({
+  availableCount,
+  pendingCount,
+  pickupCount,
+}: {
+  availableCount: number;
+  pendingCount: number;
+  pickupCount: number;
+}) {
+  return (
+    <section className={cx(panel, "grid gap-3 p-5")}>
+      <h2 className="font-serif text-[1.35rem] leading-none tracking-[-0.045em] text-[#061e0e]">
+        Today at a glance
+      </h2>
+      <div className="grid gap-2 sm:grid-cols-3">
+        <GlanceStat
+          icon="package"
+          label="Available donations"
+          value={availableCount}
+        />
+        <GlanceStat
+          icon="team"
+          label="My proposals pending"
+          value={pendingCount}
+        />
+        <GlanceStat
+          icon="pickup"
+          label="Pickups assigned"
+          value={pickupCount}
+        />
+      </div>
+    </section>
+  );
+}
+
+function GlanceStat({
+  icon,
+  label,
+  value,
+}: {
+  icon: IconName;
+  label: string;
+  value: number;
+}) {
+  return (
+    <article className="grid grid-cols-[2.6rem_1fr] items-center gap-3 rounded-lg border border-[#e4ddcf] bg-[#fffdf8] p-3">
+      <span className="grid h-10 w-10 place-items-center rounded-full bg-[#e5f1df] text-[#2f7a46]">
+        <AppIcon name={icon} className="h-5 w-5" />
+      </span>
+      <span className="grid">
+        <strong className="text-2xl font-black leading-none">{value}</strong>
+        <span className="text-xs font-bold leading-4 text-[#46534a]">
+          {label}
+        </span>
+      </span>
+    </article>
   );
 }
 
@@ -1331,6 +1968,13 @@ function formatDate(value: string) {
   return new Intl.DateTimeFormat("en", {
     month: "short",
     day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
+}
+
+function formatTime(value: string) {
+  return new Intl.DateTimeFormat("en", {
     hour: "2-digit",
     minute: "2-digit",
   }).format(new Date(value));
