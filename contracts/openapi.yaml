@@ -353,7 +353,7 @@ paths:
     post:
       tags: [Pickups]
       operationId: markPickupDelivered
-      summary: Mark pickup as delivered. Assigned volunteer only.
+      summary: Mark pickup as delivered. Assigned volunteer or receiver only.
       parameters:
         - $ref: "#/components/parameters/Id"
       requestBody:
