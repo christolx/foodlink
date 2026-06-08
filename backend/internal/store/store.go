@@ -606,8 +606,53 @@ func (s *Store) MarkPickedUp(pickupID, volunteerID string, occurredAt time.Time)
 	return s.markPickup(pickupID, volunteerID, string(api.PickupStatusAssigned), string(api.PickupStatusPickedUp), string(api.DonationStatusPickedUp), "picked_up_at", occurredAt)
 }
 
-func (s *Store) MarkDelivered(pickupID, volunteerID string, occurredAt time.Time) (models.Pickup, error) {
-	return s.markPickup(pickupID, volunteerID, string(api.PickupStatusPickedUp), string(api.PickupStatusDelivered), string(api.DonationStatusDelivered), "delivered_at", occurredAt)
+func (s *Store) MarkDelivered(pickupID, userID, userRole string, occurredAt time.Time) (models.Pickup, error) {
+	var pickup models.Pickup
+	err := s.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.First(&pickup, "id = ?", pickupID).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return ErrNotFound
+			}
+			return err
+		}
+		if userRole == string(api.Volunteer) {
+			if pickup.VolunteerID != userID {
+				return ErrForbidden("not_assigned_volunteer")
+			}
+		} else if userRole == string(api.Receiver) {
+			if pickup.ReceiverID != userID {
+				return ErrForbidden("not_assigned_receiver")
+			}
+		} else {
+			return ErrForbidden("invalid_role")
+		}
+		if pickup.Status != string(api.PickupStatusPickedUp) {
+			return ErrConflict("invalid_pickup_state")
+		}
+		now := time.Now().UTC()
+		updates := map[string]any{
+			"status":       string(api.PickupStatusDelivered),
+			"updated_at":   now,
+			"delivered_at": occurredAt,
+		}
+		if err := tx.Model(&pickup).Updates(updates).Error; err != nil {
+			return err
+		}
+		pickup.Status = string(api.PickupStatusDelivered)
+		pickup.UpdatedAt = now
+		pickup.DeliveredAt = &occurredAt
+		if err := tx.Model(&models.Donation{}).Where("id = ?", pickup.DonationID).Updates(map[string]any{
+			"status":     string(api.DonationStatusDelivered),
+			"updated_at": now,
+		}).Error; err != nil {
+			return err
+		}
+		if userRole == string(api.Volunteer) {
+			return createNotification(tx, pickup.ReceiverID, string(api.NotificationTypePickupCompleted), "Pickup completed", "Your delivery was completed.", &pickup.DonationID, &pickup.ProposalID, &pickup.ID)
+		}
+		return createNotification(tx, pickup.VolunteerID, string(api.NotificationTypePickupCompleted), "Pickup completed", "The receiver confirmed your delivery.", &pickup.DonationID, &pickup.ProposalID, &pickup.ID)
+	})
+	return pickup, err
 }
 
 func (s *Store) markPickup(pickupID, volunteerID, from, to, donationStatus, timeField string, occurredAt time.Time) (models.Pickup, error) {
