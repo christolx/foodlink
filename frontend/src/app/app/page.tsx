@@ -1,5 +1,23 @@
 "use client";
 
+import {
+  Bell,
+  Box,
+  ChartColumn,
+  Check,
+  CircleUserRound,
+  LayoutDashboard,
+  Leaf,
+  type LucideIcon,
+  MapIcon,
+  MessageSquare,
+  Package,
+  Settings,
+  ShoppingBag,
+  Truck,
+  Users,
+  X,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -60,18 +78,20 @@ const roleLabels = {
 const leafMark =
   "inline-block h-6 w-6 rotate-[-28deg] rounded-[100%_0_100%_0] border-[3px] border-current text-[#ffb91f]";
 const panel =
-  "rounded-xl border border-[#d8cfba] bg-[#fffdf5]/80 p-5 shadow-[0_1.4rem_3rem_rgba(61,55,36,0.10)]";
+  "rounded-[0.85rem] border border-[#ded7c9] bg-[#fffdf7]/82 shadow-[0_1rem_2.5rem_rgba(50,43,28,0.08)]";
 const kicker =
-  "mb-3 text-xs font-black uppercase tracking-[0.14em] text-[#2f7a46]";
-const heading = "font-serif text-3xl font-normal leading-none text-[#073515]";
+  "text-[0.78rem] font-black uppercase tracking-[0.12em] text-[#064c25]";
+const heading =
+  "font-serif text-[1.55rem] font-normal leading-none tracking-[-0.035em] text-[#061e0e]";
 const input =
-  "min-h-11 w-full rounded-lg border border-[#d8cfba] bg-white px-4 py-3 font-bold text-[#0e1b14] outline-none transition focus:border-[#2f7a46] focus:ring-2 focus:ring-[#2f7a46]/20";
+  "min-h-10 w-full rounded-md border border-[#cfc8ba] bg-[#fffdf8] px-3 py-2 text-sm font-bold text-[#111a14] outline-none transition placeholder:text-[#7a817b] focus:border-[#116b35] focus:ring-2 focus:ring-[#116b35]/15";
 const primaryButton =
-  "inline-flex min-h-12 items-center justify-center gap-3 rounded-lg bg-gradient-to-b from-[#ffca39] to-[#f5a623] px-5 font-black text-[#171206] shadow-[0_1rem_2rem_rgba(116,72,3,0.18)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:translate-y-0";
+  "inline-flex min-h-12 items-center justify-center gap-3 rounded-md bg-[#ffbd1a] px-5 font-black text-[#10140d] shadow-[0_0.75rem_1.5rem_rgba(167,111,2,0.16)] transition hover:-translate-y-0.5 hover:bg-[#f4b30e] disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:translate-y-0";
 const ghostButton =
-  "inline-flex min-h-12 items-center justify-center rounded-lg border border-[#d8cfba] bg-[#fffdf5]/70 px-5 font-black text-[#14351f] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:translate-y-0";
+  "inline-flex min-h-10 items-center justify-center rounded-md border border-[#9eb69f] bg-[#fffdf8] px-4 text-sm font-black text-[#064c25] transition hover:-translate-y-0.5 hover:bg-[#f6fbf3] disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:translate-y-0";
 const badgeBase =
-  "inline-flex min-h-7 items-center rounded-full px-3 text-xs font-black";
+  "inline-flex min-h-6 items-center rounded-md px-2.5 text-xs font-black";
+const defaultDonationImage = "/landing/cards/donate-card.webp";
 const cloudinaryCloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
 const cloudinaryUploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
 const cloudinaryUploadEnabled =
@@ -105,6 +125,53 @@ function statusClass(status: Donation["status"] | DeliveryProposal["status"]) {
 
 function emptyCopy(value: string) {
   return <p className="font-bold text-[#34443a]">{value}</p>;
+}
+
+type IconName =
+  | "bag"
+  | "bell"
+  | "box"
+  | "chart"
+  | "check"
+  | "close"
+  | "dashboard"
+  | "leaf"
+  | "map"
+  | "message"
+  | "package"
+  | "pickup"
+  | "profile"
+  | "settings"
+  | "team";
+
+const icons: Record<IconName, LucideIcon> = {
+  bag: ShoppingBag,
+  bell: Bell,
+  box: Box,
+  chart: ChartColumn,
+  check: Check,
+  close: X,
+  dashboard: LayoutDashboard,
+  leaf: Leaf,
+  map: MapIcon,
+  message: MessageSquare,
+  package: Package,
+  pickup: Truck,
+  profile: CircleUserRound,
+  settings: Settings,
+  team: Users,
+};
+
+function AppIcon({
+  name,
+  className = "h-5 w-5",
+}: {
+  name: IconName;
+  className?: string;
+}) {
+  const Icon = icons[name];
+
+  return <Icon className={className} strokeWidth={2} aria-hidden="true" />;
 }
 
 function uploadResultInfo(
@@ -214,62 +281,19 @@ export default function AppPage() {
   }
 
   return (
-    <main className="grid min-h-screen bg-[radial-gradient(circle_at_12%_18%,rgba(199,224,189,0.58),transparent_22rem),radial-gradient(circle_at_88%_82%,rgba(255,200,77,0.20),transparent_18rem),#f7f4e9] text-[#0e1b14] md:grid-cols-[minmax(14rem,17rem)_minmax(0,1fr)]">
-      <aside
-        className="sticky top-0 grid min-h-screen content-start gap-8 bg-[radial-gradient(circle_at_10%_90%,rgba(245,166,35,0.18),transparent_12rem),linear-gradient(180deg,#073515,#0b2214)] p-5 text-[#f7f4e9] max-md:static max-md:min-h-0"
-        aria-label="Dashboard navigation"
-      >
-        <Link
-          className="inline-flex items-center gap-3 font-serif text-3xl"
-          href="/"
-        >
-          <span className={leafMark} aria-hidden="true" />
-          FoodLink
-        </Link>
-        <nav className="grid gap-2 max-md:grid-cols-3">
-          {["Overview", "Work queue", "Notifications"].map((item) => (
-            <a
-              className="flex min-h-11 items-center rounded-lg bg-white/10 px-4 font-black"
-              href={`#${item === "Overview" ? "overview" : item === "Work queue" ? "work" : "notifications"}`}
-              key={item}
-            >
-              {item}
-            </a>
-          ))}
-        </nav>
-        <button
-          className="mt-[clamp(4rem,32vh,22rem)] flex min-h-11 items-center rounded-lg border border-white/20 px-4 font-black max-md:mt-0"
-          type="button"
-          onClick={signOut}
-        >
-          Sign out
-        </button>
-      </aside>
+    <main className="grid min-h-screen bg-[#f8f6ef] text-[#101812] lg:grid-cols-[13.75rem_minmax(0,1fr)]">
+      <DashboardSidebar signOut={signOut} />
 
       <section
-        className="mx-auto w-[min(100%,1500px)] p-4 md:p-8"
+        className="mx-auto w-full max-w-[116rem] px-5 py-7 lg:px-8"
         aria-labelledby="dashboard-title"
       >
-        <header className="mb-5 flex items-center justify-between gap-4 max-md:grid">
-          <div>
-            <p className={kicker}>{roleLabels[data.user.role]} dashboard</p>
-            <h1
-              id="dashboard-title"
-              className="font-serif text-[clamp(2.4rem,5vw,4.6rem)] leading-none tracking-[-0.04em] text-[#073515]"
-            >
-              {data.profile.displayName}
-            </h1>
-          </div>
-          <Link className={ghostButton} href="/demo">
-            Switch role
-          </Link>
-        </header>
+        <DashboardTopbar data={data} />
 
-        <StatusStrip data={data} />
         {action ? (
           <p
             className={cx(
-              "mb-4 rounded-lg border p-4 font-black",
+              "mb-4 rounded-md border px-4 py-3 text-sm font-black",
               action.tone === "success"
                 ? "border-[#93c7a2] bg-[#e8f1e6] text-[#14351f]"
                 : "border-[#f0a59b] bg-[#fff0eb] text-[#80251d]",
@@ -279,34 +303,162 @@ export default function AppPage() {
           </p>
         ) : null}
 
-        <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(18rem,22rem)]">
-          <div className="grid gap-4" id="work">
-            {data.user.role === "donor" ? (
-              <DonorDashboard data={data} token={token} runAction={runAction} />
-            ) : null}
-            {data.user.role === "volunteer" ? (
-              <VolunteerDashboard
-                data={data}
+        {data.user.role === "donor" ? (
+          <DonorDashboard data={data} token={token} runAction={runAction} />
+        ) : null}
+        {data.user.role !== "donor" ? (
+          <>
+            <StatusStrip data={data} />
+            <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
+              <div className="grid gap-4" id="work">
+                {data.user.role === "volunteer" ? (
+                  <VolunteerDashboard
+                    data={data}
+                    token={token}
+                    runAction={runAction}
+                  />
+                ) : null}
+                {data.user.role === "receiver" ? (
+                  <ReceiverDashboard
+                    data={data}
+                    token={token}
+                    runAction={runAction}
+                  />
+                ) : null}
+              </div>
+              <NotificationsPanel
+                notifications={data.notifications}
                 token={token}
                 runAction={runAction}
               />
-            ) : null}
-            {data.user.role === "receiver" ? (
-              <ReceiverDashboard
-                data={data}
-                token={token}
-                runAction={runAction}
-              />
-            ) : null}
-          </div>
-          <NotificationsPanel
-            notifications={data.notifications}
-            token={token}
-            runAction={runAction}
-          />
-        </div>
+            </div>
+          </>
+        ) : null}
       </section>
     </main>
+  );
+}
+
+function DashboardSidebar({ signOut }: { signOut: () => void }) {
+  const navItems: Array<{ label: string; icon: IconName; href: string }> = [
+    { label: "Dashboard", icon: "dashboard", href: "#dashboard-title" },
+    { label: "My donations", icon: "bag", href: "#my-donations" },
+    { label: "Proposals", icon: "box", href: "#proposal-queue" },
+    { label: "Pickups", icon: "pickup", href: "#work" },
+    { label: "Messages", icon: "message", href: "#notifications" },
+    { label: "Reports", icon: "chart", href: "#my-donations" },
+    { label: "Profile", icon: "profile", href: "#dashboard-title" },
+    { label: "Settings", icon: "settings", href: "#dashboard-title" },
+  ];
+
+  return (
+    <aside
+      className="sticky top-0 grid min-h-screen grid-rows-[auto_1fr_auto_auto] gap-8 bg-[radial-gradient(circle_at_70%_92%,rgba(30,112,48,0.32),transparent_12rem),linear-gradient(180deg,#063514_0%,#052b12_52%,#031b0c_100%)] px-4 py-9 text-[#f8f5ea] max-lg:static max-lg:min-h-0"
+      aria-label="Dashboard navigation"
+    >
+      <Link className="mx-auto text-[#ffbf1c]" href="/" aria-label="FoodLink">
+        <AppIcon name="leaf" className="h-14 w-14" />
+      </Link>
+      <nav className="grid content-start gap-3">
+        {navItems.map((item, index) => (
+          <a
+            className={cx(
+              "flex min-h-12 items-center gap-4 rounded-lg px-5 text-sm font-black transition hover:bg-white/10",
+              index === 0 &&
+                "bg-[#116b35] shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]",
+            )}
+            href={item.href}
+            key={item.label}
+          >
+            <AppIcon name={item.icon} className="h-5 w-5 shrink-0" />
+            {item.label}
+          </a>
+        ))}
+      </nav>
+      <div className="rounded-lg border border-white/10 bg-[#0b4c25]/45 p-5">
+        <AppIcon name="leaf" className="mb-6 h-9 w-9 text-[#1ea35a]" />
+        <strong className="block text-sm font-black leading-5">
+          Every meal makes a difference
+        </strong>
+        <p className="mt-4 text-xs font-bold leading-5 text-[#dfe8dc]">
+          Thank you for feeding our community.
+        </p>
+      </div>
+      <button
+        className="flex min-h-11 items-center gap-4 rounded-lg px-5 text-sm font-black transition hover:bg-white/10"
+        type="button"
+        onClick={signOut}
+      >
+        <AppIcon name="pickup" className="h-5 w-5 rotate-180" />
+        Log out
+      </button>
+    </aside>
+  );
+}
+
+function DashboardTopbar({ data }: { data: DashboardData }) {
+  const unread = data.notifications.filter((item) => !item.read).length;
+  const initials = data.profile.displayName
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+  return (
+    <header
+      className="mb-6 grid gap-4 md:grid-cols-[1fr_auto_auto] md:items-center"
+      id="overview"
+    >
+      <Link
+        className="font-serif text-[2.35rem] leading-none tracking-[-0.055em] text-[#061e0e]"
+        href="/"
+      >
+        FoodLink
+      </Link>
+      <Link
+        className="grid min-w-36 gap-1 justify-self-start rounded-md border border-[#d2cbbd] bg-[#fffdf8] px-3 py-1.5 text-xs font-bold shadow-sm"
+        href="/demo"
+      >
+        <span className="text-[#111a14]">Role</span>
+        <span className="flex items-center gap-2 text-sm font-black">
+          <span className="grid h-5 w-5 place-items-center rounded-full border border-[#0c7438] bg-[#e7f1e5]">
+            <span className="h-2.5 w-2.5 rounded-full bg-[#0c7438]" />
+          </span>
+          {roleLabels[data.user.role]}
+          <span className="ml-auto text-lg leading-none">⌄</span>
+        </span>
+      </Link>
+      <div className="flex items-center gap-6 justify-self-start md:justify-self-end">
+        <a
+          className="relative text-[#101812]"
+          href="#notifications"
+          aria-label="Notifications"
+        >
+          <AppIcon name="bell" className="h-8 w-8" />
+          {unread > 0 ? (
+            <span className="absolute -right-2 -top-2 grid h-5 min-w-5 place-items-center rounded-full bg-[#ffbd1a] px-1 text-xs font-black text-[#10140d]">
+              {unread}
+            </span>
+          ) : null}
+        </a>
+        <span className="h-10 w-px bg-[#d2cbbd]" aria-hidden="true" />
+        <div className="flex items-center gap-4">
+          <span className="grid h-12 w-12 place-items-center rounded-full bg-[#d9d8cf] font-black">
+            {initials}
+          </span>
+          <span className="grid">
+            <strong className="font-black leading-5">
+              {data.profile.displayName}
+            </strong>
+            <span className="text-sm font-bold text-[#46534a]">
+              {roleLabels[data.user.role]}
+            </span>
+          </span>
+          <span className="text-xl leading-none">⌄</span>
+        </div>
+      </div>
+    </header>
   );
 }
 
@@ -315,24 +467,24 @@ function StatusStrip({ data }: { data: DashboardData }) {
 
   return (
     <section
-      className="mb-4 grid gap-3 md:grid-cols-3"
+      className="mb-5 grid gap-3 md:grid-cols-3"
       id="overview"
       aria-label="Dashboard stats"
     >
-      <article className="rounded-xl border border-[#d8cfba] bg-gradient-to-b from-[#f7f4e9] to-[#eee7d7] p-5">
-        <strong className="block font-serif text-5xl font-normal leading-none text-[#073515]">
+      <article className="rounded-lg border border-[#d8cfba]/85 bg-[#fffdf5]/62 p-5 shadow-[0_0.8rem_2.2rem_rgba(49,43,24,0.06)]">
+        <strong className="block font-serif text-5xl font-normal leading-none tracking-[-0.05em] text-[#073515]">
           {data.donations.length}
         </strong>
         <span className="font-black text-[#34443a]">Donations visible</span>
       </article>
-      <article className="rounded-xl border border-[#d8cfba] bg-gradient-to-b from-[#f7f4e9] to-[#eee7d7] p-5">
-        <strong className="block font-serif text-5xl font-normal leading-none text-[#073515]">
+      <article className="rounded-lg border border-[#d8cfba]/85 bg-[#fffdf5]/62 p-5 shadow-[0_0.8rem_2.2rem_rgba(49,43,24,0.06)]">
+        <strong className="block font-serif text-5xl font-normal leading-none tracking-[-0.05em] text-[#073515]">
           {data.proposals.length}
         </strong>
         <span className="font-black text-[#34443a]">Delivery proposals</span>
       </article>
-      <article className="rounded-xl border border-[#d8cfba] bg-gradient-to-b from-[#f7f4e9] to-[#eee7d7] p-5">
-        <strong className="block font-serif text-5xl font-normal leading-none text-[#073515]">
+      <article className="rounded-lg border border-[#d8cfba]/85 bg-[#fffdf5]/62 p-5 shadow-[0_0.8rem_2.2rem_rgba(49,43,24,0.06)]">
+        <strong className="block font-serif text-5xl font-normal leading-none tracking-[-0.05em] text-[#073515]">
           {unread}
         </strong>
         <span className="font-black text-[#34443a]">Unread notifications</span>
@@ -918,7 +1070,7 @@ function DonationThumbnail({
       aria-hidden="true"
       className={cx(
         boxClass,
-        "grid shrink-0 place-items-center bg-[#e8f1e6] text-[#2f7a46]",
+        "grid shrink-0 place-items-center bg-[#e8f1e6] text-[#2f7a46] shadow-[inset_0_0_0_1px_rgba(47,122,70,0.12)]",
       )}
     >
       <span className={cx(leafMark, "h-5 w-5 border-2")} />
