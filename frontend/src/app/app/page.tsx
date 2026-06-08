@@ -1951,6 +1951,19 @@ function ReceiverProposalCard({
   const volunteerName =
     proposal.volunteerProfile?.displayName ??
     (index % 2 === 0 ? "Siti Nur A." : "Budi Santoso");
+  const volunteerContactValue =
+    proposal.volunteerProfile?.contactValue ?? "+62 812-3456-7890";
+  const volunteerContactMethodLabel =
+    proposal.volunteerProfile?.contactMethod === "whatsapp"
+      ? "WhatsApp"
+      : proposal.volunteerProfile?.contactMethod === "phone"
+        ? "Phone"
+        : proposal.volunteerProfile?.contactMethod === "email"
+          ? "Email"
+          : proposal.volunteerProfile?.contactMethod
+            ? proposal.volunteerProfile.contactMethod.charAt(0).toUpperCase() +
+              proposal.volunteerProfile.contactMethod.slice(1)
+            : "WhatsApp";
 
   return (
     // biome-ignore lint/a11y/useSemanticElements: nested interactive children prevent using button element
@@ -2112,8 +2125,18 @@ function ReceiverProposalCard({
             <ReceiverDetailNote
               icon="message"
               title="Contact volunteer"
-              body={["WhatsApp", "+62 812-3456-7890"]}
+              body={[volunteerContactMethodLabel, volunteerContactValue]}
               action="Message on WhatsApp"
+              onActionClick={() => {
+                const cleanNumber = volunteerContactValue.replace(/\D/g, "");
+                if (cleanNumber) {
+                  window.open(
+                    `https://wa.me/${cleanNumber}`,
+                    "_blank",
+                    "noopener,noreferrer",
+                  );
+                }
+              }}
             />
             <ReceiverRouteSummary from={donorName} />
           </div>
@@ -2185,11 +2208,13 @@ function ReceiverDetailNote({
   title,
   body,
   action,
+  onActionClick,
 }: {
   icon: IconName;
   title: string;
   body: string[];
   action?: string;
+  onActionClick?: () => void;
 }) {
   return (
     <div className="grid content-start gap-2 px-1 lg:px-4 first:lg:pl-0">
@@ -2209,6 +2234,7 @@ function ReceiverDetailNote({
         <button
           className="mt-2 inline-flex min-h-10 w-max items-center gap-2 rounded-md border border-[#9eb69f] bg-[#e9f4e3] px-4 text-xs font-black text-[#064c25]"
           type="button"
+          onClick={onActionClick}
         >
           <AppIcon name="message" className="h-4 w-4" />
           {action}
