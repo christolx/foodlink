@@ -1113,3 +1113,18 @@ svg {
     align-items: start;
   }
 }
+
+/* Custom styling for datetime-local inputs to hide default picker icon and make it fully clickable */
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: auto;
+  height: auto;
+  background: transparent;
+  color: transparent;
+  cursor: pointer;
+  z-index: 10;
+}

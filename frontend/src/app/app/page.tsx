@@ -812,7 +812,7 @@ function DonorDashboard({
             </div>
 
             <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_13rem]">
-              <label className="grid gap-2 text-[1.05rem] font-black text-[#1a281f]">
+              <label className="grid gap-2 text-xs font-bold text-[#46534a]">
                 Title
                 <input
                   className={input}
@@ -821,7 +821,7 @@ function DonorDashboard({
                   required
                 />
               </label>
-              <label className="grid gap-2 text-[1.05rem] font-black text-[#1a281f]">
+              <label className="grid gap-2 text-xs font-bold text-[#46534a]">
                 Quantity
                 <input
                   className={input}
@@ -832,7 +832,7 @@ function DonorDashboard({
               </label>
             </div>
 
-            <label className="grid gap-2 text-[1.05rem] font-black text-[#1a281f]">
+            <label className="grid gap-2 text-xs font-bold text-[#46534a]">
               Description
               <textarea
                 className={cx(input, "min-h-20 resize-y")}
@@ -842,14 +842,14 @@ function DonorDashboard({
               />
             </label>
 
-            <label className="grid gap-2 text-[1.05rem] font-black text-[#1a281f]">
+            <label className="grid gap-2 text-xs font-bold text-[#46534a]">
               Pickup location
               <span className="grid grid-cols-[2.5rem_1fr_2.5rem] overflow-hidden rounded-[0.65rem] border border-[#cfc8ba] bg-[#fffdf8]">
                 <span className="grid place-items-center text-[#064c25]">
                   <AppIcon name="map" className="h-5 w-5" />
                 </span>
                 <input
-                  className="min-h-10 bg-transparent px-2 text-base font-bold outline-none"
+                  className="min-h-10 bg-transparent px-2 text-sm font-bold outline-none"
                   name="location"
                   placeholder="Jl. Melati No. 12, Kebayoran Baru, Jakarta Selatan"
                 />
@@ -860,27 +860,43 @@ function DonorDashboard({
             </label>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <label className="grid gap-2 text-[1.05rem] font-black text-[#1a281f]">
+              <label className="grid gap-2 text-xs font-bold text-[#46534a]">
                 Available from
-                <input
-                  className={input}
-                  name="availableFrom"
-                  type="datetime-local"
-                  defaultValue={defaultFrom}
-                />
+                <span className="relative block">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#064c25] pointer-events-none">
+                    <AppIcon name="calendar" className="h-4.5 w-4.5" />
+                  </span>
+                  <input
+                    className={cx(input, "pl-10 pr-8")}
+                    name="availableFrom"
+                    type="datetime-local"
+                    defaultValue={defaultFrom}
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#46534a] pointer-events-none">
+                    <AppIcon name="chevron" className="h-4 w-4" />
+                  </span>
+                </span>
               </label>
-              <label className="grid gap-2 text-[1.05rem] font-black text-[#1a281f]">
+              <label className="grid gap-2 text-xs font-bold text-[#46534a]">
                 Available until
-                <input
-                  className={input}
-                  name="availableUntil"
-                  type="datetime-local"
-                  defaultValue={defaultUntil}
-                />
+                <span className="relative block">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#064c25] pointer-events-none">
+                    <AppIcon name="calendar" className="h-4.5 w-4.5" />
+                  </span>
+                  <input
+                    className={cx(input, "pl-10 pr-8")}
+                    name="availableUntil"
+                    type="datetime-local"
+                    defaultValue={defaultUntil}
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#46534a] pointer-events-none">
+                    <AppIcon name="chevron" className="h-4 w-4" />
+                  </span>
+                </span>
               </label>
             </div>
 
-            <label className="grid gap-2 text-[1.05rem] font-black text-[#1a281f]">
+            <label className="grid gap-2 text-xs font-bold text-[#46534a]">
               Special instructions (optional)
               <textarea
                 className={cx(input, "min-h-16 resize-y")}
