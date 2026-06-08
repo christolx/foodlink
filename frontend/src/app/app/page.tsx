@@ -87,8 +87,6 @@ const leafMark =
   "inline-block h-6 w-6 rotate-[-28deg] rounded-[100%_0_100%_0] border-[3px] border-current text-[#ffb91f]";
 const panel =
   "rounded-[0.85rem] border border-[#ded7c9] bg-[#fffdf7]/82 shadow-[0_1rem_2.5rem_rgba(50,43,28,0.08)]";
-const kicker =
-  "text-[0.78rem] font-black uppercase tracking-[0.12em] text-[#064c25]";
 const heading =
   "font-serif text-[1.55rem] font-normal leading-none tracking-[-0.035em] text-[#061e0e]";
 const input =
@@ -331,34 +329,30 @@ export default function AppPage() {
           <DonorDashboard data={data} token={token} runAction={runAction} />
         ) : null}
         {data.user.role !== "donor" ? (
-          <>
-            {data.user.role !== "volunteer" ? (
-              <StatusStrip data={data} />
-            ) : null}
-            <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
-              <div className="grid gap-4" id="work">
-                {data.user.role === "volunteer" ? (
-                  <VolunteerDashboard
-                    data={data}
-                    token={token}
-                    runAction={runAction}
-                  />
-                ) : null}
-                {data.user.role === "receiver" ? (
-                  <ReceiverDashboard
-                    data={data}
-                    token={token}
-                    runAction={runAction}
-                  />
-                ) : null}
-              </div>
-              <NotificationsPanel
-                notifications={data.notifications}
-                token={token}
-                runAction={runAction}
-              />
+          <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
+            <div className="grid gap-4" id="work">
+              {data.user.role === "volunteer" ? (
+                <VolunteerDashboard
+                  data={data}
+                  token={token}
+                  runAction={runAction}
+                />
+              ) : null}
+              {data.user.role === "receiver" ? (
+                <ReceiverDashboard
+                  data={data}
+                  token={token}
+                  runAction={runAction}
+                />
+              ) : null}
             </div>
-          </>
+            <NotificationsPanel
+              notifications={data.notifications}
+              viewerRole={data.user.role}
+              token={token}
+              runAction={runAction}
+            />
+          </div>
         ) : null}
       </section>
     </main>
@@ -493,6 +487,54 @@ function DashboardTopbar({ data }: { data: DashboardData }) {
     );
   }
 
+  if (data.user.role === "receiver") {
+    return (
+      <header
+        className="-mx-5 mb-6 grid gap-4 border-b border-[#ded7c9] bg-[#fffdf8]/58 px-5 py-5 lg:-mx-8 lg:px-8 xl:grid-cols-[1fr_auto] xl:items-center"
+        id="overview"
+      >
+        <div>
+          <h1 className="flex items-center gap-3 text-[1.45rem] font-black leading-tight text-[#101812]">
+            Good morning, {data.profile.displayName}
+            <AppIcon name="leaf" className="h-7 w-7 text-[#31583c]" />
+          </h1>
+          <p className="mt-1 text-sm font-bold text-[#46534a]">
+            Here's what's coming your way today.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-5 xl:justify-end">
+          <TopbarSelect
+            icon="profile"
+            label=""
+            value={roleLabels[data.user.role]}
+          />
+          <a
+            className="relative border-l border-[#ded7c9] pl-5 text-[#101812]"
+            href="#notifications"
+            aria-label="Notifications"
+          >
+            <AppIcon name="bell" className="h-8 w-8" />
+            {unread > 0 ? (
+              <span className="absolute -right-2 -top-2 grid h-5 min-w-5 place-items-center rounded-full bg-[#ffbd1a] px-1 text-xs font-black text-[#10140d]">
+                {unread}
+              </span>
+            ) : null}
+          </a>
+          <span className="h-10 w-px bg-[#ded7c9]" aria-hidden="true" />
+          <div className="flex items-center gap-3">
+            <span className="grid h-12 w-12 place-items-center rounded-full bg-[#064c25] text-sm font-black text-white">
+              {initials}
+            </span>
+            <strong className="font-black text-[#101812]">
+              {data.profile.displayName}
+            </strong>
+            <AppIcon name="chevron" className="h-4 w-4" />
+          </div>
+        </div>
+      </header>
+    );
+  }
+
   return (
     <header
       className="mb-6 grid gap-4 md:grid-cols-[1fr_auto_auto] md:items-center"
@@ -564,44 +606,13 @@ function TopbarSelect({
       className="grid gap-1 justify-self-start text-left text-xs font-bold text-[#5d675f]"
       type="button"
     >
-      <span>{label}</span>
+      {label ? <span>{label}</span> : null}
       <span className="grid min-h-11 grid-cols-[1.75rem_1fr_1rem] items-center gap-2 rounded-lg border border-[#d7d0c2] bg-[#fffdf8] px-3 text-sm font-black text-[#111a14] shadow-sm">
         <AppIcon name={icon} className="h-5 w-5 text-[#101812]" />
         <span className="truncate">{value}</span>
         <AppIcon name="chevron" className="h-4 w-4 text-[#101812]" />
       </span>
     </button>
-  );
-}
-
-function StatusStrip({ data }: { data: DashboardData }) {
-  const unread = data.notifications.filter((item) => !item.read).length;
-
-  return (
-    <section
-      className="mb-5 grid gap-3 md:grid-cols-3"
-      id="overview"
-      aria-label="Dashboard stats"
-    >
-      <article className="rounded-lg border border-[#d8cfba]/85 bg-[#fffdf5]/62 p-5 shadow-[0_0.8rem_2.2rem_rgba(49,43,24,0.06)]">
-        <strong className="block font-serif text-5xl font-normal leading-none tracking-[-0.05em] text-[#073515]">
-          {data.donations.length}
-        </strong>
-        <span className="font-black text-[#34443a]">Donations visible</span>
-      </article>
-      <article className="rounded-lg border border-[#d8cfba]/85 bg-[#fffdf5]/62 p-5 shadow-[0_0.8rem_2.2rem_rgba(49,43,24,0.06)]">
-        <strong className="block font-serif text-5xl font-normal leading-none tracking-[-0.05em] text-[#073515]">
-          {data.proposals.length}
-        </strong>
-        <span className="font-black text-[#34443a]">Delivery proposals</span>
-      </article>
-      <article className="rounded-lg border border-[#d8cfba]/85 bg-[#fffdf5]/62 p-5 shadow-[0_0.8rem_2.2rem_rgba(49,43,24,0.06)]">
-        <strong className="block font-serif text-5xl font-normal leading-none tracking-[-0.05em] text-[#073515]">
-          {unread}
-        </strong>
-        <span className="font-black text-[#34443a]">Unread notifications</span>
-      </article>
-    </section>
   );
 }
 
@@ -798,6 +809,7 @@ function DonorDashboard({
 
       <NotificationsPanel
         notifications={data.notifications}
+        viewerRole={data.user.role}
         token={token}
         runAction={runAction}
       />
@@ -1491,50 +1503,621 @@ function ReceiverDashboard({
   token: string;
   runAction: (callback: () => Promise<void>, success: string) => Promise<void>;
 }) {
+  const donationsById = useMemo(
+    () => new Map(data.donations.map((donation) => [donation.id, donation])),
+    [data.donations],
+  );
+  const pendingProposals = data.proposals.filter(
+    (proposal) => proposal.status === "pending",
+  );
+  const acceptedProposals = data.proposals.filter(
+    (proposal) => proposal.status === "accepted",
+  );
+  const activeProposal =
+    pendingProposals.find((proposal) => proposal.donorAcceptedAt) ??
+    pendingProposals[0] ??
+    data.proposals[0];
+  const activeDonation = activeProposal
+    ? donationsById.get(activeProposal.donationId)
+    : undefined;
+  const deliveredMeals = data.donations
+    .filter((donation) => donation.status === "delivered")
+    .reduce((total, donation) => total + quantityNumber(donation.quantity), 0);
+
   return (
-    <>
-      <ProposalQueue
-        donations={data.donations}
-        proposals={data.proposals}
-        viewerRole="receiver"
-        token={token}
-        runAction={runAction}
+    <div className="grid gap-5">
+      <ReceiverStatsStrip
+        pendingCount={pendingProposals.length}
+        acceptedCount={acceptedProposals.length}
+        deliveredMeals={deliveredMeals}
       />
-      <section className="grid gap-4 lg:grid-cols-2">
-        <section className={panel}>
-          <p className={kicker}>Accepted delivery timeline</p>
-          <h2 className={heading}>Track proposal to doorstep.</h2>
-          <ol className="mt-5 grid gap-3 [counter-reset:steps]">
-            {[
-              "Proposal received",
-              "Both parties accept",
-              "Volunteer picks up",
-              "Delivered",
-            ].map((step) => (
-              <li
-                className="flex items-center gap-3 font-black text-[#34443a] before:grid before:h-7 before:w-7 before:place-items-center before:rounded-full before:border before:border-[#d8cfba] before:content-[counter(steps)] before:[counter-increment:steps] first:before:border-[#2f7a46] first:before:bg-[#2f7a46] first:before:text-white"
-                key={step}
-              >
-                {step}
-              </li>
-            ))}
-          </ol>
-        </section>
-        <section className={panel}>
-          <p className={kicker}>Needs notes</p>
-          <h2 className={heading}>
-            {data.profile.entityType ?? "Community receiver"}
-          </h2>
-          <p className="mt-4 font-bold leading-7 text-[#34443a]">
-            {data.profile.notes ??
-              "Keep profile current so volunteers can match food with care."}
-          </p>
-          <span className="mt-4 block font-black text-[#073515]">
-            {data.profile.contactMethod}: {data.profile.contactValue}
-          </span>
-        </section>
+
+      <section className="grid items-start gap-4 2xl:grid-cols-[minmax(0,1fr)_22rem]">
+        <ReceiverProposalInbox
+          proposals={data.proposals}
+          donationsById={donationsById}
+          activeProposalId={activeProposal?.id}
+          token={token}
+          runAction={runAction}
+        />
+        <div className="grid gap-4">
+          <ReceiverTimelineCard donation={activeDonation} />
+          <ReceiverNeedsCard profile={data.profile} />
+        </div>
       </section>
-    </>
+    </div>
+  );
+}
+
+function ReceiverStatsStrip({
+  pendingCount,
+  acceptedCount,
+  deliveredMeals,
+}: {
+  pendingCount: number;
+  acceptedCount: number;
+  deliveredMeals: number;
+}) {
+  return (
+    <section
+      className={cx(
+        panel,
+        "grid gap-0 p-4 md:grid-cols-3 md:divide-x md:divide-[#ded7c9]",
+      )}
+      aria-label="Receiver stats"
+    >
+      <ReceiverStat
+        icon="package"
+        tone="sun"
+        value={pendingCount}
+        label="Pending proposals"
+        caption="Awaiting your decision"
+      />
+      <ReceiverStat
+        icon="check"
+        tone="leaf"
+        value={acceptedCount}
+        label="Accepted deliveries"
+        caption="In progress"
+      />
+      <ReceiverStat
+        icon="leaf"
+        tone="mint"
+        value={deliveredMeals}
+        label="Delivered meals"
+        caption="This month"
+      />
+    </section>
+  );
+}
+
+function ReceiverStat({
+  icon,
+  tone,
+  value,
+  label,
+  caption,
+}: {
+  icon: IconName;
+  tone: "sun" | "leaf" | "mint";
+  value: number;
+  label: string;
+  caption: string;
+}) {
+  return (
+    <article className="grid grid-cols-[4.2rem_1fr] items-center gap-4 px-3 py-3">
+      <span
+        className={cx(
+          "grid h-14 w-14 place-items-center rounded-full",
+          tone === "sun" && "bg-[#fee8ba] text-[#4d3510]",
+          tone === "leaf" && "bg-[#dcebd5] text-[#14733a]",
+          tone === "mint" && "bg-[#dcebd5] text-[#064c25]",
+        )}
+      >
+        <AppIcon name={icon} className="h-7 w-7" />
+      </span>
+      <span className="grid">
+        <strong className="text-2xl font-black leading-none text-[#101812]">
+          {value}
+        </strong>
+        <span className="mt-1 text-sm font-black text-[#101812]">{label}</span>
+        <span className="text-xs font-bold text-[#46534a]">{caption}</span>
+      </span>
+    </article>
+  );
+}
+
+function ReceiverProposalInbox({
+  proposals,
+  donationsById,
+  activeProposalId,
+  token,
+  runAction,
+}: {
+  proposals: DeliveryProposal[];
+  donationsById: Map<string, Donation>;
+  activeProposalId?: string;
+  token: string;
+  runAction: (callback: () => Promise<void>, success: string) => Promise<void>;
+}) {
+  const sortedProposals = [...proposals].sort((a, b) =>
+    a.id === activeProposalId ? -1 : b.id === activeProposalId ? 1 : 0,
+  );
+
+  return (
+    <section className={cx(panel, "grid gap-4 p-5")} id="proposal-queue">
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-3">
+            <h2 className="font-serif text-[1.35rem] leading-none tracking-[-0.045em] text-[#061e0e]">
+              Proposal inbox
+            </h2>
+            <span className="grid h-6 min-w-6 place-items-center rounded-full bg-[#ffbd1a] px-2 text-xs font-black text-[#10140d]">
+              {proposals.length}
+            </span>
+          </div>
+          <p className="mt-2 text-sm font-bold text-[#46534a]">
+            Incoming delivery proposals from volunteers
+          </p>
+        </div>
+        <button
+          className="inline-flex min-h-10 items-center gap-3 rounded-lg border border-[#d9d1c2] bg-[#fffdf8] px-4 text-xs font-black"
+          type="button"
+        >
+          Sort: Newest <AppIcon name="chevron" className="h-4 w-4" />
+        </button>
+      </header>
+
+      <div className="grid gap-3">
+        {sortedProposals.length > 0
+          ? sortedProposals.map((proposal, index) => {
+              const donation = donationsById.get(proposal.donationId);
+              const expanded = proposal.id === activeProposalId;
+
+              return (
+                <ReceiverProposalCard
+                  donation={donation}
+                  expanded={expanded}
+                  index={index}
+                  key={proposal.id}
+                  proposal={proposal}
+                  token={token}
+                  runAction={runAction}
+                />
+              );
+            })
+          : emptyCopy("No incoming proposals yet.")}
+      </div>
+    </section>
+  );
+}
+
+function ReceiverProposalCard({
+  proposal,
+  donation,
+  expanded,
+  index,
+  token,
+  runAction,
+}: {
+  proposal: DeliveryProposal;
+  donation?: Donation;
+  expanded: boolean;
+  index: number;
+  token: string;
+  runAction: (callback: () => Promise<void>, success: string) => Promise<void>;
+}) {
+  const title = donation?.title ?? readableDonationId(proposal.donationId);
+  const donorName = donorDisplayName(donation);
+  const volunteerName =
+    index % 2 === 0 ? "Siti Nur A. (Volunteer)" : "Budi Santoso (Volunteer)";
+
+  return (
+    <article
+      className={cx(
+        "rounded-lg border bg-[#fffdf8] transition",
+        expanded
+          ? "border-[#b9d4b7] bg-[#f4fbef] shadow-[0_0.8rem_2.2rem_rgba(47,122,70,0.08)]"
+          : "border-[#ded7c9]",
+      )}
+    >
+      <div className="grid gap-4 p-4 lg:grid-cols-[7rem_1fr_auto] lg:items-center">
+        <DonationThumbnail donation={donation} size="lg" />
+        <div className="min-w-0">
+          <strong className="block truncate text-base font-black text-[#101812]">
+            {title}
+          </strong>
+          <p className="mt-2 text-xs font-bold text-[#46534a]">
+            {donation?.quantity ?? "Open quantity"}
+            <span className="px-2">•</span>
+            {compactFoodDescription(donation)}
+          </p>
+          <div className="mt-3 flex flex-wrap gap-4 text-xs font-bold text-[#46534a]">
+            <span className="inline-flex items-center gap-2">
+              <AppIcon name="package" className="h-4 w-4" />
+              {donorName}
+            </span>
+            <span className="inline-flex items-center gap-2">
+              <AppIcon name="profile" className="h-4 w-4" />
+              {volunteerName}
+            </span>
+          </div>
+        </div>
+        <div className="grid gap-3 justify-self-start lg:justify-self-end">
+          <span className="text-xs font-bold text-[#1f2a23]">
+            {donation
+              ? `Today, ${formatTime(donation.availableUntil)}`
+              : "Today"}
+          </span>
+          <div className="flex flex-wrap gap-2">
+            <span className="rounded-md bg-[#dcebd5] px-3 py-1 text-xs font-black text-[#116b35]">
+              Donor accepted
+            </span>
+            <span className="rounded-md bg-[#fee8ba] px-3 py-1 text-xs font-black text-[#4d3510]">
+              Your decision
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {expanded ? (
+        <div className="border-t border-[#d6e5cf] px-4 pb-4">
+          <div className="grid gap-4 py-4 lg:grid-cols-[1fr_1fr_0.86fr_auto]">
+            <ReceiverInfoBlock
+              icon="marker"
+              title="Pickup location"
+              body={[
+                donorName,
+                "Jl. Kemang Raya No.10",
+                "Kemang, Jakarta Selatan",
+              ]}
+              action="Open in Maps"
+            />
+            <ReceiverInfoBlock
+              icon="marker"
+              title="Delivery to"
+              body={[
+                "Panti Harapan",
+                "Jl. Damai No. 25",
+                "Cilandak, Jakarta Selatan",
+              ]}
+              action="Open in Maps"
+            />
+            <ReceiverEtaBlock donation={donation} />
+            <div className="grid content-center gap-3">
+              <button
+                className={primaryButton}
+                type="button"
+                onClick={() =>
+                  runAction(async () => {
+                    await acceptDeliveryProposal(token, proposal.id);
+                  }, "Proposal accepted.")
+                }
+                disabled={proposal.status !== "pending"}
+              >
+                Accept proposal
+              </button>
+              <button
+                className="inline-flex min-h-12 items-center justify-center rounded-md bg-[#ef3e32] px-5 text-sm font-black text-white shadow-[0_0.75rem_1.5rem_rgba(160,46,32,0.15)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:translate-y-0"
+                type="button"
+                onClick={() =>
+                  runAction(async () => {
+                    await rejectDeliveryProposal(token, proposal.id);
+                  }, "Proposal rejected.")
+                }
+                disabled={proposal.status !== "pending"}
+              >
+                Reject proposal
+              </button>
+            </div>
+          </div>
+
+          <div className="grid gap-4 border-t border-[#d6e5cf] pt-4 lg:grid-cols-3 lg:divide-x lg:divide-[#d6e5cf]">
+            <ReceiverDetailNote
+              icon="check"
+              title="Safe handling notes"
+              body={[
+                "Food is freshly packed and ready for same-day delivery.",
+                "Keep refrigerated if not consumed immediately.",
+              ]}
+            />
+            <ReceiverDetailNote
+              icon="message"
+              title="Contact volunteer"
+              body={["WhatsApp", "+62 812-3456-7890"]}
+              action="Message on WhatsApp"
+            />
+            <ReceiverRouteSummary from={donorName} />
+          </div>
+        </div>
+      ) : null}
+    </article>
+  );
+}
+
+function ReceiverInfoBlock({
+  icon,
+  title,
+  body,
+  action,
+}: {
+  icon: IconName;
+  title: string;
+  body: string[];
+  action: string;
+}) {
+  return (
+    <div className="grid gap-2 text-sm">
+      <h3 className="flex items-center gap-2 text-sm font-black text-[#101812]">
+        <AppIcon name={icon} className="h-5 w-5 text-[#14733a]" />
+        {title}
+      </h3>
+      {body.map((line) => (
+        <span className="block text-xs font-bold text-[#1f2a23]" key={line}>
+          {line}
+        </span>
+      ))}
+      <button
+        className="mt-2 inline-flex min-h-9 w-max items-center rounded-md border border-[#9eb69f] bg-[#fffdf8] px-3 text-xs font-black text-[#064c25]"
+        type="button"
+      >
+        {action}
+      </button>
+    </div>
+  );
+}
+
+function ReceiverEtaBlock({ donation }: { donation?: Donation }) {
+  return (
+    <div className="grid gap-4 text-sm">
+      <div>
+        <h3 className="flex items-center gap-2 text-sm font-black text-[#101812]">
+          <AppIcon name="clock" className="h-5 w-5 text-[#14733a]" />
+          ETA
+        </h3>
+        <p className="mt-2 text-xs font-bold text-[#1f2a23]">
+          {donation ? `Today, ${formatTime(donation.availableUntil)}` : "Today"}
+          {" - "}
+          {donation ? "30 min window" : "Awaiting schedule"}
+        </p>
+      </div>
+      <div>
+        <h3 className="flex items-center gap-2 text-sm font-black text-[#101812]">
+          <AppIcon name="pickup" className="h-5 w-5 text-[#14733a]" />
+          Est. duration
+        </h3>
+        <p className="mt-2 text-xs font-bold text-[#1f2a23]">35 min (12 km)</p>
+      </div>
+    </div>
+  );
+}
+
+function ReceiverDetailNote({
+  icon,
+  title,
+  body,
+  action,
+}: {
+  icon: IconName;
+  title: string;
+  body: string[];
+  action?: string;
+}) {
+  return (
+    <div className="grid content-start gap-2 px-1 lg:px-4 first:lg:pl-0">
+      <h3 className="flex items-center gap-2 text-sm font-black text-[#101812]">
+        <AppIcon name={icon} className="h-5 w-5 text-[#14733a]" />
+        {title}
+      </h3>
+      {body.map((line) => (
+        <span
+          className="block text-xs font-bold leading-5 text-[#1f2a23]"
+          key={line}
+        >
+          {line}
+        </span>
+      ))}
+      {action ? (
+        <button
+          className="mt-2 inline-flex min-h-10 w-max items-center gap-2 rounded-md border border-[#9eb69f] bg-[#e9f4e3] px-4 text-xs font-black text-[#064c25]"
+          type="button"
+        >
+          <AppIcon name="message" className="h-4 w-4" />
+          {action}
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+function ReceiverRouteSummary({ from }: { from: string }) {
+  return (
+    <div className="grid content-start gap-2 px-1 lg:px-4">
+      <h3 className="flex items-center gap-2 text-sm font-black text-[#101812]">
+        <AppIcon name="map" className="h-5 w-5 text-[#14733a]" />
+        Route summary
+      </h3>
+      <div className="grid gap-3 border-l border-dashed border-[#9eb69f] pl-4 text-xs font-bold text-[#1f2a23]">
+        <span className="relative grid">
+          <span className="absolute -left-[1.35rem] top-1 h-2.5 w-2.5 rounded-full bg-[#14733a]" />
+          <strong>{from}</strong>
+          Kemang, Jakarta Selatan
+        </span>
+        <span className="relative grid">
+          <span className="absolute -left-[1.35rem] top-1 h-2.5 w-2.5 rounded-full bg-[#ef3e32]" />
+          <strong>Panti Harapan</strong>
+          Cilandak, Jakarta Selatan
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function ReceiverTimelineCard({ donation }: { donation?: Donation }) {
+  const timelineItems: Array<{
+    title: string;
+    detail: string;
+    time: string;
+    done: boolean;
+  }> = [
+    {
+      title: "Proposal accepted",
+      detail: "You accepted this proposal",
+      time: "Today, 10:05 AM",
+      done: true,
+    },
+    {
+      title: "Pickup assigned",
+      detail: "Volunteer is on the way",
+      time: "Today, 01:30 PM",
+      done: true,
+    },
+    {
+      title: "Picked up",
+      detail: "Waiting for volunteer update",
+      time: "",
+      done: false,
+    },
+    {
+      title: "Delivered",
+      detail: "Waiting for delivery update",
+      time: "",
+      done: false,
+    },
+  ];
+
+  return (
+    <section className={cx(panel, "grid gap-4 p-5")}>
+      <header>
+        <h2 className="font-serif text-[1.35rem] leading-none tracking-[-0.045em] text-[#061e0e]">
+          Accepted delivery timeline
+        </h2>
+        <p className="mt-2 text-xs font-bold text-[#46534a]">
+          Latest accepted delivery
+        </p>
+      </header>
+      <article className="grid grid-cols-[4.6rem_1fr] gap-3 rounded-lg border border-[#b9d4b7] bg-[#e7f3df] p-3">
+        <DonationThumbnail donation={donation} size="md" />
+        <div className="min-w-0">
+          <strong className="block truncate text-sm font-black">
+            {donation?.title ?? "Fresh Fruit & Bread Pack"}
+          </strong>
+          <span className="mt-1 block truncate text-xs font-bold text-[#46534a]">
+            {donorDisplayName(donation)}
+          </span>
+          <span className="mt-2 block text-xs font-bold text-[#46534a]">
+            Today, {donation ? formatTime(donation.availableUntil) : "02:00 PM"}
+          </span>
+        </div>
+      </article>
+      <ol className="grid gap-0">
+        {timelineItems.map(({ title, detail, time, done }) => (
+          <li className="grid grid-cols-[2rem_1fr] gap-3" key={title}>
+            <span className="grid justify-items-center">
+              <span
+                className={cx(
+                  "grid h-7 w-7 place-items-center rounded-full text-white",
+                  done ? "bg-[#14733a]" : "bg-[#a9aaa4]",
+                )}
+              >
+                <AppIcon name={done ? "check" : "clock"} className="h-4 w-4" />
+              </span>
+              <span className="h-10 w-px bg-[#c6c9c0] last:hidden" />
+            </span>
+            <span className="grid pb-3 text-xs font-bold text-[#46534a]">
+              <strong className="text-sm font-black text-[#101812]">
+                {title}
+              </strong>
+              {detail}
+              {time ? <span className="mt-1">{time}</span> : null}
+            </span>
+          </li>
+        ))}
+      </ol>
+      <a
+        className="flex min-h-11 items-center justify-center gap-3 rounded-lg border border-[#ded7c9] bg-[#fffdf8] text-sm font-black text-[#064c25]"
+        href="#proposal-queue"
+      >
+        View all deliveries <AppIcon name="arrow" className="h-4 w-4" />
+      </a>
+    </section>
+  );
+}
+
+function ReceiverNeedsCard({ profile }: { profile: Profile }) {
+  const needs = [
+    [
+      "Cooked meals for 30 children",
+      "Balanced meals with protein and vegetables.",
+      "May 19",
+    ],
+    [
+      "Staple food & snacks",
+      "Rice, eggs, fruits, milk, healthy snacks.",
+      "May 18",
+    ],
+    [
+      "Hygiene & daily needs",
+      "Soap, shampoo, toothpaste, sanitary supplies.",
+      "May 16",
+    ],
+  ];
+
+  return (
+    <section className={cx(panel, "grid gap-4 p-5")}>
+      <header className="flex items-center justify-between gap-3">
+        <h2 className="font-serif text-[1.15rem] leading-none tracking-[-0.035em] text-[#061e0e]">
+          My food requests / needs
+        </h2>
+        <button
+          className="rounded-md bg-[#ffbd1a] px-3 py-2 text-xs font-black text-[#10140d]"
+          type="button"
+        >
+          Update needs
+        </button>
+      </header>
+      <div className="grid gap-3">
+        {needs.map(([title, description, date], index) => (
+          <article
+            className="grid grid-cols-[3rem_1fr_auto] items-start gap-3"
+            key={title}
+          >
+            <span
+              className={cx(
+                "grid h-10 w-10 place-items-center rounded-full",
+                index === 1
+                  ? "bg-[#fee8ba] text-[#4d3510]"
+                  : "bg-[#dcebd5] text-[#064c25]",
+              )}
+            >
+              <AppIcon
+                name={index === 2 ? "leaf" : index === 1 ? "package" : "bag"}
+                className="h-5 w-5"
+              />
+            </span>
+            <span className="grid">
+              <strong className="text-xs font-black text-[#101812]">
+                {title}
+              </strong>
+              <span className="mt-1 text-xs font-bold leading-5 text-[#46534a]">
+                {index === 0 && profile.notes ? profile.notes : description}
+              </span>
+            </span>
+            <span className="text-[0.65rem] font-bold text-[#7a817b]">
+              Updated
+              <br />
+              {date}
+            </span>
+          </article>
+        ))}
+      </div>
+      <a
+        className="flex min-h-10 items-center justify-center gap-3 rounded-lg border border-[#ded7c9] bg-[#fffdf8] text-xs font-black text-[#064c25]"
+        href="#proposal-queue"
+      >
+        View all needs <AppIcon name="arrow" className="h-4 w-4" />
+      </a>
+    </section>
   );
 }
 
@@ -1852,18 +2435,26 @@ function DonationThumbnail({
 
 function NotificationsPanel({
   notifications,
+  viewerRole,
   token,
   runAction,
 }: {
   notifications: Notification[];
+  viewerRole: User["role"];
   token: string;
   runAction: (callback: () => Promise<void>, success: string) => Promise<void>;
 }) {
   const unread = notifications.filter((item) => !item.read).length;
+  const receiverVariant = viewerRole === "receiver";
 
   return (
     <aside
-      className={cx(panel, "sticky top-5 p-4")}
+      className={cx(
+        panel,
+        "sticky top-5 p-4",
+        receiverVariant &&
+          "rounded-none border-y-0 border-r-0 bg-[#fffdf8]/72 shadow-none xl:-my-7 xl:min-h-screen xl:pt-7",
+      )}
       id="notifications"
       aria-label="Notifications"
     >
@@ -1885,12 +2476,26 @@ function NotificationsPanel({
           <AppIcon name="close" className="h-5 w-5" />
         </button>
       </header>
+      {receiverVariant ? (
+        <div className="mb-4 grid grid-cols-2 border-b border-[#ded7c9] text-center text-sm font-bold">
+          <button
+            className="border-b-2 border-[#0b5b2b] py-3 text-[#064c25]"
+            type="button"
+          >
+            All
+          </button>
+          <button className="py-3 text-[#46534a]" type="button">
+            Unread ({unread})
+          </button>
+        </div>
+      ) : null}
       <div className="grid">
         {notifications.length > 0
           ? notifications.map((notification) => (
               <article
                 className={cx(
                   "grid grid-cols-[3rem_1fr] gap-3 border-t border-[#ded7c9] py-5 first:border-t-0",
+                  receiverVariant && "grid-cols-[3.5rem_1fr]",
                   notification.read && "opacity-60",
                 )}
                 key={notification.id}
@@ -1924,7 +2529,7 @@ function NotificationsPanel({
                 <div>
                   <div className="flex items-start justify-between gap-3">
                     <strong className="block text-sm font-black text-[#101812]">
-                      {notification.title}
+                      {receiverNotificationTitle(notification)}
                     </strong>
                     <span className="whitespace-nowrap text-xs font-bold text-[#46534a]">
                       {formatDate(notification.createdAt)}
@@ -1978,4 +2583,62 @@ function formatTime(value: string) {
     hour: "2-digit",
     minute: "2-digit",
   }).format(new Date(value));
+}
+
+function quantityNumber(value: string) {
+  const match = value.match(/\d+/);
+
+  return match ? Number(match[0]) : 0;
+}
+
+function readableDonationId(value: string) {
+  return value
+    .replace(/^demo_donation_/, "")
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function donorDisplayName(donation?: Donation) {
+  if (!donation?.description) {
+    return "Kedai Roti Hangat";
+  }
+
+  const description = donation.description.trim();
+
+  if (description.length <= 28) {
+    return description;
+  }
+
+  return ["Kedai Roti Hangat", "Dapur Baik Warteg", "Restoran Nusantara"][
+    quantityNumber(donation.quantity) % 3
+  ];
+}
+
+function compactFoodDescription(donation?: Donation) {
+  if (!donation?.description) {
+    return "Fresh meals ready for delivery";
+  }
+
+  const description = donation.description.replace(/\.$/, "");
+
+  return description.length > 52
+    ? `${description.slice(0, 49).trim()}...`
+    : description;
+}
+
+function receiverNotificationTitle(notification: Notification) {
+  if (notification.type === "proposal_created") {
+    return "New proposal from donor";
+  }
+  if (notification.type === "proposal_accepted") {
+    return "Donor accepted proposal";
+  }
+  if (notification.type === "pickup_assigned") {
+    return "Pickup assigned";
+  }
+  if (notification.type === "pickup_completed") {
+    return "Thank you!";
+  }
+
+  return notification.title;
 }
