@@ -43,14 +43,17 @@ import {
   listDeliveryProposals,
   listDonations,
   listNotifications,
+  listPickups,
   listReceivers,
   markNotificationRead,
   markPickupDelivered,
   markPickupPickedUp,
   type Notification,
+  type Pickup,
   type Profile,
   rejectDeliveryProposal,
   type User,
+  updateMyProfile,
 } from "@/lib/api";
 import { clearToken, getToken } from "@/lib/auth";
 import { getMe, getMyProfile } from "@/lib/session";
@@ -60,6 +63,7 @@ type DashboardData = {
   profile: Profile;
   donations: Donation[];
   proposals: DeliveryProposal[];
+  pickups: Pickup[];
   receivers: Profile[];
   notifications: Notification[];
 };
@@ -252,12 +256,13 @@ export default function AppPage() {
     }
 
     setIsLoading(true);
-    const [user, profile, donations, proposals, notifications] =
+    const [user, profile, donations, proposals, pickups, notifications] =
       await Promise.all([
         getMe(activeToken),
         getMyProfile(activeToken),
         listDonations(activeToken),
         listDeliveryProposals(activeToken),
+        listPickups(activeToken),
         listNotifications(activeToken),
       ]);
     const receivers =
@@ -268,6 +273,7 @@ export default function AppPage() {
       profile,
       donations: donations.items,
       proposals: proposals.items,
+      pickups: pickups.items,
       receivers: receivers?.items ?? [],
       notifications: notifications.items,
     });
@@ -442,6 +448,7 @@ function DashboardTopbar({ data }: { data: DashboardData }) {
             icon="team"
             label="Role"
             value={roleLabels[data.user.role]}
+            href="/demo"
           />
           <TopbarSelect
             icon="marker"
@@ -507,6 +514,7 @@ function DashboardTopbar({ data }: { data: DashboardData }) {
             icon="profile"
             label=""
             value={roleLabels[data.user.role]}
+            href="/demo"
           />
           <a
             className="relative border-l border-[#ded7c9] pl-5 text-[#101812]"
@@ -596,22 +604,41 @@ function TopbarSelect({
   icon,
   label,
   value,
+  href,
 }: {
   icon: IconName;
   label: string;
   value: string;
+  href?: string;
 }) {
-  return (
-    <button
-      className="grid gap-1 justify-self-start text-left text-xs font-bold text-[#5d675f]"
-      type="button"
-    >
+  const content = (
+    <>
       {label ? <span>{label}</span> : null}
       <span className="grid min-h-11 grid-cols-[1.75rem_1fr_1rem] items-center gap-2 rounded-lg border border-[#d7d0c2] bg-[#fffdf8] px-3 text-sm font-black text-[#111a14] shadow-sm">
         <AppIcon name={icon} className="h-5 w-5 text-[#101812]" />
         <span className="truncate">{value}</span>
         <AppIcon name="chevron" className="h-4 w-4 text-[#101812]" />
       </span>
+    </>
+  );
+
+  if (href) {
+    return (
+      <Link
+        className="grid gap-1 justify-self-start text-left text-xs font-bold text-[#5d675f]"
+        href={href}
+      >
+        {content}
+      </Link>
+    );
+  }
+
+  return (
+    <button
+      className="grid gap-1 justify-self-start text-left text-xs font-bold text-[#5d675f]"
+      type="button"
+    >
+      {content}
     </button>
   );
 }
@@ -826,19 +853,26 @@ function VolunteerDashboard({
   token: string;
   runAction: (callback: () => Promise<void>, success: string) => Promise<void>;
 }) {
-  const availableDonation = data.donations.find(
-    (donation) => donation.status === "available",
+  const [selectedDonationId, setSelectedDonationId] = useState<string | null>(
+    null,
   );
-  const receiver = data.receivers[0];
-  const activePickup = useMemo(
-    () => data.notifications.find((item) => item.pickupId)?.pickupId,
-    [data.notifications],
+  const [selectedReceiverId, setSelectedReceiverId] = useState<string | null>(
+    null,
   );
   const pendingProposals = data.proposals.filter(
     (proposal) => proposal.status === "pending",
   ).length;
   const availableDonations = data.donations.filter(
     (donation) => donation.status === "available",
+  );
+  const availableDonation =
+    availableDonations.find((donation) => donation.id === selectedDonationId) ??
+    availableDonations[0];
+  const receiver =
+    data.receivers.find((item) => item.userId === selectedReceiverId) ??
+    data.receivers[0];
+  const activePickup = data.pickups.find(
+    (pickup) => pickup.status === "assigned" || pickup.status === "picked_up",
   );
 
   async function handleCreateProposal() {
@@ -858,11 +892,13 @@ function VolunteerDashboard({
         <VolunteerDonationsPanel
           donations={data.donations}
           selectedDonation={availableDonation}
+          onSelect={setSelectedDonationId}
         />
         <VolunteerMapPanel donation={availableDonation} receiver={receiver} />
         <VolunteerReceiversPanel
           receivers={data.receivers}
           selectedReceiver={receiver}
+          onSelect={setSelectedReceiverId}
         />
       </section>
 
@@ -885,7 +921,7 @@ function VolunteerDashboard({
       <VolunteerGlancePanel
         availableCount={availableDonations.length}
         pendingCount={pendingProposals}
-        pickupCount={activePickup ? 1 : 0}
+        pickupCount={data.pickups.length}
       />
     </div>
   );
@@ -894,9 +930,11 @@ function VolunteerDashboard({
 function VolunteerDonationsPanel({
   donations,
   selectedDonation,
+  onSelect,
 }: {
   donations: Donation[];
   selectedDonation?: Donation;
+  onSelect: (id: string) => void;
 }) {
   const sortedDonations = [...donations].sort((a, b) =>
     a.status === "available" && b.status !== "available" ? -1 : 1,
@@ -946,6 +984,7 @@ function VolunteerDonationsPanel({
                   key={donation.id}
                   selected={donation.id === selectedDonation?.id}
                   index={index}
+                  onSelect={onSelect}
                 />
               ))
           : emptyCopy("No donations visible yet.")}
@@ -964,10 +1003,12 @@ function VolunteerDonationCard({
   donation,
   selected,
   index,
+  onSelect,
 }: {
   donation: Donation;
   selected: boolean;
   index: number;
+  onSelect: (id: string) => void;
 }) {
   const distance = `${(1.2 + index * 0.6).toFixed(1)} km`;
 
@@ -980,17 +1021,19 @@ function VolunteerDonationCard({
           : "border-[#e4ddcf]",
       )}
     >
-      <span
+      <button
         className={cx(
           "grid h-6 w-6 place-items-center rounded-full border",
           selected
             ? "border-[#14733a] bg-[#14733a] text-white"
             : "border-[#b8b8ae] bg-white",
         )}
-        aria-hidden="true"
+        type="button"
+        aria-label={`Select ${donation.title}`}
+        onClick={() => onSelect(donation.id)}
       >
         {selected ? <AppIcon name="check" className="h-4 w-4" /> : null}
-      </span>
+      </button>
       <DonationThumbnail donation={donation} size="lg" />
       <div className="min-w-0">
         <strong className="block truncate text-sm font-black text-[#101812]">
@@ -1126,9 +1169,11 @@ function VolunteerMapPanel({
 function VolunteerReceiversPanel({
   receivers,
   selectedReceiver,
+  onSelect,
 }: {
   receivers: Profile[];
   selectedReceiver?: Profile;
+  onSelect: (id: string) => void;
 }) {
   return (
     <section className="grid content-start gap-4 p-5">
@@ -1159,6 +1204,7 @@ function VolunteerReceiversPanel({
                   receiver={receiver}
                   selected={receiver.userId === selectedReceiver?.userId}
                   index={index}
+                  onSelect={onSelect}
                 />
               ))
           : emptyCopy("No receiver profiles available.")}
@@ -1177,10 +1223,12 @@ function VolunteerReceiverCard({
   receiver,
   selected,
   index,
+  onSelect,
 }: {
   receiver: Profile;
   selected: boolean;
   index: number;
+  onSelect: (id: string) => void;
 }) {
   const accent = ["#2f7a46", "#e18a18", "#2f7a46", "#d8841a"][index % 4];
 
@@ -1191,17 +1239,19 @@ function VolunteerReceiverCard({
         selected ? "border-[#2f7a46] bg-[#f8fbf3]" : "border-[#e4ddcf]",
       )}
     >
-      <span
+      <button
         className={cx(
           "mt-7 grid h-6 w-6 place-items-center rounded-full border",
           selected
             ? "border-[#14733a] bg-[#14733a] text-white"
             : "border-[#b8b8ae] bg-white",
         )}
-        aria-hidden="true"
+        type="button"
+        aria-label={`Select ${receiver.displayName}`}
+        onClick={() => onSelect(receiver.userId)}
       >
         {selected ? <AppIcon name="check" className="h-4 w-4" /> : null}
-      </span>
+      </button>
       <span
         className="grid h-14 w-14 place-items-center rounded-full bg-[#e5f1df]"
         style={{ color: accent }}
@@ -1354,10 +1404,13 @@ function VolunteerPickupPanel({
   token,
   runAction,
 }: {
-  activePickup?: string;
+  activePickup?: Pickup;
   token: string;
   runAction: (callback: () => Promise<void>, success: string) => Promise<void>;
 }) {
+  const canMarkPickedUp = activePickup?.status === "assigned";
+  const canMarkDelivered = activePickup?.status === "picked_up";
+
   return (
     <section className={cx(panel, "grid gap-4 p-5")}>
       <header className="flex items-center justify-between gap-3">
@@ -1370,7 +1423,9 @@ function VolunteerPickupPanel({
       </header>
       <div>
         <strong className="block text-lg font-black">
-          {activePickup ? `Pickup #${activePickup.slice(0, 6)}` : "No pickup"}
+          {activePickup
+            ? `Pickup #${activePickup.id.slice(0, 6)}`
+            : "No pickup"}
         </strong>
         <span className="text-xs font-bold text-[#46534a]">
           {activePickup ? "Assigned today" : "Waiting for accepted proposal"}
@@ -1405,11 +1460,11 @@ function VolunteerPickupPanel({
         <button
           className={ghostButton}
           type="button"
-          disabled={!activePickup}
+          disabled={!canMarkPickedUp}
           onClick={() =>
             activePickup
               ? runAction(async () => {
-                  await markPickupPickedUp(token, activePickup);
+                  await markPickupPickedUp(token, activePickup.id);
                 }, "Pickup marked picked up.")
               : undefined
           }
@@ -1419,11 +1474,11 @@ function VolunteerPickupPanel({
         <button
           className={primaryButton}
           type="button"
-          disabled={!activePickup}
+          disabled={!canMarkDelivered}
           onClick={() =>
             activePickup
               ? runAction(async () => {
-                  await markPickupDelivered(token, activePickup);
+                  await markPickupDelivered(token, activePickup.id);
                 }, "Pickup marked delivered.")
               : undefined
           }
@@ -1517,8 +1572,12 @@ function ReceiverDashboard({
     pendingProposals.find((proposal) => proposal.donorAcceptedAt) ??
     pendingProposals[0] ??
     data.proposals[0];
+  const activePickup =
+    data.pickups.find(
+      (pickup) => pickup.status === "assigned" || pickup.status === "picked_up",
+    ) ?? data.pickups[0];
   const activeDonation = activeProposal
-    ? donationsById.get(activeProposal.donationId)
+    ? (activeProposal.donation ?? donationsById.get(activeProposal.donationId))
     : undefined;
   const deliveredMeals = data.donations
     .filter((donation) => donation.status === "delivered")
@@ -1541,8 +1600,15 @@ function ReceiverDashboard({
           runAction={runAction}
         />
         <div className="grid gap-4">
-          <ReceiverTimelineCard donation={activeDonation} />
-          <ReceiverNeedsCard profile={data.profile} />
+          <ReceiverTimelineCard
+            donation={activePickup?.donation ?? activeDonation}
+            pickup={activePickup}
+          />
+          <ReceiverNeedsCard
+            profile={data.profile}
+            token={token}
+            runAction={runAction}
+          />
         </div>
       </section>
     </div>
@@ -1671,7 +1737,8 @@ function ReceiverProposalInbox({
       <div className="grid gap-3">
         {sortedProposals.length > 0
           ? sortedProposals.map((proposal, index) => {
-              const donation = donationsById.get(proposal.donationId);
+              const donation =
+                proposal.donation ?? donationsById.get(proposal.donationId);
               const expanded = proposal.id === activeProposalId;
 
               return (
@@ -1708,9 +1775,11 @@ function ReceiverProposalCard({
   runAction: (callback: () => Promise<void>, success: string) => Promise<void>;
 }) {
   const title = donation?.title ?? readableDonationId(proposal.donationId);
-  const donorName = donorDisplayName(donation);
+  const donorName =
+    proposal.donorProfile?.displayName ?? donorDisplayName(donation);
   const volunteerName =
-    index % 2 === 0 ? "Siti Nur A. (Volunteer)" : "Budi Santoso (Volunteer)";
+    proposal.volunteerProfile?.displayName ??
+    (index % 2 === 0 ? "Siti Nur A." : "Budi Santoso");
 
   return (
     <article
@@ -1739,7 +1808,7 @@ function ReceiverProposalCard({
             </span>
             <span className="inline-flex items-center gap-2">
               <AppIcon name="profile" className="h-4 w-4" />
-              {volunteerName}
+              {volunteerName} (Volunteer)
             </span>
           </div>
         </div>
@@ -1953,7 +2022,16 @@ function ReceiverRouteSummary({ from }: { from: string }) {
   );
 }
 
-function ReceiverTimelineCard({ donation }: { donation?: Donation }) {
+function ReceiverTimelineCard({
+  donation,
+  pickup,
+}: {
+  donation?: Donation;
+  pickup?: Pickup;
+}) {
+  const pickedUp =
+    pickup?.status === "picked_up" || pickup?.status === "delivered";
+  const delivered = pickup?.status === "delivered";
   const timelineItems: Array<{
     title: string;
     detail: string;
@@ -1970,19 +2048,19 @@ function ReceiverTimelineCard({ donation }: { donation?: Donation }) {
       title: "Pickup assigned",
       detail: "Volunteer is on the way",
       time: "Today, 01:30 PM",
-      done: true,
+      done: Boolean(pickup),
     },
     {
       title: "Picked up",
       detail: "Waiting for volunteer update",
-      time: "",
-      done: false,
+      time: pickup?.pickedUpAt ? formatDate(pickup.pickedUpAt) : "",
+      done: pickedUp,
     },
     {
       title: "Delivered",
       detail: "Waiting for delivery update",
-      time: "",
-      done: false,
+      time: pickup?.deliveredAt ? formatDate(pickup.deliveredAt) : "",
+      done: delivered,
     },
   ];
 
@@ -2044,7 +2122,15 @@ function ReceiverTimelineCard({ donation }: { donation?: Donation }) {
   );
 }
 
-function ReceiverNeedsCard({ profile }: { profile: Profile }) {
+function ReceiverNeedsCard({
+  profile,
+  token,
+  runAction,
+}: {
+  profile: Profile;
+  token: string;
+  runAction: (callback: () => Promise<void>, success: string) => Promise<void>;
+}) {
   const needs = [
     [
       "Cooked meals for 30 children",
@@ -2063,6 +2149,24 @@ function ReceiverNeedsCard({ profile }: { profile: Profile }) {
     ],
   ];
 
+  function handleUpdateNeeds() {
+    const notes = window.prompt("Update needs notes", profile.notes ?? "");
+    if (notes === null) {
+      return;
+    }
+    void runAction(async () => {
+      await updateMyProfile(token, {
+        displayName: profile.displayName,
+        contactMethod: profile.contactMethod,
+        contactValue: profile.contactValue,
+        location: profile.location,
+        entityType: profile.entityType,
+        operationalHours: profile.operationalHours,
+        notes,
+      });
+    }, "Needs updated.");
+  }
+
   return (
     <section className={cx(panel, "grid gap-4 p-5")}>
       <header className="flex items-center justify-between gap-3">
@@ -2072,6 +2176,7 @@ function ReceiverNeedsCard({ profile }: { profile: Profile }) {
         <button
           className="rounded-md bg-[#ffbd1a] px-3 py-2 text-xs font-black text-[#10140d]"
           type="button"
+          onClick={handleUpdateNeeds}
         >
           Update needs
         </button>
@@ -2162,7 +2267,8 @@ function ProposalQueue({
       <div className="grid gap-3">
         {proposals.length > 0 ? (
           proposals.map((proposal) => {
-            const donation = donationsById.get(proposal.donationId);
+            const donation =
+              proposal.donation ?? donationsById.get(proposal.donationId);
             const donorAccepted = Boolean(proposal.donorAcceptedAt);
             const receiverAccepted = Boolean(proposal.receiverAcceptedAt);
 
@@ -2446,6 +2552,13 @@ function NotificationsPanel({
 }) {
   const unread = notifications.filter((item) => !item.read).length;
   const receiverVariant = viewerRole === "receiver";
+  const [notificationFilter, setNotificationFilter] = useState<
+    "all" | "unread"
+  >("all");
+  const visibleNotifications =
+    receiverVariant && notificationFilter === "unread"
+      ? notifications.filter((item) => !item.read)
+      : notifications;
 
   return (
     <aside
@@ -2479,19 +2592,34 @@ function NotificationsPanel({
       {receiverVariant ? (
         <div className="mb-4 grid grid-cols-2 border-b border-[#ded7c9] text-center text-sm font-bold">
           <button
-            className="border-b-2 border-[#0b5b2b] py-3 text-[#064c25]"
+            className={cx(
+              "py-3",
+              notificationFilter === "all"
+                ? "border-b-2 border-[#0b5b2b] text-[#064c25]"
+                : "text-[#46534a]",
+            )}
             type="button"
+            onClick={() => setNotificationFilter("all")}
           >
             All
           </button>
-          <button className="py-3 text-[#46534a]" type="button">
+          <button
+            className={cx(
+              "py-3",
+              notificationFilter === "unread"
+                ? "border-b-2 border-[#0b5b2b] text-[#064c25]"
+                : "text-[#46534a]",
+            )}
+            type="button"
+            onClick={() => setNotificationFilter("unread")}
+          >
             Unread ({unread})
           </button>
         </div>
       ) : null}
       <div className="grid">
-        {notifications.length > 0
-          ? notifications.map((notification) => (
+        {visibleNotifications.length > 0
+          ? visibleNotifications.map((notification) => (
               <article
                 className={cx(
                   "grid grid-cols-[3rem_1fr] gap-3 border-t border-[#ded7c9] py-5 first:border-t-0",
@@ -2557,7 +2685,11 @@ function NotificationsPanel({
                 ) : null}
               </article>
             ))
-          : emptyCopy("No notifications yet.")}
+          : emptyCopy(
+              notificationFilter === "unread"
+                ? "No unread notifications."
+                : "No notifications yet.",
+            )}
       </div>
       <a
         className="mt-4 flex min-h-12 items-center justify-center gap-3 rounded-md border border-[#9eb69f] bg-[#fffdf8] text-sm font-black text-[#064c25]"

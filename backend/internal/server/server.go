@@ -261,7 +261,7 @@ func (s *Server) ListDeliveryProposals(ctx context.Context, request api.ListDeli
 	}
 	items := make([]api.DeliveryProposal, 0, len(proposals))
 	for _, proposal := range proposals {
-		items = append(items, deliveryProposalDTO(proposal))
+		items = append(items, s.deliveryProposalDTO(proposal))
 	}
 	return api.ListDeliveryProposals200JSONResponse{Items: items, Page: page, PageSize: pageSize, Total: int(total)}, nil
 }
@@ -287,7 +287,7 @@ func (s *Server) CreateDeliveryProposal(ctx context.Context, request api.CreateD
 	if err != nil {
 		return api.CreateDeliveryProposal500JSONResponse{InternalServerErrorJSONResponse: internalError()}, nil
 	}
-	return api.CreateDeliveryProposal201JSONResponse(deliveryProposalDTO(proposal)), nil
+	return api.CreateDeliveryProposal201JSONResponse(s.deliveryProposalDTO(proposal)), nil
 }
 
 func (s *Server) AcceptDeliveryProposal(ctx context.Context, request api.AcceptDeliveryProposalRequestObject) (api.AcceptDeliveryProposalResponseObject, error) {
@@ -308,9 +308,9 @@ func (s *Server) AcceptDeliveryProposal(ctx context.Context, request api.AcceptD
 	if err != nil {
 		return api.AcceptDeliveryProposal500JSONResponse{InternalServerErrorJSONResponse: internalError()}, nil
 	}
-	response := api.DeliveryProposalAcceptResponse{Proposal: deliveryProposalDTO(proposal)}
+	response := api.DeliveryProposalAcceptResponse{Proposal: s.deliveryProposalDTO(proposal)}
 	if pickup != nil {
-		dto := pickupDTO(*pickup)
+		dto := s.pickupDTO(*pickup)
 		response.Pickup = &dto
 	}
 	return api.AcceptDeliveryProposal200JSONResponse(response), nil
@@ -334,7 +334,27 @@ func (s *Server) RejectDeliveryProposal(ctx context.Context, request api.RejectD
 	if err != nil {
 		return api.RejectDeliveryProposal500JSONResponse{InternalServerErrorJSONResponse: internalError()}, nil
 	}
-	return api.RejectDeliveryProposal200JSONResponse(deliveryProposalDTO(proposal)), nil
+	return api.RejectDeliveryProposal200JSONResponse(s.deliveryProposalDTO(proposal)), nil
+}
+
+func (s *Server) ListPickups(ctx context.Context, request api.ListPickupsRequestObject) (api.ListPickupsResponseObject, error) {
+	user, ok := s.authUser(ctx)
+	if !ok {
+		return api.ListPickups401JSONResponse{UnauthorizedJSONResponse: unauthorized()}, nil
+	}
+	page, pageSize, err := pagination(request.Params.Page, request.Params.PageSize)
+	if err != nil {
+		return api.ListPickups400JSONResponse{BadRequestJSONResponse: badRequest(err.Error())}, nil
+	}
+	pickups, total, err := s.store.ListPickups(page, pageSize, request.Params.Status, user)
+	if err != nil {
+		return api.ListPickups500JSONResponse{InternalServerErrorJSONResponse: internalError()}, nil
+	}
+	items := make([]api.Pickup, 0, len(pickups))
+	for _, pickup := range pickups {
+		items = append(items, s.pickupDTO(pickup))
+	}
+	return api.ListPickups200JSONResponse{Items: items, Page: page, PageSize: pageSize, Total: int(total)}, nil
 }
 
 func (s *Server) MarkPickupPickedUp(ctx context.Context, request api.MarkPickupPickedUpRequestObject) (api.MarkPickupPickedUpResponseObject, error) {
@@ -362,7 +382,7 @@ func (s *Server) MarkPickupPickedUp(ctx context.Context, request api.MarkPickupP
 	if err != nil {
 		return api.MarkPickupPickedUp500JSONResponse{InternalServerErrorJSONResponse: internalError()}, nil
 	}
-	return api.MarkPickupPickedUp200JSONResponse(pickupDTO(pickup)), nil
+	return api.MarkPickupPickedUp200JSONResponse(s.pickupDTO(pickup)), nil
 }
 
 func (s *Server) MarkPickupDelivered(ctx context.Context, request api.MarkPickupDeliveredRequestObject) (api.MarkPickupDeliveredResponseObject, error) {
@@ -390,7 +410,7 @@ func (s *Server) MarkPickupDelivered(ctx context.Context, request api.MarkPickup
 	if err != nil {
 		return api.MarkPickupDelivered500JSONResponse{InternalServerErrorJSONResponse: internalError()}, nil
 	}
-	return api.MarkPickupDelivered200JSONResponse(pickupDTO(pickup)), nil
+	return api.MarkPickupDelivered200JSONResponse(s.pickupDTO(pickup)), nil
 }
 
 func (s *Server) ListNotifications(ctx context.Context, request api.ListNotificationsRequestObject) (api.ListNotificationsResponseObject, error) {
@@ -576,8 +596,8 @@ func requiredCloudinaryImageURL(value string) (string, error) {
 	return trimmed, nil
 }
 
-func deliveryProposalDTO(proposal models.DeliveryProposal) api.DeliveryProposal {
-	return api.DeliveryProposal{
+func (s *Server) deliveryProposalDTO(proposal models.DeliveryProposal) api.DeliveryProposal {
+	dto := api.DeliveryProposal{
 		Id:                 proposal.ID,
 		DonationId:         proposal.DonationID,
 		ReceiverId:         proposal.ReceiverID,
@@ -589,10 +609,12 @@ func deliveryProposalDTO(proposal models.DeliveryProposal) api.DeliveryProposal 
 		CreatedAt:          proposal.CreatedAt,
 		UpdatedAt:          proposal.UpdatedAt,
 	}
+	s.enrichDashboardRelations(&dto, nil)
+	return dto
 }
 
-func pickupDTO(pickup models.Pickup) api.Pickup {
-	return api.Pickup{
+func (s *Server) pickupDTO(pickup models.Pickup) api.Pickup {
+	dto := api.Pickup{
 		Id:               pickup.ID,
 		DonationId:       pickup.DonationID,
 		ProposalId:       pickup.ProposalID,
@@ -605,6 +627,62 @@ func pickupDTO(pickup models.Pickup) api.Pickup {
 		DeliveredAt:      pickup.DeliveredAt,
 		CreatedAt:        pickup.CreatedAt,
 		UpdatedAt:        pickup.UpdatedAt,
+	}
+	s.enrichDashboardRelations(nil, &dto)
+	return dto
+}
+
+func (s *Server) enrichDashboardRelations(proposal *api.DeliveryProposal, pickup *api.Pickup) {
+	var donationID string
+	var receiverID string
+	var volunteerID string
+	if proposal != nil {
+		donationID = proposal.DonationId
+		receiverID = proposal.ReceiverId
+		volunteerID = proposal.VolunteerId
+	}
+	if pickup != nil {
+		donationID = pickup.DonationId
+		receiverID = pickup.ReceiverId
+		volunteerID = pickup.VolunteerId
+	}
+
+	donation, err := s.store.DonationByID(donationID)
+	if err == nil {
+		donationDTO := donationDTO(donation)
+		if proposal != nil {
+			proposal.Donation = &donationDTO
+		}
+		if pickup != nil {
+			pickup.Donation = &donationDTO
+		}
+		if profile, err := s.store.ProfileByUserID(donation.DonorID); err == nil {
+			profileDTO := profileDTO(profile)
+			if proposal != nil {
+				proposal.DonorProfile = &profileDTO
+			}
+			if pickup != nil {
+				pickup.DonorProfile = &profileDTO
+			}
+		}
+	}
+	if profile, err := s.store.ProfileByUserID(receiverID); err == nil {
+		profileDTO := profileDTO(profile)
+		if proposal != nil {
+			proposal.ReceiverProfile = &profileDTO
+		}
+		if pickup != nil {
+			pickup.ReceiverProfile = &profileDTO
+		}
+	}
+	if profile, err := s.store.ProfileByUserID(volunteerID); err == nil {
+		profileDTO := profileDTO(profile)
+		if proposal != nil {
+			proposal.VolunteerProfile = &profileDTO
+		}
+		if pickup != nil {
+			pickup.VolunteerProfile = &profileDTO
+		}
 	}
 }
 

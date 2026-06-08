@@ -103,6 +103,10 @@ export type DeliveryProposal = {
   donorAcceptedAt?: string;
   receiverAcceptedAt?: string;
   rejectedByUserId?: string;
+  donation?: Donation;
+  donorProfile?: Profile;
+  receiverProfile?: Profile;
+  volunteerProfile?: Profile;
   createdAt: string;
   updatedAt: string;
 };
@@ -118,6 +122,10 @@ export type Pickup = {
   deliveryLocation: Location;
   pickedUpAt?: string;
   deliveredAt?: string;
+  donation?: Donation;
+  donorProfile?: Profile;
+  receiverProfile?: Profile;
+  volunteerProfile?: Profile;
   createdAt: string;
   updatedAt: string;
 };
@@ -150,6 +158,16 @@ export type CreateDonationRequest = {
 export type CreateDeliveryProposalRequest = {
   donationId: string;
   receiverId: string;
+};
+
+export type UpdateProfileRequest = {
+  displayName: string;
+  contactMethod: ContactMethod;
+  contactValue: string;
+  location: Location;
+  entityType?: EntityType;
+  operationalHours?: string;
+  notes?: string;
 };
 
 export type DeliveryProposalAcceptResponse = {
@@ -230,6 +248,10 @@ export function listDeliveryProposals(token: string) {
   });
 }
 
+export function listPickups(token: string) {
+  return apiFetch<PageResponse<Pickup>>("/pickups", { token });
+}
+
 export function createDeliveryProposal(
   token: string,
   json: CreateDeliveryProposalRequest,
@@ -281,6 +303,14 @@ export function listNotifications(token: string) {
 export function markNotificationRead(token: string, id: string) {
   return apiFetch<Notification>(`/notifications/${id}/read`, {
     method: "POST",
+    token,
+  });
+}
+
+export function updateMyProfile(token: string, json: UpdateProfileRequest) {
+  return apiFetch<Profile>("/me/profile", {
+    method: "PUT",
+    json,
     token,
   });
 }

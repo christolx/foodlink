@@ -440,6 +440,30 @@ func (s *Store) ListDeliveryProposals(page, pageSize int, status *api.ProposalSt
 	return proposals, total, err
 }
 
+func (s *Store) ListPickups(page, pageSize int, status *api.PickupStatus, user models.User) ([]models.Pickup, int64, error) {
+	var pickups []models.Pickup
+	query := s.db.Model(&models.Pickup{})
+	if status != nil {
+		query = query.Where("status = ?", string(*status))
+	}
+	switch user.Role {
+	case string(api.Donor):
+		query = query.Joins("JOIN donations ON donations.id = pickups.donation_id").Where("donations.donor_id = ?", user.ID)
+	case string(api.Receiver):
+		query = query.Where("receiver_id = ?", user.ID)
+	case string(api.Volunteer):
+		query = query.Where("volunteer_id = ?", user.ID)
+	default:
+		query = query.Where("1 = 0")
+	}
+	var total int64
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	err := query.Order("pickups.created_at desc").Limit(pageSize).Offset((page - 1) * pageSize).Find(&pickups).Error
+	return pickups, total, err
+}
+
 func (s *Store) AcceptDeliveryProposal(proposalID string, user models.User) (models.DeliveryProposal, *models.Pickup, error) {
 	var proposal models.DeliveryProposal
 	var pickup *models.Pickup
