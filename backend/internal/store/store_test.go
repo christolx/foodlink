@@ -161,6 +161,33 @@ func TestSeedDemoDataCreatesDashboardFixtures(t *testing.T) {
 	}
 }
 
+func TestNukeDatabase(t *testing.T) {
+	st := newTestStore(t)
+
+	// Verify tables exist
+	assertCount(t, st.db, &models.User{}, "1 = 1", nil, 3)
+
+	if err := st.NukeDatabase(); err != nil {
+		t.Fatal(err)
+	}
+
+	// Verify tables are dropped (querying should error)
+	if err := st.db.Model(&models.User{}).Find(&[]models.User{}).Error; err == nil {
+		t.Fatal("expected error querying dropped table 'users', but got nil")
+	}
+
+	// Verify rerun migrate and seed works
+	if err := st.AutoMigrate(); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.SeedDemoData(); err != nil {
+		t.Fatal(err)
+	}
+
+	// Verify data is back
+	assertCount(t, st.db, &models.User{}, "1 = 1", nil, 3)
+}
+
 func newTestStore(t *testing.T) *Store {
 	t.Helper()
 	conn, err := gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{})

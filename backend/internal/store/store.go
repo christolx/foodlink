@@ -27,6 +27,10 @@ func (s *Store) AutoMigrate() error {
 	return db.AutoMigrate(s.db)
 }
 
+func (s *Store) NukeDatabase() error {
+	return db.DropTables(s.db)
+}
+
 func (s *Store) SeedDemoData() error {
 	now := time.Now().UTC()
 	freshVegetablesImage := "https://res.cloudinary.com/dewgvguem/image/upload/v1780918205/swappy-20260608-182956_skxtwu.png"

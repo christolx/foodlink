@@ -14,6 +14,7 @@ import (
 func main() {
 	runMigrate := flag.Bool("migrate", false, "run database migrations and seed demo data")
 	cleanupSmoke := flag.Bool("cleanup-smoke", false, "delete smoke test records")
+	runNuke := flag.Bool("nuke", false, "drop all database tables (can be combined with --migrate)")
 	flag.Parse()
 
 	cfg := config.Load()
@@ -26,6 +27,17 @@ func main() {
 		log.Fatal(err)
 	}
 	st := store.New(conn)
+
+	if *runNuke {
+		if err := st.NukeDatabase(); err != nil {
+			log.Fatal(err)
+		}
+		log.Print("database nuked")
+		if !*runMigrate {
+			return
+		}
+	}
+
 	if *runMigrate {
 		if err := st.AutoMigrate(); err != nil {
 			log.Fatal(err)
