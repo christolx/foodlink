@@ -973,6 +973,16 @@ function DonorDashboard({
               <AppIcon name="leaf" className="h-5 w-5" />
               Post donation
             </button>
+            {uploadedImageUrl ? (
+              <div className="mt-2 overflow-hidden rounded-lg border border-[#cfc8ba] shadow-sm transition-all duration-300">
+                {/* biome-ignore lint/performance/noImgElement: Uploaded image preview */}
+                <img
+                  alt="Uploaded donation preview"
+                  className="h-48 w-full object-cover"
+                  src={uploadedImageUrl}
+                />
+              </div>
+            ) : null}
           </form>
 
           <ProposalQueue
@@ -1566,7 +1576,58 @@ function VolunteerPickupPanel({
   runAction: (callback: () => Promise<void>, success: string) => Promise<void>;
 }) {
   const canMarkPickedUp = activePickup?.status === "assigned";
-  const canMarkDelivered = activePickup?.status === "picked_up";
+
+  const steps = [
+    {
+      label: "Assigned",
+      isCompleted: !!activePickup,
+      time: activePickup?.createdAt ? formatTime(activePickup.createdAt) : null,
+      desc: activePickup ? "You accepted task" : "Not started",
+    },
+    {
+      label: "Picked up",
+      isCompleted: activePickup
+        ? activePickup.status === "picked_up" ||
+          activePickup.status === "delivered"
+        : false,
+      time: activePickup?.pickedUpAt
+        ? formatTime(activePickup.pickedUpAt)
+        : null,
+      desc:
+        activePickup &&
+        (activePickup.status === "picked_up" ||
+          activePickup.status === "delivered")
+          ? "Food picked up"
+          : "Not started",
+    },
+    {
+      label: "Delivered",
+      isCompleted: activePickup ? activePickup.status === "delivered" : false,
+      time: activePickup?.deliveredAt
+        ? formatTime(activePickup.deliveredAt)
+        : null,
+      desc:
+        activePickup && activePickup.status === "delivered"
+          ? "Delivered to receiver"
+          : "Not started",
+    },
+  ];
+
+  const getStatusBadge = () => {
+    if (!activePickup) return null;
+    switch (activePickup.status) {
+      case "picked_up":
+        return { label: "Picked Up", className: "bg-[#dcebd5] text-[#14351f]" };
+      case "delivered":
+        return { label: "Delivered", className: "bg-[#dcebd5] text-[#14351f]" };
+      case "canceled":
+        return { label: "Canceled", className: "bg-[#f7d8d1] text-[#8a2e22]" };
+      default:
+        return { label: "Assigned", className: "bg-[#fee6bf] text-[#9d5b00]" };
+    }
+  };
+
+  const badge = getStatusBadge();
 
   return (
     <section className={cx(panel, "grid gap-4 p-5")}>
@@ -1574,9 +1635,16 @@ function VolunteerPickupPanel({
         <h2 className="font-serif text-[1.35rem] leading-none tracking-[-0.045em] text-[#061e0e]">
           Active pickup
         </h2>
-        <span className="rounded-full bg-[#fee6bf] px-3 py-1 text-xs font-black text-[#9d5b00]">
-          Assigned
-        </span>
+        {badge && (
+          <span
+            className={cx(
+              "rounded-full px-3 py-1 text-xs font-black",
+              badge.className,
+            )}
+          >
+            {badge.label}
+          </span>
+        )}
       </header>
       <div>
         <strong className="block text-lg font-black">
@@ -1589,12 +1657,15 @@ function VolunteerPickupPanel({
         </span>
       </div>
       <ol className="grid gap-3">
-        {["Assigned", "Picked up", "Delivered"].map((step, index) => (
-          <li className="grid grid-cols-[1.75rem_1fr_auto] gap-3" key={step}>
+        {steps.map((step, index) => (
+          <li
+            className="grid grid-cols-[1.75rem_1fr_auto] gap-3"
+            key={step.label}
+          >
             <span
               className={cx(
                 "grid h-7 w-7 place-items-center rounded-full text-xs font-black",
-                index === 0
+                step.isCompleted
                   ? "bg-[#14733a] text-white"
                   : "bg-[#eeece3] text-[#46534a]",
               )}
@@ -1603,12 +1674,14 @@ function VolunteerPickupPanel({
             </span>
             <span className="grid text-xs font-bold text-[#46534a]">
               <strong className="text-sm font-black text-[#101812]">
-                {step}
+                {step.label}
               </strong>
-              {index === 0 ? "You accepted task" : "Not started"}
+              {step.desc}
             </span>
-            {index === 0 ? (
-              <span className="text-xs font-bold text-[#46534a]">10:24</span>
+            {step.time ? (
+              <span className="text-xs font-bold text-[#46534a]">
+                {step.time}
+              </span>
             ) : null}
           </li>
         ))}
@@ -1628,19 +1701,10 @@ function VolunteerPickupPanel({
         >
           Mark picked up
         </button>
-        <button
-          className={primaryButton}
-          type="button"
-          disabled={!canMarkDelivered}
-          onClick={() =>
-            activePickup
-              ? runAction(async () => {
-                  await markPickupDelivered(token, activePickup.id);
-                }, "Pickup marked delivered.")
-              : undefined
-          }
-        >
-          Mark delivered
+        <button className={primaryButton} type="button" disabled>
+          {activePickup?.status === "picked_up"
+            ? "Awaiting confirmation"
+            : "Mark delivered"}
         </button>
       </div>
     </section>
@@ -1766,6 +1830,8 @@ function ReceiverDashboard({
             proposal={activeProposal}
             donation={activePickup?.donation ?? activeDonation}
             pickup={activePickup}
+            token={token}
+            runAction={runAction}
           />
           <ReceiverNeedsCard
             profile={data.profile}
@@ -2271,10 +2337,14 @@ function ReceiverTimelineCard({
   proposal,
   donation,
   pickup,
+  token,
+  runAction,
 }: {
   proposal?: DeliveryProposal;
   donation?: Donation;
   pickup?: Pickup;
+  token: string;
+  runAction: (callback: () => Promise<void>, success: string) => Promise<void>;
 }) {
   const receiverAccepted =
     Boolean(proposal?.receiverAcceptedAt) || proposal?.status === "accepted";
@@ -2376,6 +2446,19 @@ function ReceiverTimelineCard({
           </li>
         ))}
       </ol>
+      {pickup?.status === "picked_up" && (
+        <button
+          className={cx(primaryButton, "w-full")}
+          type="button"
+          onClick={() =>
+            runAction(async () => {
+              await markPickupDelivered(token, pickup.id);
+            }, "Delivery confirmed successfully.")
+          }
+        >
+          Confirm delivery received
+        </button>
+      )}
       <a
         className="flex min-h-11 items-center justify-center gap-3 rounded-lg border border-[#ded7c9] bg-[#fffdf8] text-sm font-black text-[#064c25]"
         href="#proposal-queue"
