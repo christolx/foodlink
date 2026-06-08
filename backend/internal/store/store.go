@@ -101,7 +101,7 @@ func (s *Store) SeedDemoData() error {
 			Description:         "Mixed shelf-stable cans, jars, and pantry staples.",
 			Quantity:            "8 boxes",
 			ImageURL:            &cannedGoodsImage,
-			Status:              string(api.DonationStatusPickupAssigned),
+			Status:              string(api.DonationStatusDelivered),
 			PickupLocation:      location,
 			AvailableFrom:       now.Add(-2 * time.Hour),
 			AvailableUntil:      now.Add(3 * time.Hour),
@@ -152,10 +152,12 @@ func (s *Store) SeedDemoData() error {
 		{ID: "demo_proposal_prepared_meals", DonationID: "demo_donation_prepared_meals", ReceiverID: "user_receiver", VolunteerID: "user_volunteer", Status: string(api.ProposalStatusAccepted), DonorAcceptedAt: &preparedDonorAcceptedAt, ReceiverAcceptedAt: &preparedReceiverAcceptedAt, CreatedAt: now.Add(-28 * time.Hour), UpdatedAt: now.Add(-26 * time.Hour)},
 		{ID: "demo_proposal_tofu_rejected", DonationID: "demo_donation_tofu_rice_trays", ReceiverID: "user_receiver", VolunteerID: "user_volunteer", Status: string(api.ProposalStatusRejected), RejectedByUserID: &rejectedByReceiver, CreatedAt: now.Add(-2 * time.Hour), UpdatedAt: now.Add(-90 * time.Minute)},
 	}
+	cannedPickedUpAt := now.Add(-60 * time.Minute)
+	cannedDeliveredAt := now.Add(-40 * time.Minute)
 	preparedPickedUpAt := now.Add(-25 * time.Hour)
 	preparedDeliveredAt := now.Add(-23 * time.Hour)
 	pickups := []models.Pickup{
-		{ID: "demo_pickup_canned_goods", DonationID: "demo_donation_canned_goods", ProposalID: "demo_proposal_canned_goods", ReceiverID: "user_receiver", VolunteerID: "user_volunteer", Status: string(api.PickupStatusAssigned), PickupLocation: location, DeliveryLocation: receiverLocation, CreatedAt: now.Add(-65 * time.Minute), UpdatedAt: now.Add(-30 * time.Minute)},
+		{ID: "demo_pickup_canned_goods", DonationID: "demo_donation_canned_goods", ProposalID: "demo_proposal_canned_goods", ReceiverID: "user_receiver", VolunteerID: "user_volunteer", Status: string(api.PickupStatusDelivered), PickupLocation: location, DeliveryLocation: receiverLocation, PickedUpAt: &cannedPickedUpAt, DeliveredAt: &cannedDeliveredAt, CreatedAt: now.Add(-65 * time.Minute), UpdatedAt: now.Add(-30 * time.Minute)},
 		{ID: "demo_pickup_prepared_meals", DonationID: "demo_donation_prepared_meals", ProposalID: "demo_proposal_prepared_meals", ReceiverID: "user_receiver", VolunteerID: "user_volunteer", Status: string(api.PickupStatusDelivered), PickupLocation: location, DeliveryLocation: receiverLocation, PickedUpAt: &preparedPickedUpAt, DeliveredAt: &preparedDeliveredAt, CreatedAt: now.Add(-26 * time.Hour), UpdatedAt: now.Add(-23 * time.Hour)},
 	}
 	notifications := []models.Notification{
