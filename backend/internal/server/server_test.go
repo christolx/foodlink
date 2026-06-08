@@ -100,6 +100,16 @@ func TestVolunteerProposalFlow(t *testing.T) {
 		t.Fatalf("proposal status = %s", proposal.Status)
 	}
 
+	status, body = doJSON(t, handler, http.MethodGet, "/api/v1/delivery-proposals", nil, volunteerToken)
+	if status != http.StatusOK {
+		t.Fatalf("list proposals status = %d body = %s", status, body)
+	}
+	var proposalList api.DeliveryProposalListResponse
+	decode(t, body, &proposalList)
+	if proposalList.Total == 0 || proposalList.Items[0].Donation == nil || proposalList.Items[0].ReceiverProfile == nil || proposalList.Items[0].VolunteerProfile == nil {
+		t.Fatalf("listed proposal missing embedded dashboard data: %+v", proposalList.Items)
+	}
+
 	status, body = doJSON(t, handler, http.MethodPost, "/api/v1/delivery-proposals/"+proposal.Id+"/accept", nil, donorToken)
 	if status != http.StatusOK {
 		t.Fatalf("donor accept status = %d body = %s", status, body)
@@ -124,6 +134,19 @@ func TestVolunteerProposalFlow(t *testing.T) {
 	}
 	if receiverAccepted.Pickup.Status != api.PickupStatusAssigned {
 		t.Fatalf("pickup status = %s", receiverAccepted.Pickup.Status)
+	}
+	if receiverAccepted.Pickup.Donation == nil || receiverAccepted.Pickup.ReceiverProfile == nil || receiverAccepted.Pickup.VolunteerProfile == nil {
+		t.Fatalf("accepted pickup missing embedded dashboard data: %+v", receiverAccepted.Pickup)
+	}
+
+	status, body = doJSON(t, handler, http.MethodGet, "/api/v1/pickups", nil, volunteerToken)
+	if status != http.StatusOK {
+		t.Fatalf("list volunteer pickups status = %d body = %s", status, body)
+	}
+	var pickupList api.PickupListResponse
+	decode(t, body, &pickupList)
+	if pickupList.Total == 0 || pickupList.Items[0].Donation == nil {
+		t.Fatalf("listed pickup missing embedded donation: %+v", pickupList.Items)
 	}
 
 	status, body = doJSON(t, handler, http.MethodPost, "/api/v1/pickups/"+receiverAccepted.Pickup.Id+"/pickup", api.UpdatePickupStatusRequest{}, volunteerToken)

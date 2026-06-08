@@ -115,15 +115,19 @@ type CreateDonationRequest struct {
 // DeliveryProposal defines model for DeliveryProposal.
 type DeliveryProposal struct {
 	CreatedAt          time.Time      `json:"createdAt"`
+	Donation           *Donation      `json:"donation,omitempty"`
 	DonationId         string         `json:"donationId"`
 	DonorAcceptedAt    *time.Time     `json:"donorAcceptedAt,omitempty"`
+	DonorProfile       *Profile       `json:"donorProfile,omitempty"`
 	Id                 string         `json:"id"`
 	ReceiverAcceptedAt *time.Time     `json:"receiverAcceptedAt,omitempty"`
 	ReceiverId         string         `json:"receiverId"`
+	ReceiverProfile    *Profile       `json:"receiverProfile,omitempty"`
 	RejectedByUserId   *string        `json:"rejectedByUserId,omitempty"`
 	Status             ProposalStatus `json:"status"`
 	UpdatedAt          time.Time      `json:"updatedAt"`
 	VolunteerId        string         `json:"volunteerId"`
+	VolunteerProfile   *Profile       `json:"volunteerProfile,omitempty"`
 }
 
 // DeliveryProposalAcceptResponse defines model for DeliveryProposalAcceptResponse.
@@ -236,15 +240,27 @@ type Pickup struct {
 	CreatedAt        time.Time    `json:"createdAt"`
 	DeliveredAt      *time.Time   `json:"deliveredAt,omitempty"`
 	DeliveryLocation Location     `json:"deliveryLocation"`
+	Donation         *Donation    `json:"donation,omitempty"`
 	DonationId       string       `json:"donationId"`
+	DonorProfile     *Profile     `json:"donorProfile,omitempty"`
 	Id               string       `json:"id"`
 	PickedUpAt       *time.Time   `json:"pickedUpAt,omitempty"`
 	PickupLocation   Location     `json:"pickupLocation"`
 	ProposalId       string       `json:"proposalId"`
 	ReceiverId       string       `json:"receiverId"`
+	ReceiverProfile  *Profile     `json:"receiverProfile,omitempty"`
 	Status           PickupStatus `json:"status"`
 	UpdatedAt        time.Time    `json:"updatedAt"`
 	VolunteerId      string       `json:"volunteerId"`
+	VolunteerProfile *Profile     `json:"volunteerProfile,omitempty"`
+}
+
+// PickupListResponse defines model for PickupListResponse.
+type PickupListResponse struct {
+	Items    []Pickup `json:"items"`
+	Page     int      `json:"page"`
+	PageSize int      `json:"pageSize"`
+	Total    int      `json:"total"`
 }
 
 // PickupStatus defines model for PickupStatus.
@@ -352,6 +368,13 @@ type ListNotificationsParams struct {
 	PageSize *PageSize `form:"pageSize,omitempty" json:"pageSize,omitempty"`
 }
 
+// ListPickupsParams defines parameters for ListPickups.
+type ListPickupsParams struct {
+	Page     *Page         `form:"page,omitempty" json:"page,omitempty"`
+	PageSize *PageSize     `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+	Status   *PickupStatus `form:"status,omitempty" json:"status,omitempty"`
+}
+
 // ListReceiversParams defines parameters for ListReceivers.
 type ListReceiversParams struct {
 	Page     *Page     `form:"page,omitempty" json:"page,omitempty"`
@@ -420,6 +443,9 @@ type ServerInterface interface {
 	// Mark notification read.
 	// (POST /notifications/{id}/read)
 	MarkNotificationRead(w http.ResponseWriter, r *http.Request, id Id)
+	// List pickups visible to current role.
+	// (GET /pickups)
+	ListPickups(w http.ResponseWriter, r *http.Request, params ListPickupsParams)
 	// Mark pickup as delivered. Assigned volunteer only.
 	// (POST /pickups/{id}/deliver)
 	MarkPickupDelivered(w http.ResponseWriter, r *http.Request, id Id)
@@ -837,6 +863,55 @@ func (siw *ServerInterfaceWrapper) MarkNotificationRead(w http.ResponseWriter, r
 	handler.ServeHTTP(w, r)
 }
 
+// ListPickups operation middleware
+func (siw *ServerInterfaceWrapper) ListPickups(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListPickupsParams
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "page", r.URL.Query(), &params.Page)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "pageSize" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "pageSize", r.URL.Query(), &params.PageSize)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "pageSize", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "status" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "status", r.URL.Query(), &params.Status)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "status", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListPickups(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // MarkPickupDelivered operation middleware
 func (siw *ServerInterfaceWrapper) MarkPickupDelivered(w http.ResponseWriter, r *http.Request) {
 
@@ -1074,6 +1149,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc("GET "+options.BaseURL+"/notifications", wrapper.ListNotifications)
 	m.HandleFunc("GET "+options.BaseURL+"/notifications/stream", wrapper.StreamNotifications)
 	m.HandleFunc("POST "+options.BaseURL+"/notifications/{id}/read", wrapper.MarkNotificationRead)
+	m.HandleFunc("GET "+options.BaseURL+"/pickups", wrapper.ListPickups)
 	m.HandleFunc("POST "+options.BaseURL+"/pickups/{id}/deliver", wrapper.MarkPickupDelivered)
 	m.HandleFunc("POST "+options.BaseURL+"/pickups/{id}/pickup", wrapper.MarkPickupPickedUp)
 	m.HandleFunc("GET "+options.BaseURL+"/receivers", wrapper.ListReceivers)
@@ -1789,6 +1865,52 @@ func (response MarkNotificationRead500JSONResponse) VisitMarkNotificationReadRes
 	return json.NewEncoder(w).Encode(response)
 }
 
+type ListPickupsRequestObject struct {
+	Params ListPickupsParams
+}
+
+type ListPickupsResponseObject interface {
+	VisitListPickupsResponse(w http.ResponseWriter) error
+}
+
+type ListPickups200JSONResponse PickupListResponse
+
+func (response ListPickups200JSONResponse) VisitListPickupsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListPickups400JSONResponse struct{ BadRequestJSONResponse }
+
+func (response ListPickups400JSONResponse) VisitListPickupsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListPickups401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response ListPickups401JSONResponse) VisitListPickupsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListPickups500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response ListPickups500JSONResponse) VisitListPickupsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
 type MarkPickupDeliveredRequestObject struct {
 	Id   Id `json:"id"`
 	Body *MarkPickupDeliveredJSONRequestBody
@@ -2018,6 +2140,9 @@ type StrictServerInterface interface {
 	// Mark notification read.
 	// (POST /notifications/{id}/read)
 	MarkNotificationRead(ctx context.Context, request MarkNotificationReadRequestObject) (MarkNotificationReadResponseObject, error)
+	// List pickups visible to current role.
+	// (GET /pickups)
+	ListPickups(ctx context.Context, request ListPickupsRequestObject) (ListPickupsResponseObject, error)
 	// Mark pickup as delivered. Assigned volunteer only.
 	// (POST /pickups/{id}/deliver)
 	MarkPickupDelivered(ctx context.Context, request MarkPickupDeliveredRequestObject) (MarkPickupDeliveredResponseObject, error)
@@ -2429,6 +2554,32 @@ func (sh *strictHandler) MarkNotificationRead(w http.ResponseWriter, r *http.Req
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(MarkNotificationReadResponseObject); ok {
 		if err := validResponse.VisitMarkNotificationReadResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListPickups operation middleware
+func (sh *strictHandler) ListPickups(w http.ResponseWriter, r *http.Request, params ListPickupsParams) {
+	var request ListPickupsRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListPickups(ctx, request.(ListPickupsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListPickups")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListPickupsResponseObject); ok {
+		if err := validResponse.VisitListPickupsResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

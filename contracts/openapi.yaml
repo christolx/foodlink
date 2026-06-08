@@ -293,6 +293,32 @@ paths:
           $ref: "#/components/responses/Conflict"
         "500":
           $ref: "#/components/responses/InternalServerError"
+  /pickups:
+    get:
+      tags: [Pickups]
+      operationId: listPickups
+      summary: List pickups visible to current role.
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/PickupStatus"
+      responses:
+        "200":
+          description: Paged pickups.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PickupListResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   /pickups/{id}/pickup:
     post:
       tags: [Pickups]
@@ -642,6 +668,14 @@ components:
           format: date-time
         rejectedByUserId:
           type: string
+        donation:
+          $ref: "#/components/schemas/Donation"
+        donorProfile:
+          $ref: "#/components/schemas/Profile"
+        receiverProfile:
+          $ref: "#/components/schemas/Profile"
+        volunteerProfile:
+          $ref: "#/components/schemas/Profile"
         createdAt:
           type: string
           format: date-time
@@ -675,6 +709,14 @@ components:
         deliveredAt:
           type: string
           format: date-time
+        donation:
+          $ref: "#/components/schemas/Donation"
+        donorProfile:
+          $ref: "#/components/schemas/Profile"
+        receiverProfile:
+          $ref: "#/components/schemas/Profile"
+        volunteerProfile:
+          $ref: "#/components/schemas/Profile"
         createdAt:
           type: string
           format: date-time
@@ -822,6 +864,21 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Profile"
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        total:
+          type: integer
+    PickupListResponse:
+      type: object
+      additionalProperties: false
+      required: [items, page, pageSize, total]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Pickup"
         page:
           type: integer
         pageSize:
