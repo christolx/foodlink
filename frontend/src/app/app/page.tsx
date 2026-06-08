@@ -1,31 +1,5 @@
 "use client";
 
-import {
-  ArrowRight,
-  Bell,
-  Box,
-  CalendarDays,
-  ChartColumn,
-  Check,
-  ChevronDown,
-  CircleUserRound,
-  Clock3,
-  Filter,
-  LayoutDashboard,
-  Leaf,
-  type LucideIcon,
-  MapIcon,
-  MapPin,
-  MessageSquare,
-  Navigation,
-  Package,
-  Search,
-  Settings,
-  ShoppingBag,
-  Truck,
-  Users,
-  X,
-} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -57,6 +31,31 @@ import {
 } from "@/lib/api";
 import { clearToken, getToken } from "@/lib/auth";
 import { getMe, getMyProfile } from "@/lib/session";
+import {
+  AppIcon,
+  badgeBase,
+  compactFoodDescription,
+  cx,
+  DonationThumbnail,
+  defaultDonationImage,
+  demoLocation,
+  donorDisplayName,
+  emptyCopy,
+  formatDate,
+  formatTime,
+  ghostButton,
+  heading,
+  type IconName,
+  input,
+  leafMark,
+  panel,
+  primaryButton,
+  quantityNumber,
+  readableDonationId,
+  receiverNotificationTitle,
+  roleLabels,
+  statusClass,
+} from "./dashboard-ui";
 
 type DashboardData = {
   user: User;
@@ -73,132 +72,10 @@ type ActionState = {
   tone: "success" | "error";
 } | null;
 
-const demoLocation = {
-  addressLine1: "Jl. Sudirman 1",
-  city: "Jakarta",
-  region: "DKI Jakarta",
-  postalCode: "10220",
-  country: "ID",
-};
-
-const roleLabels = {
-  donor: "Donor",
-  volunteer: "Volunteer",
-  receiver: "Receiver",
-};
-
-const leafMark =
-  "inline-block h-6 w-6 rotate-[-28deg] rounded-[100%_0_100%_0] border-[3px] border-current text-[#ffb91f]";
-const panel =
-  "rounded-[0.85rem] border border-[#ded7c9] bg-[#fffdf7]/82 shadow-[0_1rem_2.5rem_rgba(50,43,28,0.08)]";
-const heading =
-  "font-serif text-[1.55rem] font-normal leading-none tracking-[-0.035em] text-[#061e0e]";
-const input =
-  "min-h-10 w-full rounded-md border border-[#cfc8ba] bg-[#fffdf8] px-3 py-2 text-sm font-bold text-[#111a14] outline-none transition placeholder:text-[#7a817b] focus:border-[#116b35] focus:ring-2 focus:ring-[#116b35]/15";
-const primaryButton =
-  "inline-flex min-h-12 items-center justify-center gap-3 rounded-md bg-[#ffbd1a] px-5 font-black text-[#10140d] shadow-[0_0.75rem_1.5rem_rgba(167,111,2,0.16)] transition hover:-translate-y-0.5 hover:bg-[#f4b30e] disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:translate-y-0";
-const ghostButton =
-  "inline-flex min-h-10 items-center justify-center rounded-md border border-[#9eb69f] bg-[#fffdf8] px-4 text-sm font-black text-[#064c25] transition hover:-translate-y-0.5 hover:bg-[#f6fbf3] disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:translate-y-0";
-const badgeBase =
-  "inline-flex min-h-6 items-center rounded-md px-2.5 text-xs font-black";
-const defaultDonationImage = "/landing/cards/donate-card.webp";
 const cloudinaryCloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
 const cloudinaryUploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
 const cloudinaryUploadEnabled =
   Boolean(cloudinaryCloudName) && Boolean(cloudinaryUploadPreset);
-
-function cx(...classes: Array<string | false | null | undefined>) {
-  return classes.filter(Boolean).join(" ");
-}
-
-function statusClass(status: Donation["status"] | DeliveryProposal["status"]) {
-  if (status === "rejected" || status === "canceled") {
-    return "bg-[#f7d8d1] text-[#8a2e22]";
-  }
-  if (
-    status === "accepted" ||
-    status === "picked_up" ||
-    status === "delivered"
-  ) {
-    return "bg-[#dcebd5] text-[#14351f]";
-  }
-  if (
-    status === "proposal_pending" ||
-    status === "pending" ||
-    status === "pickup_assigned"
-  ) {
-    return "bg-[#f7dfaa] text-[#332309]";
-  }
-
-  return "bg-[#dcebd5] text-[#14351f]";
-}
-
-function emptyCopy(value: string) {
-  return <p className="font-bold text-[#34443a]">{value}</p>;
-}
-
-type IconName =
-  | "arrow"
-  | "bag"
-  | "bell"
-  | "box"
-  | "calendar"
-  | "chart"
-  | "check"
-  | "chevron"
-  | "clock"
-  | "close"
-  | "dashboard"
-  | "filter"
-  | "leaf"
-  | "map"
-  | "marker"
-  | "message"
-  | "navigation"
-  | "package"
-  | "pickup"
-  | "profile"
-  | "search"
-  | "settings"
-  | "team";
-
-const icons: Record<IconName, LucideIcon> = {
-  arrow: ArrowRight,
-  bag: ShoppingBag,
-  bell: Bell,
-  box: Box,
-  calendar: CalendarDays,
-  chart: ChartColumn,
-  check: Check,
-  chevron: ChevronDown,
-  clock: Clock3,
-  close: X,
-  dashboard: LayoutDashboard,
-  filter: Filter,
-  leaf: Leaf,
-  map: MapIcon,
-  marker: MapPin,
-  message: MessageSquare,
-  navigation: Navigation,
-  package: Package,
-  pickup: Truck,
-  profile: CircleUserRound,
-  search: Search,
-  settings: Settings,
-  team: Users,
-};
-
-function AppIcon({
-  name,
-  className = "h-5 w-5",
-}: {
-  name: IconName;
-  className?: string;
-}) {
-  const Icon = icons[name];
-
-  return <Icon className={className} strokeWidth={2} aria-hidden="true" />;
-}
 
 function uploadResultInfo(
   result: CloudinaryUploadWidgetResults,
@@ -2498,47 +2375,6 @@ function DonationsTable({
   );
 }
 
-function DonationThumbnail({
-  donation,
-  size = "md",
-}: {
-  donation?: Donation;
-  size?: "sm" | "md" | "lg";
-}) {
-  const [failed, setFailed] = useState(false);
-  const imageUrl = donation?.imageUrl;
-  const boxClass =
-    size === "lg"
-      ? "h-24 w-24 rounded-md"
-      : size === "sm"
-        ? "h-12 w-12 rounded-md"
-        : "h-11 w-16 rounded-md";
-
-  if (imageUrl && !failed) {
-    return (
-      // biome-ignore lint/performance/noImgElement: Donation image URLs are user-provided and can be arbitrary remote or root-relative URLs.
-      <img
-        alt={donation?.title ?? "Donation image"}
-        className={cx(boxClass, "shrink-0 object-cover")}
-        src={imageUrl}
-        onError={() => setFailed(true)}
-      />
-    );
-  }
-
-  return (
-    <span
-      aria-hidden="true"
-      className={cx(
-        boxClass,
-        "grid shrink-0 place-items-center bg-[#e8f1e6] text-[#2f7a46] shadow-[inset_0_0_0_1px_rgba(47,122,70,0.12)]",
-      )}
-    >
-      <span className={cx(leafMark, "h-5 w-5 border-2")} />
-    </span>
-  );
-}
-
 function NotificationsPanel({
   notifications,
   viewerRole,
@@ -2699,78 +2535,4 @@ function NotificationsPanel({
       </a>
     </aside>
   );
-}
-
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("en", {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(value));
-}
-
-function formatTime(value: string) {
-  return new Intl.DateTimeFormat("en", {
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(value));
-}
-
-function quantityNumber(value: string) {
-  const match = value.match(/\d+/);
-
-  return match ? Number(match[0]) : 0;
-}
-
-function readableDonationId(value: string) {
-  return value
-    .replace(/^demo_donation_/, "")
-    .replaceAll("_", " ")
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
-}
-
-function donorDisplayName(donation?: Donation) {
-  if (!donation?.description) {
-    return "Kedai Roti Hangat";
-  }
-
-  const description = donation.description.trim();
-
-  if (description.length <= 28) {
-    return description;
-  }
-
-  return ["Kedai Roti Hangat", "Dapur Baik Warteg", "Restoran Nusantara"][
-    quantityNumber(donation.quantity) % 3
-  ];
-}
-
-function compactFoodDescription(donation?: Donation) {
-  if (!donation?.description) {
-    return "Fresh meals ready for delivery";
-  }
-
-  const description = donation.description.replace(/\.$/, "");
-
-  return description.length > 52
-    ? `${description.slice(0, 49).trim()}...`
-    : description;
-}
-
-function receiverNotificationTitle(notification: Notification) {
-  if (notification.type === "proposal_created") {
-    return "New proposal from donor";
-  }
-  if (notification.type === "proposal_accepted") {
-    return "Donor accepted proposal";
-  }
-  if (notification.type === "pickup_assigned") {
-    return "Pickup assigned";
-  }
-  if (notification.type === "pickup_completed") {
-    return "Thank you!";
-  }
-
-  return notification.title;
 }
