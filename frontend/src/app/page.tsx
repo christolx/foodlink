@@ -1,4 +1,14 @@
 import Image from "next/image";
+import type { UserRole } from "@/lib/api";
+
+type LandingRole = {
+  eyebrow: string;
+  title: string;
+  body: string;
+  action: string;
+  image: string;
+  demoRole: UserRole;
+};
 
 const activity = [
   ["Posted", "Community Cafe", "12 min ago"],
@@ -6,13 +16,14 @@ const activity = [
   ["Volunteer assigned", "On the way", "3 min ago"],
 ];
 
-const roles = [
+const roles: LandingRole[] = [
   {
     eyebrow: "I can donate food",
     title: "Give surplus a second table.",
     body: "Businesses, restaurants, and kitchens can post safe food before it becomes waste.",
     action: "I want to donate",
     image: "/landing/cards/donate-card.webp",
+    demoRole: "donor",
   },
   {
     eyebrow: "I need food",
@@ -20,6 +31,7 @@ const roles = [
     body: "Simple requests stay private, local, and coordinated through trusted community partners.",
     action: "I need food",
     image: "/landing/cards/need-card.webp",
+    demoRole: "receiver",
   },
   {
     eyebrow: "I want to volunteer",
@@ -27,6 +39,7 @@ const roles = [
     body: "Pickup routes and live updates help volunteers get meals where they are needed.",
     action: "I want to volunteer",
     image: "/landing/cards/volunteer-card.webp",
+    demoRole: "volunteer",
   },
 ];
 
@@ -86,10 +99,10 @@ export default function Home() {
             <a href="#get-involved">Get involved</a>
           </nav>
           <div className="nav-actions">
-            <a className="button button-ghost" href="#get-involved">
+            <a className="button button-ghost" href="/demo">
               Get involved
             </a>
-            <a className="signin" href="#signin">
+            <a className="signin" href="/demo">
               <span aria-hidden="true">♙</span>
               Sign in
             </a>
@@ -101,11 +114,11 @@ export default function Home() {
             <h1 id="hero-title">FoodLink</h1>
             <p>Connect surplus food with people who need it, fast.</p>
             <div className="hero-actions">
-              <a className="button button-primary" href="#get-involved">
+              <a className="button button-primary" href="/demo">
                 Get involved
                 <ArrowIcon />
               </a>
-              <a className="button button-google" href="#signin">
+              <a className="button button-google" href="/demo">
                 <span aria-hidden="true">G</span>
                 Continue with Google or email
               </a>
@@ -188,7 +201,7 @@ export default function Home() {
                 <p className="role-eyebrow">{role.eyebrow}</p>
                 <h3>{role.title}</h3>
                 <p>{role.body}</p>
-                <a href="#get-involved">
+                <a href={`/demo?selectedRole=${role.demoRole}`}>
                   {role.action}
                   <ArrowIcon />
                 </a>
@@ -231,7 +244,7 @@ export default function Home() {
 
       <section className="final-cta" id="get-involved">
         <h2>Small actions. Big community impact.</h2>
-        <a className="button button-primary" href="mailto:hello@foodlink.local">
+        <a className="button button-primary" href="/demo">
           Get involved today
           <ArrowIcon />
         </a>
