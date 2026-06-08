@@ -483,7 +483,7 @@ function DashboardSidebar({
 
   return (
     <aside
-      className="sticky top-0 grid min-h-screen grid-rows-[auto_1fr_auto_auto] gap-8 bg-[radial-gradient(circle_at_70%_92%,rgba(30,112,48,0.32),transparent_12rem),linear-gradient(180deg,#063514_0%,#052b12_52%,#031b0c_100%)] px-4 py-9 text-[#f8f5ea] max-lg:static max-lg:min-h-0"
+      className="sticky top-0 grid h-screen grid-rows-[auto_1fr_auto_auto] gap-8 bg-[radial-gradient(circle_at_70%_92%,rgba(30,112,48,0.32),transparent_12rem),linear-gradient(180deg,#063514_0%,#052b12_52%,#031b0c_100%)] px-4 py-9 text-[#f8f5ea] max-lg:static max-lg:h-auto"
       aria-label="Dashboard navigation"
     >
       {topHeader}
@@ -801,7 +801,7 @@ function DonorDashboard({
       <div className="grid gap-5" id="work">
         <section className="grid gap-5 lg:grid-cols-[minmax(28rem,1.08fr)_minmax(24rem,0.92fr)]">
           <form
-            className={cx(panel, "grid gap-4 p-6")}
+            className={cx(panel, "grid content-start gap-4 p-6")}
             onSubmit={handleCreateDonation}
           >
             <div className="flex items-center gap-4">
