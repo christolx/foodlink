@@ -187,7 +187,7 @@ export default function AppPage() {
 
   return (
     <main className="grid min-h-screen bg-[#f8f6ef] text-[#101812] lg:grid-cols-[13.75rem_minmax(0,1fr)]">
-      <DashboardSidebar signOut={signOut} />
+      <DashboardSidebar data={data} signOut={signOut} />
 
       <section
         className="mx-auto w-full max-w-[116rem] px-5 py-7 lg:px-8"
@@ -242,26 +242,251 @@ export default function AppPage() {
   );
 }
 
-function DashboardSidebar({ signOut }: { signOut: () => void }) {
-  const navItems: Array<{ label: string; icon: IconName; href: string }> = [
-    { label: "Dashboard", icon: "dashboard", href: "#dashboard-title" },
-    { label: "My donations", icon: "bag", href: "#my-donations" },
-    { label: "Proposals", icon: "box", href: "#proposal-queue" },
-    { label: "Pickups", icon: "pickup", href: "#work" },
-    { label: "Messages", icon: "message", href: "#notifications" },
-    { label: "Reports", icon: "chart", href: "#my-donations" },
-    { label: "Profile", icon: "profile", href: "#dashboard-title" },
-    { label: "Settings", icon: "settings", href: "#dashboard-title" },
-  ];
+function DashboardSidebar({
+  data,
+  signOut,
+}: {
+  data: DashboardData;
+  signOut: () => void;
+}) {
+  const role = data.user.role;
+  const initials = data.profile.displayName
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+  const navItems = useMemo(() => {
+    if (role === "receiver") {
+      const pendingCount = data.proposals.filter(
+        (p) => p.status === "pending",
+      ).length;
+      return [
+        {
+          label: "Dashboard",
+          icon: "dashboard" as IconName,
+          href: "#dashboard-title",
+        },
+        {
+          label: "Proposals",
+          icon: "box" as IconName,
+          href: "#proposal-queue",
+          badge: pendingCount,
+        },
+        { label: "Deliveries", icon: "pickup" as IconName, href: "#work" },
+        { label: "Needs", icon: "bag" as IconName, href: "#my-food-requests" },
+        {
+          label: "Messages",
+          icon: "message" as IconName,
+          href: "#notifications",
+          badge: 2,
+        },
+        {
+          label: "Profile",
+          icon: "profile" as IconName,
+          href: "#dashboard-title",
+        },
+      ];
+    }
+    if (role === "volunteer") {
+      const availableCount = data.donations.filter(
+        (d) => d.status === "available",
+      ).length;
+      return [
+        {
+          label: "Dashboard",
+          icon: "dashboard" as IconName,
+          href: "#dashboard-title",
+        },
+        {
+          label: "Available donations",
+          icon: "bag" as IconName,
+          href: "#available-donations",
+          badge: availableCount,
+        },
+        {
+          label: "Receivers",
+          icon: "team" as IconName,
+          href: "#receiver-directory",
+        },
+        {
+          label: "My proposals",
+          icon: "box" as IconName,
+          href: "#my-proposals",
+        },
+        {
+          label: "Pickups",
+          icon: "pickup" as IconName,
+          href: "#active-pickup",
+        },
+        {
+          label: "History",
+          icon: "clock" as IconName,
+          href: "#today-at-a-glance",
+        },
+        {
+          label: "Messages",
+          icon: "message" as IconName,
+          href: "#notifications",
+        },
+        {
+          label: "Reports",
+          icon: "chart" as IconName,
+          href: "#today-at-a-glance",
+        },
+        {
+          label: "Profile",
+          icon: "profile" as IconName,
+          href: "#dashboard-title",
+        },
+        {
+          label: "Settings",
+          icon: "settings" as IconName,
+          href: "#dashboard-title",
+        },
+        {
+          label: "Help & support",
+          icon: "message" as IconName,
+          href: "#dashboard-title",
+        },
+      ];
+    }
+    // Donor
+    return [
+      {
+        label: "Dashboard",
+        icon: "dashboard" as IconName,
+        href: "#dashboard-title",
+      },
+      { label: "My donations", icon: "bag" as IconName, href: "#my-donations" },
+      { label: "Proposals", icon: "box" as IconName, href: "#proposal-queue" },
+      { label: "Pickups", icon: "pickup" as IconName, href: "#work" },
+      {
+        label: "Messages",
+        icon: "message" as IconName,
+        href: "#notifications",
+      },
+      { label: "Reports", icon: "chart" as IconName, href: "#my-donations" },
+      {
+        label: "Profile",
+        icon: "profile" as IconName,
+        href: "#dashboard-title",
+      },
+      {
+        label: "Settings",
+        icon: "settings" as IconName,
+        href: "#dashboard-title",
+      },
+    ];
+  }, [role, data]);
+
+  const topHeader = useMemo(() => {
+    if (role === "receiver") {
+      return (
+        <div className="flex flex-col items-center gap-2 border-b border-white/10 pb-6 text-center">
+          <span className="grid h-16 w-16 place-items-center rounded-full bg-[#116b35] text-xl font-black text-[#ffbd1a] border-2 border-[#ffbd1a]/30 shadow-md">
+            <AppIcon name="leaf" className="h-8 w-8 text-[#ffbd1a]" />
+          </span>
+          <div className="mt-2 grid justify-items-center">
+            <strong className="flex items-center gap-1.5 text-base font-black">
+              {data.profile.displayName}
+              <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-[#ffbd1a] text-[0.6rem] font-bold text-[#052b12]">
+                ✓
+              </span>
+            </strong>
+            <span className="mt-1 flex items-center gap-1.5 text-xs font-bold text-[#dfe8dc]/80">
+              <AppIcon name="profile" className="h-3.5 w-3.5" />
+              Receiver
+            </span>
+            <span className="mt-1 flex items-center gap-1.5 text-xs font-bold text-[#dfe8dc]/80">
+              <AppIcon name="marker" className="h-3.5 w-3.5" />
+              {data.profile.location.city || "Jakarta Selatan"}
+            </span>
+          </div>
+        </div>
+      );
+    }
+    if (role === "volunteer") {
+      return (
+        <div className="flex flex-col items-center gap-2 border-b border-white/10 pb-6 text-center">
+          <span className="grid h-16 w-16 place-items-center rounded-full bg-[#ffbd1a] text-xl font-black text-[#052b12] border-2 border-white/20 shadow-md">
+            {initials}
+          </span>
+          <div className="mt-2 grid justify-items-center">
+            <strong className="text-base font-black">
+              {data.profile.displayName}
+            </strong>
+            <span className="mt-1 text-xs font-bold text-[#dfe8dc]/80">
+              Volunteer
+            </span>
+            <div className="mt-2.5 inline-flex items-center gap-1.5 rounded-full border border-[#ffbd1a]/45 bg-[#ffbd1a]/10 px-2.5 py-0.5 text-[0.65rem] font-bold text-[#ffbd1a]">
+              <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
+              Online
+            </div>
+          </div>
+        </div>
+      );
+    }
+    // Donor
+    return (
+      <Link className="mx-auto text-[#ffbf1c]" href="/" aria-label="FoodLink">
+        <AppIcon name="leaf" className="h-14 w-14" />
+      </Link>
+    );
+  }, [role, data, initials]);
+
+  const bottomCard = useMemo(() => {
+    if (role === "receiver") {
+      return (
+        <div className="rounded-lg border border-white/10 bg-[#0b4c25]/45 p-5">
+          <span className="mb-4 inline-flex h-9 w-9 items-center justify-center rounded-full bg-[#ffbd1a]/15 text-[#ffbd1a]">
+            <AppIcon name="leaf" className="h-5 w-5" />
+          </span>
+          <strong className="block text-sm font-black leading-5 text-[#ffbd1a]">
+            Together we turn surplus into hope
+          </strong>
+          <p className="mt-3 text-xs font-bold leading-5 text-[#dfe8dc]">
+            Thank you for serving your community.
+          </p>
+        </div>
+      );
+    }
+    if (role === "volunteer") {
+      return (
+        <div className="rounded-lg border border-white/10 bg-[#0b4c25]/45 p-5">
+          <span className="mb-4 inline-flex h-9 w-9 items-center justify-center rounded-full bg-[#ffbd1a]/15 text-[#ffbd1a]">
+            <AppIcon name="navigation" className="h-5 w-5" />
+          </span>
+          <strong className="block text-sm font-black leading-5 text-[#ffbd1a]">
+            Every pickup makes a difference
+          </strong>
+          <p className="mt-3 text-xs font-bold leading-5 text-[#dfe8dc]">
+            Thank you for showing up today.
+          </p>
+        </div>
+      );
+    }
+    // Donor
+    return (
+      <div className="rounded-lg border border-white/10 bg-[#0b4c25]/45 p-5">
+        <AppIcon name="leaf" className="mb-6 h-9 w-9 text-[#1ea35a]" />
+        <strong className="block text-sm font-black leading-5">
+          Every meal makes a difference
+        </strong>
+        <p className="mt-4 text-xs font-bold leading-5 text-[#dfe8dc]">
+          Thank you for feeding our community.
+        </p>
+      </div>
+    );
+  }, [role]);
 
   return (
     <aside
       className="sticky top-0 grid min-h-screen grid-rows-[auto_1fr_auto_auto] gap-8 bg-[radial-gradient(circle_at_70%_92%,rgba(30,112,48,0.32),transparent_12rem),linear-gradient(180deg,#063514_0%,#052b12_52%,#031b0c_100%)] px-4 py-9 text-[#f8f5ea] max-lg:static max-lg:min-h-0"
       aria-label="Dashboard navigation"
     >
-      <Link className="mx-auto text-[#ffbf1c]" href="/" aria-label="FoodLink">
-        <AppIcon name="leaf" className="h-14 w-14" />
-      </Link>
+      {topHeader}
       <nav className="grid content-start gap-3">
         {navItems.map((item, index) => (
           <a
@@ -275,18 +500,15 @@ function DashboardSidebar({ signOut }: { signOut: () => void }) {
           >
             <AppIcon name={item.icon} className="h-5 w-5 shrink-0" />
             {item.label}
+            {item.badge !== undefined && item.badge > 0 ? (
+              <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-[#ffbd1a] px-1 text-[0.65rem] font-black text-[#052b12]">
+                {item.badge}
+              </span>
+            ) : null}
           </a>
         ))}
       </nav>
-      <div className="rounded-lg border border-white/10 bg-[#0b4c25]/45 p-5">
-        <AppIcon name="leaf" className="mb-6 h-9 w-9 text-[#1ea35a]" />
-        <strong className="block text-sm font-black leading-5">
-          Every meal makes a difference
-        </strong>
-        <p className="mt-4 text-xs font-bold leading-5 text-[#dfe8dc]">
-          Thank you for feeding our community.
-        </p>
-      </div>
+      {bottomCard}
       <button
         className="flex min-h-11 items-center gap-4 rounded-lg px-5 text-sm font-black transition hover:bg-white/10"
         type="button"
@@ -532,12 +754,28 @@ function DonorDashboard({
   const [uploadedImageUrl, setUploadedImageUrl] = useState("");
   const [uploadError, setUploadError] = useState("");
 
+  const [defaultFrom, setDefaultFrom] = useState("");
+  const [defaultUntil, setDefaultUntil] = useState("");
+
+  useEffect(() => {
+    const tzoffset = new Date().getTimezoneOffset() * 60000;
+    const localNow = new Date(Date.now() - tzoffset);
+    const localLater = new Date(Date.now() - tzoffset + 4 * 60 * 60 * 1000);
+    setDefaultFrom(localNow.toISOString().slice(0, 16));
+    setDefaultUntil(localLater.toISOString().slice(0, 16));
+  }, []);
+
   async function handleCreateDonation(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formElement = event.currentTarget;
     const form = new FormData(event.currentTarget);
     const now = new Date();
     const later = new Date(now.getTime() + 4 * 60 * 60 * 1000);
+
+    const fromVal = form.get("availableFrom");
+    const untilVal = form.get("availableUntil");
+    const fromDate = fromVal ? new Date(String(fromVal)) : now;
+    const untilDate = untilVal ? new Date(String(untilVal)) : later;
 
     await runAction(async () => {
       await createDonation(token, {
@@ -548,8 +786,8 @@ function DonorDashboard({
         quantity: String(form.get("quantity") || "10 packs"),
         imageUrl: uploadedImageUrl || defaultDonationImage,
         pickupLocation: demoLocation,
-        availableFrom: now.toISOString(),
-        availableUntil: later.toISOString(),
+        availableFrom: fromDate.toISOString(),
+        availableUntil: untilDate.toISOString(),
         specialInstructions: String(form.get("instructions") || ""),
       });
       formElement.reset();
@@ -628,6 +866,7 @@ function DonorDashboard({
                   className={input}
                   name="availableFrom"
                   type="datetime-local"
+                  defaultValue={defaultFrom}
                 />
               </label>
               <label className="grid gap-2 text-xs font-black text-[#1a281f]">
@@ -636,6 +875,7 @@ function DonorDashboard({
                   className={input}
                   name="availableUntil"
                   type="datetime-local"
+                  defaultValue={defaultUntil}
                 />
               </label>
             </div>
@@ -2149,6 +2389,32 @@ function ProposalQueue({
             const donorAccepted = Boolean(proposal.donorAcceptedAt);
             const receiverAccepted = Boolean(proposal.receiverAcceptedAt);
 
+            const volunteerName =
+              proposal.volunteerProfile?.displayName ??
+              (proposal.volunteerId === "user_volunteer" ||
+              proposal.volunteerId === "demo_volunteer"
+                ? "Budi Santoso"
+                : proposal.volunteerId
+                    .replace(/^(user_|demo_)/, "")
+                    .replace("_", " ")
+                    .replace(/\b\w/g, (c) => c.toUpperCase()));
+            const receiverName =
+              proposal.receiverProfile?.displayName ??
+              (proposal.receiverId === "user_receiver" ||
+              proposal.receiverId === "demo_receiver"
+                ? "Panti Harapan"
+                : proposal.receiverId
+                    .replace(/^(user_|demo_)/, "")
+                    .replace("_", " ")
+                    .replace(/\b\w/g, (c) => c.toUpperCase()));
+
+            const volunteerInitials = volunteerName
+              .split(" ")
+              .map((p) => p[0])
+              .join("")
+              .toUpperCase()
+              .slice(0, 2);
+
             return (
               <article
                 className="grid gap-4 rounded-lg border border-[#ded7c9] bg-[#fffdf8] p-3 2xl:grid-cols-[6rem_1fr_auto]"
@@ -2168,18 +2434,22 @@ function ProposalQueue({
                   </p>
                   <div className="mt-3 grid gap-2 text-xs font-bold">
                     <span className="flex items-center gap-2">
-                      Volunteer
-                      <span className="grid h-5 w-5 place-items-center rounded-full bg-[#ead7c5] text-[0.65rem]">
-                        V
+                      <span className="text-[#5c6860]">Volunteer</span>
+                      <span className="grid h-5 w-5 place-items-center rounded-full bg-[#ead7c5] text-[0.65rem] font-bold text-[#5c3e21]">
+                        {volunteerInitials}
                       </span>
-                      {proposal.volunteerId}
+                      <span className="font-black text-[#101812]">
+                        {volunteerName}
+                      </span>
                     </span>
                     <span className="flex items-center gap-2">
-                      Receiver
-                      <span className="grid h-5 w-5 place-items-center rounded-full bg-[#e5f1df] text-[#064c25]">
+                      <span className="text-[#5c6860]">Receiver</span>
+                      <span className="grid h-5 w-5 place-items-center rounded-full bg-[#fff4df] text-[#c46b00]">
                         <AppIcon name="leaf" className="h-3.5 w-3.5" />
                       </span>
-                      {proposal.receiverId}
+                      <span className="font-black text-[#101812]">
+                        {receiverName}
+                      </span>
                     </span>
                   </div>
                 </div>
@@ -2371,6 +2641,11 @@ function DonationsTable({
           </tbody>
         </table>
       </div>
+      {donations.length > 0 ? (
+        <div className="mt-5 text-center text-xs font-bold text-[#5c6860] border-t border-[#ded7c9]/40 pt-4">
+          Showing 1 to {donations.length} of {donations.length} donations
+        </div>
+      ) : null}
     </section>
   );
 }
