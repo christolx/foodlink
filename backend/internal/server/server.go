@@ -390,14 +390,14 @@ func (s *Server) MarkPickupDelivered(ctx context.Context, request api.MarkPickup
 	if !ok {
 		return api.MarkPickupDelivered401JSONResponse{UnauthorizedJSONResponse: unauthorized()}, nil
 	}
-	if user.Role != string(api.Volunteer) {
-		return api.MarkPickupDelivered403JSONResponse{ForbiddenJSONResponse: forbidden("volunteer role required")}, nil
+	if user.Role != string(api.Volunteer) && user.Role != string(api.Receiver) {
+		return api.MarkPickupDelivered403JSONResponse{ForbiddenJSONResponse: forbidden("volunteer or receiver role required")}, nil
 	}
 	occurredAt := time.Now().UTC()
 	if request.Body != nil && request.Body.OccurredAt != nil {
 		occurredAt = *request.Body.OccurredAt
 	}
-	pickup, err := s.store.MarkDelivered(request.Id, user.ID, occurredAt)
+	pickup, err := s.store.MarkDelivered(request.Id, user.ID, user.Role, occurredAt)
 	if errors.Is(err, store.ErrNotFound) {
 		return api.MarkPickupDelivered404JSONResponse{NotFoundJSONResponse: notFound("pickup not found")}, nil
 	}
