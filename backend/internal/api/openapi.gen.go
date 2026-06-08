@@ -105,7 +105,7 @@ type CreateDonationRequest struct {
 	AvailableFrom       time.Time `json:"availableFrom"`
 	AvailableUntil      time.Time `json:"availableUntil"`
 	Description         string    `json:"description"`
-	ImageUrl            *string   `json:"imageUrl,omitempty"`
+	ImageUrl            string    `json:"imageUrl"`
 	PickupLocation      Location  `json:"pickupLocation"`
 	Quantity            string    `json:"quantity"`
 	SpecialInstructions *string   `json:"specialInstructions,omitempty"`
@@ -164,7 +164,7 @@ type Donation struct {
 	Description         string         `json:"description"`
 	DonorId             string         `json:"donorId"`
 	Id                  string         `json:"id"`
-	ImageUrl            *string        `json:"imageUrl,omitempty"`
+	ImageUrl            string         `json:"imageUrl"`
 	PickupLocation      Location       `json:"pickupLocation"`
 	Quantity            string         `json:"quantity"`
 	SpecialInstructions *string        `json:"specialInstructions,omitempty"`
