@@ -1,12 +1,16 @@
 # Frontend
 
-Next.js frontend shell for FoodLink.
+Next.js frontend app for FoodLink.
 
-Planned contents:
-- app router
-- React + TypeScript
-- Tailwind
-- role dashboards
-- demo account picker
-- donation map panel with static pins
-- "Open in Google Maps" handoff for volunteer navigation
+Current contents:
+- App Router, React, TypeScript, and Tailwind.
+- Demo account picker for donor, volunteer, and receiver roles.
+- Role dashboards for donor, volunteer, and receiver demo flows.
+- Volunteer dashboard loads donations, receivers, proposals, pickups, and notifications.
+- Receiver dashboard loads proposals, pickups, profile needs, and notifications.
+- Dashboard controls should either call the API, update local view state, or be removed until implemented.
+
+Dashboard data notes:
+- `GET /delivery-proposals` and `GET /pickups` may include embedded donation/profile data.
+- Prefer embedded data for dashboard labels and cards; fall back to local lists only when an embedded field is absent.
+- Profile needs updates use `PUT /me/profile`.
