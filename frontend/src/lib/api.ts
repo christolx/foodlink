@@ -84,7 +84,7 @@ export type Donation = {
   title: string;
   description: string;
   quantity: string;
-  imageUrl?: string;
+  imageUrl: string;
   status: DonationStatus;
   pickupLocation: Location;
   availableFrom: string;
@@ -140,7 +140,7 @@ export type CreateDonationRequest = {
   title: string;
   description: string;
   quantity: string;
-  imageUrl?: string;
+  imageUrl: string;
   pickupLocation: Location;
   availableFrom: string;
   availableUntil: string;
