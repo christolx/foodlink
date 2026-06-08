@@ -450,15 +450,6 @@ const roles: DemoRole[] = [
     accent: "leaf",
   },
   {
-    role: "volunteer",
-    title: "Volunteer",
-    account: "volunteer@foodlink.local",
-    description: "I help collect and deliver food to those in need.",
-    icon: "hand",
-    image: "/demo/roles/volunteer-role.webp",
-    accent: "mint",
-  },
-  {
     role: "receiver",
     title: "Receiver",
     account: "receiver@foodlink.local",
@@ -466,6 +457,15 @@ const roles: DemoRole[] = [
     icon: "people",
     image: "/demo/roles/receiver-role.webp",
     accent: "sun",
+  },
+  {
+    role: "volunteer",
+    title: "Volunteer",
+    account: "volunteer@foodlink.local",
+    description: "I help collect and deliver food to those in need.",
+    icon: "hand",
+    image: "/demo/roles/volunteer-role.webp",
+    accent: "mint",
   },
 ];
 
