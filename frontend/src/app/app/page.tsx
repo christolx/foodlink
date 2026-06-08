@@ -1725,7 +1725,11 @@ function ReceiverDashboard({
   const acceptedProposals = data.proposals.filter(
     (proposal) => proposal.status === "accepted",
   );
+  const [selectedProposalId, setSelectedProposalId] = useState<string | null>(
+    null,
+  );
   const activeProposal =
+    data.proposals.find((proposal) => proposal.id === selectedProposalId) ??
     pendingProposals.find((proposal) => proposal.donorAcceptedAt) ??
     pendingProposals[0] ??
     data.proposals[0];
@@ -1753,11 +1757,13 @@ function ReceiverDashboard({
           proposals={data.proposals}
           donationsById={donationsById}
           activeProposalId={activeProposal?.id}
+          onSelectProposalId={setSelectedProposalId}
           token={token}
           runAction={runAction}
         />
         <div className="grid gap-4">
           <ReceiverTimelineCard
+            proposal={activeProposal}
             donation={activePickup?.donation ?? activeDonation}
             pickup={activePickup}
           />
@@ -1854,18 +1860,23 @@ function ReceiverProposalInbox({
   proposals,
   donationsById,
   activeProposalId,
+  onSelectProposalId,
   token,
   runAction,
 }: {
   proposals: DeliveryProposal[];
   donationsById: Map<string, Donation>;
   activeProposalId?: string;
+  onSelectProposalId: (id: string) => void;
   token: string;
   runAction: (callback: () => Promise<void>, success: string) => Promise<void>;
 }) {
-  const sortedProposals = [...proposals].sort((a, b) =>
-    a.id === activeProposalId ? -1 : b.id === activeProposalId ? 1 : 0,
-  );
+  const sortedProposals = useMemo(() => {
+    return [...proposals].sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
+  }, [proposals]);
 
   return (
     <section className={cx(panel, "grid gap-4 p-5")} id="proposal-queue">
@@ -1907,6 +1918,7 @@ function ReceiverProposalInbox({
                   proposal={proposal}
                   token={token}
                   runAction={runAction}
+                  onSelect={() => onSelectProposalId(proposal.id)}
                 />
               );
             })
@@ -1923,6 +1935,7 @@ function ReceiverProposalCard({
   index,
   token,
   runAction,
+  onSelect,
 }: {
   proposal: DeliveryProposal;
   donation?: Donation;
@@ -1930,6 +1943,7 @@ function ReceiverProposalCard({
   index: number;
   token: string;
   runAction: (callback: () => Promise<void>, success: string) => Promise<void>;
+  onSelect: () => void;
 }) {
   const title = donation?.title ?? readableDonationId(proposal.donationId);
   const donorName =
@@ -1939,13 +1953,27 @@ function ReceiverProposalCard({
     (index % 2 === 0 ? "Siti Nur A." : "Budi Santoso");
 
   return (
-    <article
+    // biome-ignore lint/a11y/useSemanticElements: nested interactive children prevent using button element
+    <div
       className={cx(
         "rounded-lg border bg-[#fffdf8] transition",
         expanded
           ? "border-[#b9d4b7] bg-[#f4fbef] shadow-[0_0.8rem_2.2rem_rgba(47,122,70,0.08)]"
-          : "border-[#ded7c9]",
+          : "border-[#ded7c9] hover:border-[#b9d4b7] hover:bg-[#fafdf8] cursor-pointer",
       )}
+      onClick={!expanded ? onSelect : undefined}
+      onKeyDown={
+        !expanded
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onSelect();
+              }
+            }
+          : undefined
+      }
+      role="button"
+      tabIndex={!expanded ? 0 : undefined}
     >
       <div className="grid gap-4 p-4 lg:grid-cols-[7rem_1fr_auto] lg:items-center">
         <DonationThumbnail donation={donation} size="lg" />
@@ -1976,12 +2004,32 @@ function ReceiverProposalCard({
               : "Today"}
           </span>
           <div className="flex flex-wrap gap-2">
-            <span className="rounded-md bg-[#dcebd5] px-3 py-1 text-xs font-black text-[#116b35]">
-              Donor accepted
-            </span>
-            <span className="rounded-md bg-[#fee8ba] px-3 py-1 text-xs font-black text-[#4d3510]">
-              Your decision
-            </span>
+            {proposal.donorAcceptedAt || proposal.status === "accepted" ? (
+              <span className="rounded-md bg-[#dcebd5] px-3 py-1 text-xs font-black text-[#116b35]">
+                Donor accepted
+              </span>
+            ) : (
+              <span className="rounded-md bg-[#f2ede4] px-3 py-1 text-xs font-bold text-[#746957]">
+                Awaiting donor
+              </span>
+            )}
+            {proposal.status === "accepted" ? (
+              <span className="rounded-md bg-[#dcebd5] px-3 py-1 text-xs font-black text-[#116b35]">
+                Accepted
+              </span>
+            ) : proposal.status === "rejected" ? (
+              <span className="rounded-md bg-[#fee2e2] px-3 py-1 text-xs font-black text-[#991b1b]">
+                Rejected
+              </span>
+            ) : proposal.receiverAcceptedAt ? (
+              <span className="rounded-md bg-[#dcebd5] px-3 py-1 text-xs font-black text-[#116b35]">
+                You accepted
+              </span>
+            ) : (
+              <span className="rounded-md bg-[#fee8ba] px-3 py-1 text-xs font-black text-[#4d3510]">
+                Your decision
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -2011,30 +2059,44 @@ function ReceiverProposalCard({
             />
             <ReceiverEtaBlock donation={donation} />
             <div className="grid content-center gap-3">
-              <button
-                className={primaryButton}
-                type="button"
-                onClick={() =>
-                  runAction(async () => {
-                    await acceptDeliveryProposal(token, proposal.id);
-                  }, "Proposal accepted.")
-                }
-                disabled={proposal.status !== "pending"}
-              >
-                Accept proposal
-              </button>
-              <button
-                className="inline-flex min-h-12 items-center justify-center rounded-md bg-[#ef3e32] px-5 text-sm font-black text-white shadow-[0_0.75rem_1.5rem_rgba(160,46,32,0.15)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:translate-y-0"
-                type="button"
-                onClick={() =>
-                  runAction(async () => {
-                    await rejectDeliveryProposal(token, proposal.id);
-                  }, "Proposal rejected.")
-                }
-                disabled={proposal.status !== "pending"}
-              >
-                Reject proposal
-              </button>
+              {proposal.status === "accepted" ? (
+                <div className="text-center p-3 bg-[#e8f1e6] rounded-md border border-[#93c7a2] text-[#14351f] font-bold text-xs">
+                  Proposal Accepted! Delivery has been assigned to volunteer.
+                </div>
+              ) : proposal.status === "rejected" ? (
+                <div className="text-center p-3 bg-[#fff0eb] rounded-md border border-[#f0a59b] text-[#80251d] font-bold text-xs">
+                  Proposal Rejected.
+                </div>
+              ) : proposal.receiverAcceptedAt ? (
+                <div className="text-center p-3 bg-[#e8f1e6] rounded-md border border-[#93c7a2] text-[#14351f] font-bold text-xs">
+                  Accepted. Awaiting donor confirmation.
+                </div>
+              ) : (
+                <>
+                  <button
+                    className={primaryButton}
+                    type="button"
+                    onClick={() =>
+                      runAction(async () => {
+                        await acceptDeliveryProposal(token, proposal.id);
+                      }, "Proposal accepted.")
+                    }
+                  >
+                    Accept proposal
+                  </button>
+                  <button
+                    className="inline-flex min-h-12 items-center justify-center rounded-md bg-[#ef3e32] px-5 text-sm font-black text-white shadow-[0_0.75rem_1.5rem_rgba(160,46,32,0.15)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:translate-y-0"
+                    type="button"
+                    onClick={() =>
+                      runAction(async () => {
+                        await rejectDeliveryProposal(token, proposal.id);
+                      }, "Proposal rejected.")
+                    }
+                  >
+                    Reject proposal
+                  </button>
+                </>
+              )}
             </div>
           </div>
 
@@ -2057,7 +2119,7 @@ function ReceiverProposalCard({
           </div>
         </div>
       ) : null}
-    </article>
+    </div>
   );
 }
 
@@ -2180,12 +2242,17 @@ function ReceiverRouteSummary({ from }: { from: string }) {
 }
 
 function ReceiverTimelineCard({
+  proposal,
   donation,
   pickup,
 }: {
+  proposal?: DeliveryProposal;
   donation?: Donation;
   pickup?: Pickup;
 }) {
+  const receiverAccepted =
+    Boolean(proposal?.receiverAcceptedAt) || proposal?.status === "accepted";
+
   const pickedUp =
     pickup?.status === "picked_up" || pickup?.status === "delivered";
   const delivered = pickup?.status === "delivered";
@@ -2196,27 +2263,41 @@ function ReceiverTimelineCard({
     done: boolean;
   }> = [
     {
-      title: "Proposal accepted",
-      detail: "You accepted this proposal",
-      time: "Today, 10:05 AM",
-      done: true,
+      title:
+        proposal?.status === "accepted"
+          ? "Proposal accepted"
+          : "Awaiting acceptance",
+      detail:
+        proposal?.status === "accepted"
+          ? "Accepted by both parties"
+          : receiverAccepted
+            ? "You accepted proposal. Waiting for donor."
+            : "Awaiting your decision",
+      time: proposal?.receiverAcceptedAt
+        ? formatTime(proposal.receiverAcceptedAt)
+        : "",
+      done: receiverAccepted,
     },
     {
       title: "Pickup assigned",
-      detail: "Volunteer is on the way",
-      time: "Today, 01:30 PM",
+      detail: pickup
+        ? "Volunteer is on the way"
+        : "Waiting for delivery assignment",
+      time: pickup?.createdAt ? formatTime(pickup.createdAt) : "",
       done: Boolean(pickup),
     },
     {
       title: "Picked up",
-      detail: "Waiting for volunteer update",
-      time: pickup?.pickedUpAt ? formatDate(pickup.pickedUpAt) : "",
+      detail: pickedUp ? "Volunteer has food" : "Waiting for volunteer update",
+      time: pickup?.pickedUpAt ? formatTime(pickup.pickedUpAt) : "",
       done: pickedUp,
     },
     {
       title: "Delivered",
-      detail: "Waiting for delivery update",
-      time: pickup?.deliveredAt ? formatDate(pickup.deliveredAt) : "",
+      detail: delivered
+        ? "Food delivered safely"
+        : "Waiting for delivery update",
+      time: pickup?.deliveredAt ? formatTime(pickup.deliveredAt) : "",
       done: delivered,
     },
   ];
@@ -2713,12 +2794,7 @@ function NotificationsPanel({
 
   return (
     <aside
-      className={cx(
-        panel,
-        "sticky top-5 p-6",
-        receiverVariant &&
-          "rounded-none border-y-0 border-r-0 bg-[#fffdf8]/72 shadow-none xl:-my-7 xl:min-h-screen xl:pt-7",
-      )}
+      className={cx(panel, "sticky top-5 p-6")}
       id="notifications"
       aria-label="Notifications"
     >
@@ -2805,17 +2881,19 @@ function NotificationsPanel({
                     className="h-5 w-5"
                   />
                 </span>
-                <div>
+                <div className="min-w-0">
                   <div className="flex items-start justify-between gap-3">
-                    <strong className="block text-sm font-black text-[#101812]">
+                    <strong className="block text-sm font-black text-[#101812] min-w-0">
                       {receiverNotificationTitle(notification)}
                     </strong>
-                    <span className="whitespace-nowrap text-xs font-bold text-[#46534a]">
-                      {formatDate(notification.createdAt)}
-                    </span>
-                    {!notification.read ? (
-                      <span className="mt-1.5 h-2 w-2 rounded-full bg-[#ffbd1a]" />
-                    ) : null}
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      <span className="whitespace-nowrap text-xs font-bold text-[#46534a]">
+                        {formatDate(notification.createdAt)}
+                      </span>
+                      {!notification.read ? (
+                        <span className="h-2 w-2 rounded-full bg-[#ffbd1a]" />
+                      ) : null}
+                    </div>
                   </div>
                   <p className="mt-2 text-sm font-bold leading-6 text-[#1f2a23]">
                     {notification.body}
