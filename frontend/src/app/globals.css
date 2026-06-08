@@ -618,7 +618,8 @@ svg {
 }
 
 .roles-copy {
-  align-self: center;
+  align-self: start;
+  padding-top: 2rem;
 }
 
 .hand-note {
@@ -631,7 +632,7 @@ svg {
 }
 
 .roles-copy .hand-note {
-  margin-bottom: 0.85rem;
+  margin-bottom: 1.2rem;
 }
 
 .hand-note::after {
@@ -658,7 +659,7 @@ svg {
 }
 
 .roles-copy > p:last-child {
-  margin-top: 1.25rem;
+  margin-top: 0.85rem;
   color: var(--ink);
   font-family: var(--font-young-serif), serif;
   font-size: clamp(1.5rem, 2.5vw, 2.15rem);
