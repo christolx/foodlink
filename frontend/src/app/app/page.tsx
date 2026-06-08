@@ -428,7 +428,31 @@ function DashboardSidebar({
         </div>
       );
     }
-    // Donor
+    if (role === "donor") {
+      return (
+        <div className="flex flex-col items-center gap-2 border-b border-white/10 pb-6 text-center">
+          <span className="grid h-16 w-16 place-items-center rounded-full bg-[#ffbd1a] text-xl font-black text-[#052b12] border-2 border-white/20 shadow-md">
+            {initials}
+          </span>
+          <div className="mt-2 grid justify-items-center">
+            <strong className="flex items-center gap-1.5 text-base font-black">
+              {data.profile.displayName}
+              <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-[#ffbd1a] text-[0.6rem] font-bold text-[#052b12]">
+                ✓
+              </span>
+            </strong>
+            <span className="mt-1 flex items-center gap-1.5 text-xs font-bold text-[#dfe8dc]/80">
+              <AppIcon name="profile" className="h-3.5 w-3.5" />
+              Donor
+            </span>
+            <span className="mt-1 flex items-center gap-1.5 text-xs font-bold text-[#dfe8dc]/80">
+              <AppIcon name="marker" className="h-3.5 w-3.5" />
+              {data.profile.location.city || "Jakarta"}
+            </span>
+          </div>
+        </div>
+      );
+    }
     return (
       <Link className="mx-auto text-[#ffbf1c]" href="/" aria-label="FoodLink">
         <AppIcon name="leaf" className="h-14 w-14" />
@@ -483,15 +507,15 @@ function DashboardSidebar({
 
   return (
     <aside
-      className="sticky top-0 grid h-screen grid-rows-[auto_1fr_auto_auto] gap-8 bg-[radial-gradient(circle_at_70%_92%,rgba(30,112,48,0.32),transparent_12rem),linear-gradient(180deg,#063514_0%,#052b12_52%,#031b0c_100%)] px-4 py-9 text-[#f8f5ea] max-lg:static max-lg:h-auto"
+      className="sticky top-0 grid h-screen grid-rows-[auto_1fr_auto_auto] gap-6 bg-[radial-gradient(circle_at_70%_92%,rgba(30,112,48,0.32),transparent_12rem),linear-gradient(180deg,#063514_0%,#052b12_52%,#031b0c_100%)] px-4 py-6 text-[#f8f5ea] max-lg:static max-lg:h-auto"
       aria-label="Dashboard navigation"
     >
       {topHeader}
-      <nav className="grid content-start gap-3">
+      <nav className="flex flex-col gap-1 overflow-y-auto pr-1 min-h-0 custom-scrollbar">
         {navItems.map((item, index) => (
           <a
             className={cx(
-              "flex min-h-12 items-center gap-4 rounded-lg px-5 text-sm font-black transition hover:bg-white/10",
+              "flex min-h-10 items-center gap-3.5 rounded-lg px-4 text-sm font-black transition hover:bg-white/10 shrink-0",
               index === 0 &&
                 "bg-[#116b35] shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]",
             )}
@@ -510,7 +534,7 @@ function DashboardSidebar({
       </nav>
       {bottomCard}
       <button
-        className="flex min-h-11 items-center gap-4 rounded-lg px-5 text-sm font-black transition hover:bg-white/10"
+        className="flex min-h-10 items-center gap-3.5 rounded-lg px-4 text-sm font-black transition hover:bg-white/10 shrink-0"
         type="button"
         onClick={signOut}
       >
