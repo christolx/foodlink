@@ -2,6 +2,11 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import {
+  CldUploadWidget,
+  type CloudinaryUploadWidgetInfo,
+  type CloudinaryUploadWidgetResults,
+} from "next-cloudinary";
 import { type FormEvent, useEffect, useMemo, useState } from "react";
 import {
   acceptDeliveryProposal,
@@ -67,6 +72,10 @@ const ghostButton =
   "inline-flex min-h-12 items-center justify-center rounded-lg border border-[#d8cfba] bg-[#fffdf5]/70 px-5 font-black text-[#14351f] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:translate-y-0";
 const badgeBase =
   "inline-flex min-h-7 items-center rounded-full px-3 text-xs font-black";
+const cloudinaryCloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+const cloudinaryUploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+const cloudinaryUploadEnabled =
+  Boolean(cloudinaryCloudName) && Boolean(cloudinaryUploadPreset);
 
 function cx(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ");
@@ -96,6 +105,27 @@ function statusClass(status: Donation["status"] | DeliveryProposal["status"]) {
 
 function emptyCopy(value: string) {
   return <p className="font-bold text-[#34443a]">{value}</p>;
+}
+
+function uploadResultInfo(
+  result: CloudinaryUploadWidgetResults,
+): CloudinaryUploadWidgetInfo | null {
+  return typeof result.info === "object" ? result.info : null;
+}
+
+function uploadErrorMessage(error: unknown) {
+  if (typeof error === "string") {
+    return error;
+  }
+  if (
+    error &&
+    typeof error === "object" &&
+    "statusText" in error &&
+    typeof error.statusText === "string"
+  ) {
+    return error.statusText;
+  }
+  return "Image upload failed.";
 }
 
 export default function AppPage() {
@@ -320,26 +350,35 @@ function DonorDashboard({
   token: string;
   runAction: (callback: () => Promise<void>, success: string) => Promise<void>;
 }) {
+  const [uploadedImageUrl, setUploadedImageUrl] = useState("");
+  const [uploadError, setUploadError] = useState("");
+
   async function handleCreateDonation(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const formElement = event.currentTarget;
     const form = new FormData(event.currentTarget);
     const now = new Date();
     const later = new Date(now.getTime() + 4 * 60 * 60 * 1000);
 
     await runAction(async () => {
+      if (!uploadedImageUrl) {
+        throw new Error("Upload donation image first.");
+      }
       await createDonation(token, {
         title: String(form.get("title") || "Fresh prepared meals"),
         description: String(
           form.get("description") || "Safe surplus food ready for pickup.",
         ),
         quantity: String(form.get("quantity") || "10 packs"),
-        imageUrl: String(form.get("imageUrl") || ""),
+        imageUrl: uploadedImageUrl,
         pickupLocation: demoLocation,
         availableFrom: now.toISOString(),
         availableUntil: later.toISOString(),
         specialInstructions: String(form.get("instructions") || ""),
       });
-      event.currentTarget.reset();
+      formElement.reset();
+      setUploadedImageUrl("");
+      setUploadError("");
     }, "Donation posted.");
   }
 
@@ -379,14 +418,70 @@ function DonorDashboard({
               required
             />
           </label>
-          <label className="grid gap-2 text-sm font-black text-[#34443a]">
-            Image URL
+          <div className="grid gap-2 text-sm font-black text-[#34443a]">
+            Donation image
+            {cloudinaryUploadEnabled ? (
+              <CldUploadWidget
+                uploadPreset={cloudinaryUploadPreset}
+                options={{
+                  clientAllowedFormats: ["jpg", "jpeg", "png", "webp"],
+                  maxFiles: 1,
+                  multiple: false,
+                  resourceType: "image",
+                  sources: ["local", "camera"],
+                }}
+                onError={(error) => {
+                  setUploadError(uploadErrorMessage(error));
+                }}
+                onSuccess={(result) => {
+                  const info = uploadResultInfo(result);
+                  if (!info?.secure_url) {
+                    setUploadError("Cloudinary did not return image URL.");
+                    return;
+                  }
+                  setUploadedImageUrl(info.secure_url);
+                  setUploadError("");
+                }}
+              >
+                {({ open }) => (
+                  <button
+                    className={ghostButton}
+                    type="button"
+                    onClick={() => open()}
+                  >
+                    {uploadedImageUrl ? "Replace image" : "Upload image"}
+                  </button>
+                )}
+              </CldUploadWidget>
+            ) : (
+              <p className="rounded-lg border border-[#f0a59b] bg-[#fff0eb] p-3 text-[#80251d]">
+                Set NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME and
+                NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET to enable image uploads.
+              </p>
+            )}
             <input
-              className={input}
               name="imageUrl"
-              placeholder="https://example.com/food.jpg or /demo/food.jpg"
+              readOnly
+              required
+              type="hidden"
+              value={uploadedImageUrl}
             />
-          </label>
+            {uploadedImageUrl ? (
+              // biome-ignore lint/performance/noImgElement: Cloudinary upload preview uses a freshly returned remote CDN URL.
+              <img
+                alt="Uploaded donation preview"
+                className="h-40 w-full rounded-lg object-cover"
+                src={uploadedImageUrl}
+              />
+            ) : (
+              <p className="rounded-lg border border-dashed border-[#d8cfba] bg-white/60 p-3 text-[#5d685f]">
+                Image required before posting donation.
+              </p>
+            )}
+            {uploadError ? (
+              <p className="text-[#80251d]">{uploadError}</p>
+            ) : null}
+          </div>
           <label className="grid gap-2 text-sm font-black text-[#34443a]">
             Special instructions
             <input
@@ -395,7 +490,11 @@ function DonorDashboard({
               placeholder="Use rear entrance"
             />
           </label>
-          <button className={primaryButton} type="submit">
+          <button
+            className={primaryButton}
+            type="submit"
+            disabled={!uploadedImageUrl}
+          >
             Post donation
           </button>
         </form>
