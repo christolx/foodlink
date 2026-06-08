@@ -24,6 +24,26 @@ export type EntityType =
   | "individual"
   | "other";
 
+export type DonationStatus =
+  | "available"
+  | "proposal_pending"
+  | "pickup_assigned"
+  | "picked_up"
+  | "delivered"
+  | "canceled";
+
+export type ProposalStatus = "pending" | "accepted" | "rejected" | "canceled";
+
+export type PickupStatus = "assigned" | "picked_up" | "delivered" | "canceled";
+
+export type NotificationType =
+  | "donation_created"
+  | "proposal_created"
+  | "proposal_accepted"
+  | "proposal_rejected"
+  | "pickup_assigned"
+  | "pickup_completed";
+
 export type Location = {
   addressLine1: string;
   addressLine2?: string;
@@ -56,6 +76,92 @@ export type Profile = {
   notes?: string;
   createdAt: string;
   updatedAt: string;
+};
+
+export type Donation = {
+  id: string;
+  donorId: string;
+  title: string;
+  description: string;
+  quantity: string;
+  imageUrl?: string;
+  status: DonationStatus;
+  pickupLocation: Location;
+  availableFrom: string;
+  availableUntil: string;
+  specialInstructions?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type DeliveryProposal = {
+  id: string;
+  donationId: string;
+  receiverId: string;
+  volunteerId: string;
+  status: ProposalStatus;
+  donorAcceptedAt?: string;
+  receiverAcceptedAt?: string;
+  rejectedByUserId?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type Pickup = {
+  id: string;
+  donationId: string;
+  proposalId: string;
+  receiverId: string;
+  volunteerId: string;
+  status: PickupStatus;
+  pickupLocation: Location;
+  deliveryLocation: Location;
+  pickedUpAt?: string;
+  deliveredAt?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type Notification = {
+  id: string;
+  userId: string;
+  type: NotificationType;
+  title: string;
+  body: string;
+  read: boolean;
+  donationId?: string;
+  proposalId?: string;
+  pickupId?: string;
+  createdAt: string;
+  readAt?: string;
+};
+
+export type CreateDonationRequest = {
+  title: string;
+  description: string;
+  quantity: string;
+  imageUrl?: string;
+  pickupLocation: Location;
+  availableFrom: string;
+  availableUntil: string;
+  specialInstructions?: string;
+};
+
+export type CreateDeliveryProposalRequest = {
+  donationId: string;
+  receiverId: string;
+};
+
+export type DeliveryProposalAcceptResponse = {
+  proposal: DeliveryProposal;
+  pickup?: Pickup;
+};
+
+export type PageResponse<T> = {
+  items: T[];
+  page: number;
+  pageSize: number;
+  total: number;
 };
 
 export type ErrorResponse = {
@@ -100,6 +206,83 @@ export async function apiFetch<T>(
   }
 
   return data as T;
+}
+
+export function listDonations(token: string) {
+  return apiFetch<PageResponse<Donation>>("/donations", { token });
+}
+
+export function createDonation(token: string, json: CreateDonationRequest) {
+  return apiFetch<Donation>("/donations", {
+    method: "POST",
+    json,
+    token,
+  });
+}
+
+export function listReceivers(token: string) {
+  return apiFetch<PageResponse<Profile>>("/receivers", { token });
+}
+
+export function listDeliveryProposals(token: string) {
+  return apiFetch<PageResponse<DeliveryProposal>>("/delivery-proposals", {
+    token,
+  });
+}
+
+export function createDeliveryProposal(
+  token: string,
+  json: CreateDeliveryProposalRequest,
+) {
+  return apiFetch<DeliveryProposal>("/delivery-proposals", {
+    method: "POST",
+    json,
+    token,
+  });
+}
+
+export function acceptDeliveryProposal(token: string, id: string) {
+  return apiFetch<DeliveryProposalAcceptResponse>(
+    `/delivery-proposals/${id}/accept`,
+    {
+      method: "POST",
+      token,
+    },
+  );
+}
+
+export function rejectDeliveryProposal(token: string, id: string) {
+  return apiFetch<DeliveryProposal>(`/delivery-proposals/${id}/reject`, {
+    method: "POST",
+    token,
+  });
+}
+
+export function markPickupPickedUp(token: string, id: string) {
+  return apiFetch<Pickup>(`/pickups/${id}/pickup`, {
+    method: "POST",
+    json: {},
+    token,
+  });
+}
+
+export function markPickupDelivered(token: string, id: string) {
+  return apiFetch<Pickup>(`/pickups/${id}/deliver`, {
+    method: "POST",
+    json: {},
+    token,
+  });
+}
+
+export function listNotifications(token: string) {
+  return apiFetch<PageResponse<Notification>>("/notifications", { token });
+}
+
+export function markNotificationRead(token: string, id: string) {
+  return apiFetch<Notification>(`/notifications/${id}/read`, {
+    method: "POST",
+    token,
+  });
 }
 
 function apiUrl(path: string) {
