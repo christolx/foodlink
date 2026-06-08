@@ -812,7 +812,7 @@ function DonorDashboard({
             </div>
 
             <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_13rem]">
-              <label className="grid gap-2 text-sm font-bold text-[#1a281f]">
+              <label className="grid gap-2 text-[1.05rem] font-black text-[#1a281f]">
                 Title
                 <input
                   className={input}
@@ -821,7 +821,7 @@ function DonorDashboard({
                   required
                 />
               </label>
-              <label className="grid gap-2 text-sm font-bold text-[#1a281f]">
+              <label className="grid gap-2 text-[1.05rem] font-black text-[#1a281f]">
                 Quantity
                 <input
                   className={input}
@@ -832,7 +832,7 @@ function DonorDashboard({
               </label>
             </div>
 
-            <label className="grid gap-2 text-sm font-bold text-[#1a281f]">
+            <label className="grid gap-2 text-[1.05rem] font-black text-[#1a281f]">
               Description
               <textarea
                 className={cx(input, "min-h-20 resize-y")}
@@ -842,14 +842,14 @@ function DonorDashboard({
               />
             </label>
 
-            <label className="grid gap-2 text-sm font-bold text-[#1a281f]">
+            <label className="grid gap-2 text-[1.05rem] font-black text-[#1a281f]">
               Pickup location
               <span className="grid grid-cols-[2.5rem_1fr_2.5rem] overflow-hidden rounded-[0.65rem] border border-[#cfc8ba] bg-[#fffdf8]">
                 <span className="grid place-items-center text-[#064c25]">
                   <AppIcon name="map" className="h-5 w-5" />
                 </span>
                 <input
-                  className="min-h-10 bg-transparent px-2 text-sm font-bold outline-none"
+                  className="min-h-10 bg-transparent px-2 text-base font-bold outline-none"
                   name="location"
                   placeholder="Jl. Melati No. 12, Kebayoran Baru, Jakarta Selatan"
                 />
@@ -860,7 +860,7 @@ function DonorDashboard({
             </label>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <label className="grid gap-2 text-sm font-bold text-[#1a281f]">
+              <label className="grid gap-2 text-[1.05rem] font-black text-[#1a281f]">
                 Available from
                 <input
                   className={input}
@@ -869,7 +869,7 @@ function DonorDashboard({
                   defaultValue={defaultFrom}
                 />
               </label>
-              <label className="grid gap-2 text-sm font-bold text-[#1a281f]">
+              <label className="grid gap-2 text-[1.05rem] font-black text-[#1a281f]">
                 Available until
                 <input
                   className={input}
@@ -880,7 +880,7 @@ function DonorDashboard({
               </label>
             </div>
 
-            <label className="grid gap-2 text-sm font-bold text-[#1a281f]">
+            <label className="grid gap-2 text-[1.05rem] font-black text-[#1a281f]">
               Special instructions (optional)
               <textarea
                 className={cx(input, "min-h-16 resize-y")}
