@@ -112,6 +112,55 @@ func TestCleanupSmokeData(t *testing.T) {
 	assertCount(t, st.db, &models.Donation{}, "id = ?", regularDonation.ID, 1)
 }
 
+func TestSeedDemoDataCreatesDashboardFixtures(t *testing.T) {
+	st := newTestStore(t)
+
+	if err := st.SeedDemoData(); err != nil {
+		t.Fatal(err)
+	}
+
+	assertCount(t, st.db, &models.Donation{}, "id LIKE ?", "demo_donation_%", 5)
+	assertCount(t, st.db, &models.DeliveryProposal{}, "id LIKE ?", "demo_proposal_%", 4)
+	assertCount(t, st.db, &models.Pickup{}, "id LIKE ?", "demo_pickup_%", 2)
+	assertCount(t, st.db, &models.Notification{}, "id LIKE ?", "demo_notif_%", 11)
+
+	var donor models.User
+	if err := st.db.First(&donor, "id = ?", "user_donor").Error; err != nil {
+		t.Fatal(err)
+	}
+
+	_, total, err := st.ListDonations(1, 20, nil, donor)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if total < 5 {
+		t.Fatalf("donor donation total = %d, want at least 5", total)
+	}
+	var freshVegetables models.Donation
+	if err := st.db.First(&freshVegetables, "id = ?", "demo_donation_fresh_vegetables").Error; err != nil {
+		t.Fatal(err)
+	}
+	if freshVegetables.ImageURL == nil || *freshVegetables.ImageURL == "" {
+		t.Fatal("fresh vegetables seed missing image URL")
+	}
+
+	proposals, total, err := st.ListDeliveryProposals(1, 20, nil, donor)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if total < 4 || len(proposals) == 0 {
+		t.Fatalf("donor proposal total = %d len = %d, want seeded proposals", total, len(proposals))
+	}
+
+	notifications, total, err := st.ListNotifications(donor.ID, 1, 20)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if total < 6 || len(notifications) == 0 {
+		t.Fatalf("donor notification total = %d len = %d, want seeded notifications", total, len(notifications))
+	}
+}
+
 func newTestStore(t *testing.T) *Store {
 	t.Helper()
 	conn, err := gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{})
