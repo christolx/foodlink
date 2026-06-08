@@ -513,16 +513,13 @@ function DonorDashboard({
     const later = new Date(now.getTime() + 4 * 60 * 60 * 1000);
 
     await runAction(async () => {
-      if (!uploadedImageUrl) {
-        throw new Error("Upload donation image first.");
-      }
       await createDonation(token, {
         title: String(form.get("title") || "Fresh prepared meals"),
         description: String(
           form.get("description") || "Safe surplus food ready for pickup.",
         ),
         quantity: String(form.get("quantity") || "10 packs"),
-        imageUrl: uploadedImageUrl,
+        imageUrl: uploadedImageUrl || defaultDonationImage,
         pickupLocation: demoLocation,
         availableFrom: now.toISOString(),
         availableUntil: later.toISOString(),
@@ -535,43 +532,96 @@ function DonorDashboard({
   }
 
   return (
-    <>
-      <section className="grid gap-4 lg:grid-cols-2">
-        <form
-          className={cx(panel, "grid gap-4")}
-          onSubmit={handleCreateDonation}
-        >
-          <p className={kicker}>Create donation</p>
-          <h2 className={heading}>Post food while it is still useful.</h2>
-          <label className="grid gap-2 text-sm font-black text-[#34443a]">
-            Title
-            <input
-              className={input}
-              name="title"
-              placeholder="Fresh produce boxes"
-              required
-            />
-          </label>
-          <label className="grid gap-2 text-sm font-black text-[#34443a]">
-            Quantity
-            <input
-              className={input}
-              name="quantity"
-              placeholder="12 boxes"
-              required
-            />
-          </label>
-          <label className="grid gap-2 text-sm font-black text-[#34443a]">
-            Description
-            <textarea
-              className={cx(input, "min-h-28 resize-y")}
-              name="description"
-              placeholder="Prepared today, safe for same-day pickup."
-              required
-            />
-          </label>
-          <div className="grid gap-2 text-sm font-black text-[#34443a]">
-            Donation image
+    <div className="grid items-start gap-5 2xl:grid-cols-[minmax(0,1fr)_26rem]">
+      <div className="grid gap-5" id="work">
+        <section className="grid gap-5 lg:grid-cols-[minmax(28rem,1.08fr)_minmax(24rem,0.92fr)]">
+          <form
+            className={cx(panel, "grid gap-4 p-6")}
+            onSubmit={handleCreateDonation}
+          >
+            <div className="flex items-center gap-4">
+              <span className="grid h-12 w-12 place-items-center rounded-full bg-[#f4ead6] text-[#064c25]">
+                <AppIcon name="leaf" className="h-6 w-6" />
+              </span>
+              <h2 className={heading}>Create donation</h2>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_13rem]">
+              <label className="grid gap-2 text-xs font-black text-[#1a281f]">
+                Title
+                <input
+                  className={input}
+                  name="title"
+                  placeholder="e.g. Fresh vegetables from today"
+                  required
+                />
+              </label>
+              <label className="grid gap-2 text-xs font-black text-[#1a281f]">
+                Quantity
+                <input
+                  className={input}
+                  name="quantity"
+                  placeholder="e.g. 15 kg, 10 packs"
+                  required
+                />
+              </label>
+            </div>
+
+            <label className="grid gap-2 text-xs font-black text-[#1a281f]">
+              Description
+              <textarea
+                className={cx(input, "min-h-20 resize-y")}
+                name="description"
+                placeholder="Describe the food, condition, and anything important."
+                required
+              />
+            </label>
+
+            <label className="grid gap-2 text-xs font-black text-[#1a281f]">
+              Pickup location
+              <span className="grid grid-cols-[2.5rem_1fr_2.5rem] overflow-hidden rounded-md border border-[#cfc8ba] bg-[#fffdf8]">
+                <span className="grid place-items-center text-[#064c25]">
+                  <AppIcon name="map" className="h-5 w-5" />
+                </span>
+                <input
+                  className="min-h-10 bg-transparent px-2 text-sm font-bold outline-none"
+                  name="location"
+                  placeholder="Jl. Melati No. 12, Kebayoran Baru, Jakarta Selatan"
+                />
+                <span className="grid place-items-center border-l border-[#cfc8ba] text-[#064c25]">
+                  <AppIcon name="map" className="h-5 w-5" />
+                </span>
+              </span>
+            </label>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="grid gap-2 text-xs font-black text-[#1a281f]">
+                Available from
+                <input
+                  className={input}
+                  name="availableFrom"
+                  type="datetime-local"
+                />
+              </label>
+              <label className="grid gap-2 text-xs font-black text-[#1a281f]">
+                Available until
+                <input
+                  className={input}
+                  name="availableUntil"
+                  type="datetime-local"
+                />
+              </label>
+            </div>
+
+            <label className="grid gap-2 text-xs font-black text-[#1a281f]">
+              Special instructions (optional)
+              <textarea
+                className={cx(input, "min-h-16 resize-y")}
+                name="instructions"
+                placeholder="Parking info, access notes, packaging, etc."
+              />
+            </label>
+
             {cloudinaryUploadEnabled ? (
               <CldUploadWidget
                 uploadPreset={cloudinaryUploadPreset}
@@ -597,71 +647,49 @@ function DonorDashboard({
               >
                 {({ open }) => (
                   <button
-                    className={ghostButton}
+                    className="justify-self-start border-0 bg-transparent p-0 text-xs font-black text-[#064c25]"
                     type="button"
                     onClick={() => open()}
                   >
-                    {uploadedImageUrl ? "Replace image" : "Upload image"}
+                    {uploadedImageUrl
+                      ? "Replace donation photo"
+                      : "Add donation photo"}
                   </button>
                 )}
               </CldUploadWidget>
-            ) : (
-              <p className="rounded-lg border border-[#f0a59b] bg-[#fff0eb] p-3 text-[#80251d]">
-                Set NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME and
-                NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET to enable image uploads.
-              </p>
-            )}
-            <input
-              name="imageUrl"
-              readOnly
-              required
-              type="hidden"
-              value={uploadedImageUrl}
-            />
-            {uploadedImageUrl ? (
-              // biome-ignore lint/performance/noImgElement: Cloudinary upload preview uses a freshly returned remote CDN URL.
-              <img
-                alt="Uploaded donation preview"
-                className="h-40 w-full rounded-lg object-cover"
-                src={uploadedImageUrl}
-              />
-            ) : (
-              <p className="rounded-lg border border-dashed border-[#d8cfba] bg-white/60 p-3 text-[#5d685f]">
-                Image required before posting donation.
-              </p>
-            )}
-            {uploadError ? (
-              <p className="text-[#80251d]">{uploadError}</p>
             ) : null}
-          </div>
-          <label className="grid gap-2 text-sm font-black text-[#34443a]">
-            Special instructions
-            <input
-              className={input}
-              name="instructions"
-              placeholder="Use rear entrance"
-            />
-          </label>
-          <button
-            className={primaryButton}
-            type="submit"
-            disabled={!uploadedImageUrl}
-          >
-            Post donation
-          </button>
-        </form>
+            {uploadError ? (
+              <p className="text-xs font-black text-[#80251d]">{uploadError}</p>
+            ) : null}
 
-        <ProposalQueue
+            <button className={primaryButton} type="submit">
+              <AppIcon name="leaf" className="h-5 w-5" />
+              Post donation
+            </button>
+          </form>
+
+          <ProposalQueue
+            donations={data.donations}
+            proposals={data.proposals}
+            viewerRole="donor"
+            token={token}
+            runAction={runAction}
+          />
+        </section>
+
+        <DonationsTable
           donations={data.donations}
           proposals={data.proposals}
-          viewerRole="donor"
-          token={token}
-          runAction={runAction}
+          title="My donations"
         />
-      </section>
+      </div>
 
-      <DonationsTable donations={data.donations} title="My donations" />
-    </>
+      <NotificationsPanel
+        notifications={data.notifications}
+        token={token}
+        runAction={runAction}
+      />
+    </div>
   );
 }
 
@@ -892,58 +920,99 @@ function ProposalQueue({
   );
 
   return (
-    <section className={panel}>
-      <p className={kicker}>Proposal queue</p>
-      <h2 className={heading}>
-        {viewerRole === "donor"
-          ? "Review volunteer matches."
-          : "Review food offers."}
-      </h2>
-      <div className="mt-4 grid gap-3">
+    <section className={cx(panel, "min-h-full p-4")} id="proposal-queue">
+      <header className="mb-4 flex items-start justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <span className="grid h-12 w-12 place-items-center rounded-full bg-[#e5f1df] text-[#064c25]">
+            <AppIcon name="team" className="h-6 w-6" />
+          </span>
+          <div>
+            <h2 className={heading}>Proposal queue</h2>
+            <p className="mt-1 text-xs font-bold text-[#1f2a23]">
+              {viewerRole === "donor"
+                ? "Review proposals from volunteers and receivers."
+                : "Review food offers."}
+            </p>
+          </div>
+        </div>
+        <a className="text-xs font-black text-[#064c25]" href="#my-donations">
+          View all
+        </a>
+      </header>
+      <div className="grid gap-3">
         {proposals.length > 0 ? (
           proposals.map((proposal) => {
             const donation = donationsById.get(proposal.donationId);
+            const donorAccepted = Boolean(proposal.donorAcceptedAt);
+            const receiverAccepted = Boolean(proposal.receiverAcceptedAt);
 
             return (
               <article
-                className="grid gap-3 rounded-lg border border-[#d8cfba] bg-[#f7f4e9]/75 p-4"
+                className="grid gap-4 rounded-lg border border-[#ded7c9] bg-[#fffdf8] p-3 2xl:grid-cols-[6rem_1fr_auto]"
                 key={proposal.id}
               >
-                <div className="flex items-center justify-between gap-3">
-                  <strong className="text-[#0e1b14]">{proposal.id}</strong>
-                  <span className={cx(badgeBase, statusClass(proposal.status))}>
-                    {proposal.status}
-                  </span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <DonationThumbnail donation={donation} size="sm" />
-                  <p className="font-bold leading-6 text-[#34443a]">
+                <DonationThumbnail donation={donation} size="lg" />
+                <div>
+                  <strong className="block text-sm font-black text-[#101812]">
                     {donation
                       ? donation.title
-                      : `Donation ${proposal.donationId}`}{" "}
-                    / Receiver {proposal.receiverId}
+                      : `Donation ${proposal.donationId}`}
+                  </strong>
+                  <p className="mt-1 text-xs font-bold text-[#111a14]">
+                    {donation ? formatDate(donation.availableFrom) : "Today"}{" "}
+                    <span className="px-2">•</span>
+                    {donation?.quantity ?? "Open quantity"}
                   </p>
+                  <div className="mt-3 grid gap-2 text-xs font-bold">
+                    <span className="flex items-center gap-2">
+                      Volunteer
+                      <span className="grid h-5 w-5 place-items-center rounded-full bg-[#ead7c5] text-[0.65rem]">
+                        V
+                      </span>
+                      {proposal.volunteerId}
+                    </span>
+                    <span className="flex items-center gap-2">
+                      Receiver
+                      <span className="grid h-5 w-5 place-items-center rounded-full bg-[#e5f1df] text-[#064c25]">
+                        <AppIcon name="leaf" className="h-3.5 w-3.5" />
+                      </span>
+                      {proposal.receiverId}
+                    </span>
+                  </div>
                 </div>
-                <small className="font-bold text-[#5a6259]">
-                  Donor {proposal.donorAcceptedAt ? "accepted" : "pending"} /
-                  Receiver{" "}
-                  {proposal.receiverAcceptedAt ? "accepted" : "pending"}
-                </small>
-                {proposal.status === "pending" ? (
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      className="min-h-10 rounded-md bg-[#2f7a46] px-4 font-black text-[#fffdf5]"
-                      type="button"
-                      onClick={() =>
-                        runAction(async () => {
-                          await acceptDeliveryProposal(token, proposal.id);
-                        }, "Proposal accepted.")
-                      }
+                <div className="grid content-between gap-3">
+                  <div className="grid gap-2 sm:grid-cols-2 2xl:grid-cols-1">
+                    <span
+                      className={cx(
+                        badgeBase,
+                        donorAccepted
+                          ? "bg-[#e4f1e0] text-[#116b35]"
+                          : "bg-[#fff3df] text-[#c46b00]",
+                      )}
                     >
-                      Accept
-                    </button>
+                      Donor {donorAccepted ? "Accepted" : "Pending"}
+                    </span>
+                    <span
+                      className={cx(
+                        badgeBase,
+                        receiverAccepted
+                          ? "bg-[#e4f1e0] text-[#116b35]"
+                          : proposal.status === "rejected"
+                            ? "bg-[#fde9e4] text-[#9b2118]"
+                            : "bg-[#fff3df] text-[#c46b00]",
+                      )}
+                    >
+                      Receiver{" "}
+                      {proposal.status === "rejected"
+                        ? "Rejected"
+                        : receiverAccepted
+                          ? "Accepted"
+                          : "Pending"}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-2 justify-self-end">
                     <button
-                      className="min-h-10 rounded-md border border-[#d8cfba] px-4 font-black text-[#8a2e22]"
+                      className={ghostButton}
                       type="button"
                       onClick={() =>
                         runAction(async () => {
@@ -953,13 +1022,32 @@ function ProposalQueue({
                     >
                       Reject
                     </button>
+                    {proposal.status === "pending" ? (
+                      <button
+                        className={primaryButton}
+                        type="button"
+                        onClick={() =>
+                          runAction(async () => {
+                            await acceptDeliveryProposal(token, proposal.id);
+                          }, "Proposal accepted.")
+                        }
+                      >
+                        Accept
+                      </button>
+                    ) : (
+                      <button className={ghostButton} type="button">
+                        View details
+                      </button>
+                    )}
                   </div>
-                ) : null}
+                </div>
               </article>
             );
           })
         ) : (
-          <p className="font-bold text-[#34443a]">No proposals yet.</p>
+          <div className="rounded-lg border border-dashed border-[#d8cfba] bg-[#fffdf8] p-6 text-sm font-bold text-[#46534a]">
+            No proposals yet.
+          </div>
         )}
       </div>
     </section>
@@ -968,23 +1056,46 @@ function ProposalQueue({
 
 function DonationsTable({
   donations,
+  proposals = [],
   title,
   compact = false,
 }: {
   donations: Donation[];
+  proposals?: DeliveryProposal[];
   title: string;
   compact?: boolean;
 }) {
   return (
-    <section className={cx(panel, compact && "min-h-full")}>
-      <p className={kicker}>{title}</p>
+    <section
+      className={cx(panel, "p-5", compact && "min-h-full")}
+      id="my-donations"
+    >
+      <header className="mb-4 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <span className="grid h-12 w-12 place-items-center rounded-full bg-[#f4ead6] text-[#064c25]">
+            <AppIcon name="package" className="h-6 w-6" />
+          </span>
+          <h2 className={heading}>{title}</h2>
+        </div>
+        <button className={ghostButton} type="button">
+          All statuses <span className="ml-3 text-lg leading-none">⌄</span>
+        </button>
+      </header>
       <div className="mt-3 overflow-x-auto">
-        <table className="w-full min-w-[34rem] border-collapse">
+        <table className="w-full min-w-[56rem] border-collapse">
           <thead className="text-left">
             <tr>
-              {["Item", "Quantity", "Status", "Window"].map((label) => (
+              {[
+                "Donation",
+                "Quantity",
+                "Available window",
+                "Status",
+                "Latest update",
+                "Proposals",
+                "Actions",
+              ].map((label) => (
                 <th
-                  className="border-b border-[#d8cfba] px-3 py-3 text-xs font-black uppercase text-[#5a6259]"
+                  className="border-b border-[#ded7c9] px-3 py-3 text-xs font-black text-[#111a14]"
                   key={label}
                 >
                   {label}
@@ -996,37 +1107,59 @@ function DonationsTable({
             {donations.length > 0 ? (
               donations.map((donation) => (
                 <tr key={donation.id}>
-                  <td className="border-b border-[#d8cfba] px-3 py-4 font-black">
+                  <td className="border-b border-[#ded7c9] px-3 py-3 font-black">
                     <div className="flex items-center gap-3">
                       <DonationThumbnail donation={donation} />
                       <div>
-                        <strong className="block">{donation.title}</strong>
-                        <small className="block font-bold text-[#5a6259]">
-                          {donation.pickupLocation.city}
+                        <strong className="block text-sm">
+                          {donation.title}
+                        </strong>
+                        <small className="block text-xs font-bold text-[#46534a]">
+                          {donation.description}
                         </small>
                       </div>
                     </div>
                   </td>
-                  <td className="border-b border-[#d8cfba] px-3 py-4 font-bold">
+                  <td className="border-b border-[#ded7c9] px-3 py-3 text-sm font-bold">
                     {donation.quantity}
                   </td>
-                  <td className="border-b border-[#d8cfba] px-3 py-4">
+                  <td className="border-b border-[#ded7c9] px-3 py-3 text-sm font-bold">
+                    {formatDate(donation.availableFrom)} –{" "}
+                    {formatDate(donation.availableUntil)}
+                  </td>
+                  <td className="border-b border-[#ded7c9] px-3 py-3">
                     <span
                       className={cx(badgeBase, statusClass(donation.status))}
                     >
                       {donation.status.replace("_", " ")}
                     </span>
                   </td>
-                  <td className="border-b border-[#d8cfba] px-3 py-4 font-bold">
-                    {formatDate(donation.availableUntil)}
+                  <td className="border-b border-[#ded7c9] px-3 py-3 text-sm font-bold">
+                    {formatDate(donation.updatedAt)}
+                  </td>
+                  <td className="border-b border-[#ded7c9] px-3 py-3 text-sm font-bold">
+                    {
+                      proposals.filter(
+                        (proposal) => proposal.donationId === donation.id,
+                      ).length
+                    }
+                  </td>
+                  <td className="border-b border-[#ded7c9] px-3 py-3">
+                    <button
+                      className="grid h-8 w-8 place-items-center rounded-md border border-[#ded7c9] bg-[#fffdf8] font-black"
+                      type="button"
+                      aria-label={`Donation actions for ${donation.title}`}
+                    >
+                      ⋮
+                    </button>
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
                 <td
-                  className="border-b border-[#d8cfba] px-3 py-4 font-bold text-[#34443a]"
-                  colSpan={4}
+                  className="border-b border-[#ded7c9] px-3 py-4 font-bold text-[#34443a]"
+                  colSpan={7}
                 >
                   No donations visible yet.
                 </td>
@@ -1044,14 +1177,16 @@ function DonationThumbnail({
   size = "md",
 }: {
   donation?: Donation;
-  size?: "sm" | "md";
+  size?: "sm" | "md" | "lg";
 }) {
   const [failed, setFailed] = useState(false);
   const imageUrl = donation?.imageUrl;
   const boxClass =
-    size === "sm"
-      ? "h-12 w-12 rounded-lg"
-      : "h-14 w-16 rounded-lg md:h-16 md:w-20";
+    size === "lg"
+      ? "h-24 w-24 rounded-md"
+      : size === "sm"
+        ? "h-12 w-12 rounded-md"
+        : "h-11 w-16 rounded-md";
 
   if (imageUrl && !failed) {
     return (
@@ -1087,47 +1222,87 @@ function NotificationsPanel({
   token: string;
   runAction: (callback: () => Promise<void>, success: string) => Promise<void>;
 }) {
+  const unread = notifications.filter((item) => !item.read).length;
+
   return (
     <aside
-      className={cx(panel, "sticky top-4")}
+      className={cx(panel, "sticky top-5 p-4")}
       id="notifications"
       aria-label="Notifications"
     >
-      <div>
-        <p className={kicker}>Notifications</p>
-        <h2 className={heading}>Live updates</h2>
-      </div>
-      <div className="mt-4 grid gap-3">
+      <header className="mb-3 flex items-center gap-3">
+        <h2 className={heading}>Notifications</h2>
+        {unread > 0 ? (
+          <span className="rounded-md bg-[#e5f1df] px-2 py-1 text-xs font-black text-[#064c25]">
+            {unread} unread
+          </span>
+        ) : null}
+        <button
+          className="ml-auto text-[#101812]"
+          type="button"
+          aria-label="Notification settings"
+        >
+          <AppIcon name="settings" className="h-5 w-5" />
+        </button>
+        <button className="text-[#101812]" type="button" aria-label="Close">
+          <AppIcon name="close" className="h-5 w-5" />
+        </button>
+      </header>
+      <div className="grid">
         {notifications.length > 0
           ? notifications.map((notification) => (
               <article
                 className={cx(
-                  "grid grid-cols-[0.75rem_1fr] gap-3 rounded-lg border border-[#d8cfba] bg-[#f7f4e9]/75 p-4",
+                  "grid grid-cols-[3rem_1fr] gap-3 border-t border-[#ded7c9] py-5 first:border-t-0",
                   notification.read && "opacity-60",
                 )}
                 key={notification.id}
               >
                 <span
                   className={cx(
-                    "mt-1.5 h-3 w-3 rounded-full",
-                    notification.read ? "bg-[#d8cfba]" : "bg-[#ffca39]",
+                    "grid h-11 w-11 place-items-center rounded-full",
+                    notification.type === "proposal_accepted"
+                      ? "bg-[#ffe9c1] text-[#dd6700]"
+                      : notification.type === "pickup_assigned"
+                        ? "bg-[#deedf8] text-[#1c6796]"
+                        : notification.type === "pickup_completed"
+                          ? "bg-[#dfeedd] text-[#116b35]"
+                          : "bg-[#e5f1df] text-[#064c25]",
                   )}
                   aria-hidden="true"
-                />
+                >
+                  <AppIcon
+                    name={
+                      notification.type === "pickup_assigned"
+                        ? "pickup"
+                        : notification.type === "pickup_completed"
+                          ? "check"
+                          : notification.type === "proposal_created"
+                            ? "package"
+                            : "team"
+                    }
+                    className="h-5 w-5"
+                  />
+                </span>
                 <div>
-                  <strong className="block text-[#0e1b14]">
-                    {notification.title}
-                  </strong>
-                  <p className="mt-1 font-bold leading-6 text-[#34443a]">
+                  <div className="flex items-start justify-between gap-3">
+                    <strong className="block text-sm font-black text-[#101812]">
+                      {notification.title}
+                    </strong>
+                    <span className="whitespace-nowrap text-xs font-bold text-[#46534a]">
+                      {formatDate(notification.createdAt)}
+                    </span>
+                    {!notification.read ? (
+                      <span className="mt-1.5 h-2 w-2 rounded-full bg-[#ffbd1a]" />
+                    ) : null}
+                  </div>
+                  <p className="mt-2 text-sm font-bold leading-6 text-[#1f2a23]">
                     {notification.body}
                   </p>
-                  <small className="mt-2 block font-bold text-[#5a6259]">
-                    {formatDate(notification.createdAt)}
-                  </small>
                 </div>
                 {!notification.read ? (
                   <button
-                    className="col-start-2 justify-self-start border-0 bg-transparent p-0 font-black text-[#073515]"
+                    className="col-start-2 justify-self-start border-0 bg-transparent p-0 text-sm font-black text-[#064c25] transition hover:text-[#116b35]"
                     type="button"
                     onClick={() =>
                       runAction(async () => {
@@ -1142,6 +1317,12 @@ function NotificationsPanel({
             ))
           : emptyCopy("No notifications yet.")}
       </div>
+      <a
+        className="mt-4 flex min-h-12 items-center justify-center gap-3 rounded-md border border-[#9eb69f] bg-[#fffdf8] text-sm font-black text-[#064c25]"
+        href="#notifications"
+      >
+        View all notifications <span className="text-lg">→</span>
+      </a>
     </aside>
   );
 }
