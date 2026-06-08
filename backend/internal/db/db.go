@@ -8,7 +8,10 @@ import (
 )
 
 func Open(databaseURL string) (*gorm.DB, error) {
-	return gorm.Open(postgres.Open(databaseURL), &gorm.Config{})
+	return gorm.Open(postgres.New(postgres.Config{
+		DSN:                  databaseURL,
+		PreferSimpleProtocol: true,
+	}), &gorm.Config{})
 }
 
 func AutoMigrate(conn *gorm.DB) error {
