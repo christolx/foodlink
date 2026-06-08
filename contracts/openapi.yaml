@@ -586,7 +586,7 @@ components:
     Donation:
       type: object
       additionalProperties: false
-      required: [id, donorId, title, description, quantity, status, pickupLocation, availableFrom, availableUntil, createdAt, updatedAt]
+      required: [id, donorId, title, description, quantity, imageUrl, status, pickupLocation, availableFrom, availableUntil, createdAt, updatedAt]
       properties:
         id:
           type: string
@@ -752,7 +752,7 @@ components:
     CreateDonationRequest:
       type: object
       additionalProperties: false
-      required: [title, description, quantity, pickupLocation, availableFrom, availableUntil]
+      required: [title, description, quantity, imageUrl, pickupLocation, availableFrom, availableUntil]
       properties:
         title:
           type: string

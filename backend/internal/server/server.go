@@ -183,7 +183,7 @@ func (s *Server) CreateDonation(ctx context.Context, request api.CreateDonationR
 	if !request.Body.AvailableUntil.After(request.Body.AvailableFrom) {
 		return api.CreateDonation400JSONResponse{BadRequestJSONResponse: badRequest("availableUntil must be after availableFrom")}, nil
 	}
-	imageURL, err := optionalImageURL(request.Body.ImageUrl)
+	imageURL, err := requiredCloudinaryImageURL(request.Body.ImageUrl)
 	if err != nil {
 		return api.CreateDonation400JSONResponse{BadRequestJSONResponse: badRequest(err.Error())}, nil
 	}
@@ -194,7 +194,7 @@ func (s *Server) CreateDonation(ctx context.Context, request api.CreateDonationR
 		Title:               request.Body.Title,
 		Description:         request.Body.Description,
 		Quantity:            request.Body.Quantity,
-		ImageURL:            imageURL,
+		ImageURL:            &imageURL,
 		Status:              string(api.DonationStatusAvailable),
 		PickupLocation:      locationModel(request.Body.PickupLocation),
 		AvailableFrom:       request.Body.AvailableFrom,
@@ -540,7 +540,7 @@ func donationDTO(donation models.Donation) api.Donation {
 		Title:               donation.Title,
 		Description:         donation.Description,
 		Quantity:            donation.Quantity,
-		ImageUrl:            donation.ImageURL,
+		ImageUrl:            donationImageURL(donation.ImageURL),
 		Status:              api.DonationStatus(donation.Status),
 		PickupLocation:      locationDTO(donation.PickupLocation),
 		AvailableFrom:       donation.AvailableFrom,
@@ -551,25 +551,29 @@ func donationDTO(donation models.Donation) api.Donation {
 	}
 }
 
-func optionalImageURL(value *string) (*string, error) {
+func donationImageURL(value *string) string {
 	if value == nil {
-		return nil, nil
+		return ""
 	}
-	trimmed := strings.TrimSpace(*value)
+	return *value
+}
+
+func requiredCloudinaryImageURL(value string) (string, error) {
+	trimmed := strings.TrimSpace(value)
 	if trimmed == "" {
-		return nil, nil
+		return "", fmt.Errorf("imageUrl is required")
 	}
 	if len(trimmed) > 2048 {
-		return nil, fmt.Errorf("imageUrl must be 2048 characters or fewer")
-	}
-	if strings.HasPrefix(trimmed, "/") && !strings.HasPrefix(trimmed, "//") {
-		return &trimmed, nil
+		return "", fmt.Errorf("imageUrl must be 2048 characters or fewer")
 	}
 	parsed, err := url.Parse(trimmed)
-	if err != nil || parsed.Host == "" || (parsed.Scheme != "http" && parsed.Scheme != "https") {
-		return nil, fmt.Errorf("imageUrl must be an http, https, or root-relative URL")
+	if err != nil || parsed.Host == "" || parsed.Scheme != "https" {
+		return "", fmt.Errorf("imageUrl must be a Cloudinary HTTPS URL")
 	}
-	return &trimmed, nil
+	if parsed.Host != "res.cloudinary.com" {
+		return "", fmt.Errorf("imageUrl must be a Cloudinary HTTPS URL")
+	}
+	return trimmed, nil
 }
 
 func deliveryProposalDTO(proposal models.DeliveryProposal) api.DeliveryProposal {

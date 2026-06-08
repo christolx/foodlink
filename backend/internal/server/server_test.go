@@ -34,11 +34,11 @@ func TestVolunteerProposalFlow(t *testing.T) {
 	}
 
 	location := testLocation()
-	imageURL := "https://images.example.test/lunch-boxes.jpg"
+	imageURL := "https://res.cloudinary.com/foodlink-demo/image/upload/v1/donations/lunch-boxes.jpg"
 	createBody := api.CreateDonationRequest{
 		Title:          "Lunch boxes",
 		Description:    "Fresh boxed meals",
-		ImageUrl:       &imageURL,
+		ImageUrl:       imageURL,
 		Quantity:       "12 boxed meals",
 		PickupLocation: location,
 		AvailableFrom:  time.Now().UTC(),
@@ -53,7 +53,7 @@ func TestVolunteerProposalFlow(t *testing.T) {
 	if donation.Status != api.DonationStatusAvailable {
 		t.Fatalf("donation status = %s", donation.Status)
 	}
-	if donation.ImageUrl == nil || *donation.ImageUrl != imageURL {
+	if donation.ImageUrl != imageURL {
 		t.Fatalf("donation imageUrl = %v, want %s", donation.ImageUrl, imageURL)
 	}
 
@@ -63,7 +63,7 @@ func TestVolunteerProposalFlow(t *testing.T) {
 	}
 	var fetchedDonation api.Donation
 	decode(t, body, &fetchedDonation)
-	if fetchedDonation.ImageUrl == nil || *fetchedDonation.ImageUrl != imageURL {
+	if fetchedDonation.ImageUrl != imageURL {
 		t.Fatalf("fetched donation imageUrl = %v, want %s", fetchedDonation.ImageUrl, imageURL)
 	}
 
@@ -73,7 +73,7 @@ func TestVolunteerProposalFlow(t *testing.T) {
 	}
 	var listedDonations api.DonationListResponse
 	decode(t, body, &listedDonations)
-	if listedDonations.Total == 0 || listedDonations.Items[0].ImageUrl == nil || *listedDonations.Items[0].ImageUrl != imageURL {
+	if listedDonations.Total == 0 || listedDonations.Items[0].ImageUrl != imageURL {
 		t.Fatalf("listed donation imageUrl missing from response")
 	}
 
@@ -151,6 +151,7 @@ func TestRoleGatesAndProposalRejection(t *testing.T) {
 	status, _ := doJSON(t, handler, http.MethodPost, "/api/v1/donations", api.CreateDonationRequest{
 		Title:          "Dinner boxes",
 		Description:    "Fresh meals",
+		ImageUrl:       "https://res.cloudinary.com/foodlink-demo/image/upload/v1/donations/dinner-boxes.jpg",
 		Quantity:       "8 boxes",
 		PickupLocation: testLocation(),
 		AvailableFrom:  time.Now().UTC(),
@@ -163,6 +164,7 @@ func TestRoleGatesAndProposalRejection(t *testing.T) {
 	status, body := doJSON(t, handler, http.MethodPost, "/api/v1/donations", api.CreateDonationRequest{
 		Title:          "Dinner boxes",
 		Description:    "Fresh meals",
+		ImageUrl:       "https://res.cloudinary.com/foodlink-demo/image/upload/v1/donations/dinner-boxes.jpg",
 		Quantity:       "8 boxes",
 		PickupLocation: testLocation(),
 		AvailableFrom:  time.Now().UTC(),
@@ -224,7 +226,7 @@ func TestCreateDonationRejectsInvalidImageURL(t *testing.T) {
 	status, body := doJSON(t, handler, http.MethodPost, "/api/v1/donations", api.CreateDonationRequest{
 		Title:          "Dinner boxes",
 		Description:    "Fresh meals",
-		ImageUrl:       &imageURL,
+		ImageUrl:       imageURL,
 		Quantity:       "8 boxes",
 		PickupLocation: testLocation(),
 		AvailableFrom:  time.Now().UTC(),
@@ -232,6 +234,23 @@ func TestCreateDonationRejectsInvalidImageURL(t *testing.T) {
 	}, donorToken)
 	if status != http.StatusBadRequest {
 		t.Fatalf("create donation with invalid imageUrl status = %d body = %s", status, body)
+	}
+}
+
+func TestCreateDonationRequiresImageURL(t *testing.T) {
+	handler := newTestHandler(t)
+	donorToken := login(t, handler, api.Donor)
+
+	status, body := doJSON(t, handler, http.MethodPost, "/api/v1/donations", api.CreateDonationRequest{
+		Title:          "Dinner boxes",
+		Description:    "Fresh meals",
+		Quantity:       "8 boxes",
+		PickupLocation: testLocation(),
+		AvailableFrom:  time.Now().UTC(),
+		AvailableUntil: time.Now().UTC().Add(time.Hour),
+	}, donorToken)
+	if status != http.StatusBadRequest {
+		t.Fatalf("create donation without imageUrl status = %d body = %s", status, body)
 	}
 }
 
