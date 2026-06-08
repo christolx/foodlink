@@ -598,6 +598,9 @@ components:
           type: string
         quantity:
           type: string
+        imageUrl:
+          type: string
+          maxLength: 2048
         status:
           $ref: "#/components/schemas/DonationStatus"
         pickupLocation:
@@ -757,6 +760,9 @@ components:
           type: string
         quantity:
           type: string
+        imageUrl:
+          type: string
+          maxLength: 2048
         pickupLocation:
           $ref: "#/components/schemas/Location"
         availableFrom:

@@ -34,9 +34,11 @@ func TestVolunteerProposalFlow(t *testing.T) {
 	}
 
 	location := testLocation()
+	imageURL := "https://images.example.test/lunch-boxes.jpg"
 	createBody := api.CreateDonationRequest{
 		Title:          "Lunch boxes",
 		Description:    "Fresh boxed meals",
+		ImageUrl:       &imageURL,
 		Quantity:       "12 boxed meals",
 		PickupLocation: location,
 		AvailableFrom:  time.Now().UTC(),
@@ -50,6 +52,29 @@ func TestVolunteerProposalFlow(t *testing.T) {
 	decode(t, body, &donation)
 	if donation.Status != api.DonationStatusAvailable {
 		t.Fatalf("donation status = %s", donation.Status)
+	}
+	if donation.ImageUrl == nil || *donation.ImageUrl != imageURL {
+		t.Fatalf("donation imageUrl = %v, want %s", donation.ImageUrl, imageURL)
+	}
+
+	status, body = doJSON(t, handler, http.MethodGet, "/api/v1/donations/"+donation.Id, nil, donorToken)
+	if status != http.StatusOK {
+		t.Fatalf("get donation status = %d body = %s", status, body)
+	}
+	var fetchedDonation api.Donation
+	decode(t, body, &fetchedDonation)
+	if fetchedDonation.ImageUrl == nil || *fetchedDonation.ImageUrl != imageURL {
+		t.Fatalf("fetched donation imageUrl = %v, want %s", fetchedDonation.ImageUrl, imageURL)
+	}
+
+	status, body = doJSON(t, handler, http.MethodGet, "/api/v1/donations", nil, donorToken)
+	if status != http.StatusOK {
+		t.Fatalf("list donations status = %d body = %s", status, body)
+	}
+	var listedDonations api.DonationListResponse
+	decode(t, body, &listedDonations)
+	if listedDonations.Total == 0 || listedDonations.Items[0].ImageUrl == nil || *listedDonations.Items[0].ImageUrl != imageURL {
+		t.Fatalf("listed donation imageUrl missing from response")
 	}
 
 	status, body = doJSON(t, handler, http.MethodGet, "/api/v1/receivers", nil, volunteerToken)
@@ -188,6 +213,25 @@ func TestRoleGatesAndProposalRejection(t *testing.T) {
 	}, volunteerToken)
 	if status != http.StatusCreated {
 		t.Fatalf("create proposal after rejection status = %d body = %s", status, body)
+	}
+}
+
+func TestCreateDonationRejectsInvalidImageURL(t *testing.T) {
+	handler := newTestHandler(t)
+	donorToken := login(t, handler, api.Donor)
+	imageURL := "javascript:alert(1)"
+
+	status, body := doJSON(t, handler, http.MethodPost, "/api/v1/donations", api.CreateDonationRequest{
+		Title:          "Dinner boxes",
+		Description:    "Fresh meals",
+		ImageUrl:       &imageURL,
+		Quantity:       "8 boxes",
+		PickupLocation: testLocation(),
+		AvailableFrom:  time.Now().UTC(),
+		AvailableUntil: time.Now().UTC().Add(time.Hour),
+	}, donorToken)
+	if status != http.StatusBadRequest {
+		t.Fatalf("create donation with invalid imageUrl status = %d body = %s", status, body)
 	}
 }
 

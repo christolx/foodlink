@@ -28,6 +28,7 @@ type Donation struct {
 	Title               string
 	Description         string
 	Quantity            string
+	ImageURL            *string
 	Status              string         `gorm:"index"`
 	PickupLocation      LocationFields `gorm:"embedded;embeddedPrefix:pickup_"`
 	AvailableFrom       time.Time
