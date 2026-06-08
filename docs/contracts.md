@@ -34,11 +34,18 @@
 - `GET /delivery-proposals`
 - `POST /delivery-proposals/:id/accept`
 - `POST /delivery-proposals/:id/reject`
+- `GET /pickups`
 - `POST /pickups/:id/pickup`
 - `POST /pickups/:id/deliver`
 - `GET /notifications`
 - `POST /notifications/:id/read`
 - `GET /notifications/stream`
+
+## Dashboard Response Shape
+
+- `DeliveryProposalDTO` may include embedded `donation`, `donorProfile`, `receiverProfile`, and `volunteerProfile` fields for role dashboards.
+- `PickupDTO` may include embedded `donation`, `donorProfile`, `receiverProfile`, and `volunteerProfile` fields for active delivery timelines.
+- Embedded fields are optional compatibility additions; IDs remain canonical.
 
 ## Contract Rule
 
