@@ -34,3 +34,31 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Image Upload Configuration (Cloudinary)
+
+To enable the image upload functionality (e.g., when adding a donation), you must configure Cloudinary.
+
+### Environment Setup
+
+Create a file named `.env.local` in the `frontend` folder or copy the provided example:
+
+```bash
+cp .env.example .env.local
+```
+
+Fill in the environment variables:
+
+- `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`: Your Cloudinary Cloud Name.
+- `NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET`: Your Unsigned Upload Preset name.
+
+### Cloudinary Configuration Steps
+
+1. Create a free account at [Cloudinary](https://cloudinary.com).
+2. Go to the **Dashboard** and copy your **Cloud Name**.
+3. Go to **Settings** (gear icon) -> **Upload** tab.
+4. Scroll down to **Upload presets** and click **Add upload preset**.
+5. Change the **Signing Mode** to **Unsigned** (crucial for client-side uploads to work).
+6. Save the preset and copy its name (e.g. `ml_default` or custom).
+7. Paste these values into your `frontend/.env.local` file.
+
