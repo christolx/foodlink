@@ -6,3 +6,4 @@ bin/
 tmp/
 *.log
 .DS_Store
+.env.yaml
