@@ -44,12 +44,16 @@ func (s *Store) SeedDemoData() error {
 		{ID: "user_receiver", Name: "Demo Receiver", Email: "receiver@foodlink.local", Role: string(api.Receiver), CreatedAt: now},
 		{ID: "user_volunteer", Name: "Demo Volunteer", Email: "volunteer@foodlink.local", Role: string(api.Volunteer), CreatedAt: now},
 	}
+	donorLat, donorLng := -6.2088, 106.8210
+	receiverLat, receiverLng := -6.2615, 106.8106
 	location := models.LocationFields{
 		AddressLine1: "Jl. Sudirman 1",
 		City:         "Jakarta",
 		Region:       "DKI Jakarta",
 		PostalCode:   "10220",
 		Country:      "ID",
+		Latitude:     &donorLat,
+		Longitude:    &donorLng,
 	}
 	receiverLocation := models.LocationFields{
 		AddressLine1: "Jl. Panti Harapan 8",
@@ -57,6 +61,8 @@ func (s *Store) SeedDemoData() error {
 		Region:       "DKI Jakarta",
 		PostalCode:   "12160",
 		Country:      "ID",
+		Latitude:     &receiverLat,
+		Longitude:    &receiverLng,
 	}
 	profiles := []models.Profile{
 		{UserID: "user_donor", DisplayName: "Dapur Abadi", Role: string(api.Donor), ContactMethod: string(api.ContactMethodWhatsapp), ContactValue: "+628111111111", Location: location, EntityType: strPtr(string(api.EntityTypeRestaurant)), OperationalHours: strPtr("Daily 08:00-20:00"), CreatedAt: now, UpdatedAt: now},

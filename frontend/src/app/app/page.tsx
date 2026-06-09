@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -56,6 +57,15 @@ import {
   roleLabels,
   statusClass,
 } from "./dashboard-ui";
+
+const VolunteerMapDynamic = dynamic(() => import("./VolunteerMap"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-full items-center justify-center text-sm text-[#46534a]">
+      Loading map…
+    </div>
+  ),
+});
 
 type DashboardData = {
   user: User;
@@ -1246,49 +1256,15 @@ function VolunteerMapPanel({
           Live map
         </h2>
       </header>
-      <div className="relative mx-4 min-h-[28rem] overflow-hidden rounded-lg border border-[#e4ddcf] bg-[#eef0ea]">
-        <div className="absolute inset-0 bg-[linear-gradient(30deg,rgba(255,255,255,0.62)_12%,transparent_12%,transparent_88%,rgba(255,255,255,0.62)_88%),linear-gradient(120deg,rgba(255,255,255,0.5)_9%,transparent_9%,transparent_91%,rgba(255,255,255,0.5)_91%),linear-gradient(#d9dfd5_1px,transparent_1px),linear-gradient(90deg,#d9dfd5_1px,transparent_1px)] bg-[length:7rem_4rem,8rem_5rem,2.1rem_2.1rem,2.1rem_2.1rem] opacity-80" />
-        <div className="absolute left-[34%] top-[15%] h-[18rem] w-[9rem] rotate-[-18deg] rounded-[60%] border-r-[6px] border-dashed border-[#0b4c25]" />
-        <span className="absolute left-[34%] top-[16%] grid rounded-lg border border-[#d9d1c2] bg-[#fffdf8] p-3 shadow-[0_0.8rem_1.8rem_rgba(49,43,24,0.12)]">
-          <span className="flex items-center gap-3">
-            <span className="grid h-8 w-8 place-items-center rounded-full bg-[#2f7a46] text-white">
-              <AppIcon name="package" className="h-4 w-4" />
-            </span>
-            <span className="grid text-xs font-bold">
-              <strong className="text-sm font-black text-[#101812]">
-                {donation?.description?.split(" ")[0] ?? "Warteg"} Berkah
-              </strong>
-              Donor
-            </span>
-          </span>
-        </span>
-        <span className="absolute left-[35%] top-[43%] grid h-5 w-5 place-items-center rounded-full border-4 border-white bg-[#287bd5] shadow-md" />
-        <span className="absolute left-[55%] top-[66%] grid rounded-lg border border-[#d9d1c2] bg-[#fffdf8] p-3 shadow-[0_0.8rem_1.8rem_rgba(49,43,24,0.12)]">
-          <span className="flex items-center gap-3">
-            <span className="grid h-10 w-10 place-items-center rounded-full bg-[#ffb91f] text-white">
-              <AppIcon name="marker" className="h-5 w-5" />
-            </span>
-            <span className="grid text-xs font-bold">
-              <strong className="text-sm font-black text-[#101812]">
-                {receiver?.displayName ?? "Panti Harapan"}
-              </strong>
-              Receiver
-            </span>
-          </span>
-        </span>
-        <div className="absolute right-4 top-4 grid overflow-hidden rounded-lg border border-[#d9d1c2] bg-[#fffdf8] shadow-sm">
-          {["+", "-", "⌖"].map((item) => (
-            <button
-              className="grid h-11 w-11 place-items-center border-b border-[#d9d1c2] text-xl font-bold last:border-b-0"
-              key={item}
-              type="button"
-            >
-              {item}
-            </button>
-          ))}
-        </div>
+      <div className="relative mx-4 min-h-[28rem] overflow-hidden rounded-lg border border-[#e4ddcf]">
+        <VolunteerMapDynamic
+          donorLocation={donation?.pickupLocation}
+          receiverLocation={receiver?.location}
+          donorLabel={donation ? donorDisplayName(donation) ?? "Donor" : undefined}
+          receiverLabel={receiver?.displayName}
+        />
         {donation ? (
-          <article className="absolute inset-x-4 bottom-4 grid grid-cols-[4.8rem_1fr_auto] items-center gap-3 rounded-lg border border-[#d9d1c2] bg-[#fffdf8] p-3 shadow-[0_0.8rem_1.8rem_rgba(49,43,24,0.12)]">
+          <article className="absolute inset-x-4 bottom-4 z-[1000] grid grid-cols-[4.8rem_1fr_auto] items-center gap-3 rounded-lg border border-[#d9d1c2] bg-[#fffdf8] p-3 shadow-[0_0.8rem_1.8rem_rgba(49,43,24,0.12)]">
             <DonationThumbnail donation={donation} size="lg" />
             <div className="min-w-0">
               <strong className="block truncate text-sm font-black">
@@ -1308,9 +1284,6 @@ function VolunteerMapPanel({
                 </span>
               </div>
             </div>
-            <span className="rounded-lg bg-[#dcebd5] px-3 py-2 text-xs font-black text-[#14351f]">
-              1.2 km
-            </span>
           </article>
         ) : null}
       </div>
