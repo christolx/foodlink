@@ -375,7 +375,7 @@ func (s *Store) ListDonations(page, pageSize int, status *api.DonationStatus, us
 	return donations, total, err
 }
 
-func (s *Store) CreateDeliveryProposal(donationID, receiverID, volunteerID string) (models.DeliveryProposal, error) {
+func (s *Store) CreateDeliveryProposal(donationID, receiverID, volunteerID string, volunteerContactOverride *string) (models.DeliveryProposal, error) {
 	var proposal models.DeliveryProposal
 	err := s.db.Transaction(func(tx *gorm.DB) error {
 		var donation models.Donation
@@ -403,13 +403,14 @@ func (s *Store) CreateDeliveryProposal(donationID, receiverID, volunteerID strin
 		}
 		now := time.Now().UTC()
 		proposal = models.DeliveryProposal{
-			ID:          NewID("proposal"),
-			DonationID:  donationID,
-			ReceiverID:  receiverID,
-			VolunteerID: volunteerID,
-			Status:      string(api.ProposalStatusPending),
-			CreatedAt:   now,
-			UpdatedAt:   now,
+			ID:                      NewID("proposal"),
+			DonationID:              donationID,
+			ReceiverID:              receiverID,
+			VolunteerID:             volunteerID,
+			Status:                  string(api.ProposalStatusPending),
+			VolunteerContactOverride: volunteerContactOverride,
+			CreatedAt:               now,
+			UpdatedAt:               now,
 		}
 		if err := tx.Create(&proposal).Error; err != nil {
 			return err

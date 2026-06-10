@@ -5,10 +5,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="40d301eb-cff4-4459-863b-412137ce3437" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/internal/api/openapi.gen.go" beforeDir="false" afterPath="$PROJECT_DIR$/backend/internal/api/openapi.gen.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/internal/models/models.go" beforeDir="false" afterPath="$PROJECT_DIR$/backend/internal/models/models.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/internal/server/server.go" beforeDir="false" afterPath="$PROJECT_DIR$/backend/internal/server/server.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/internal/store/store.go" beforeDir="false" afterPath="$PROJECT_DIR$/backend/internal/store/store.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/pnpm-lock.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/pnpm-lock.yaml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/app/app/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/app/app/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/lib/api.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/lib/api.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -42,7 +45,7 @@
   "keyToString": {
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "master",
+    "git-widget-placeholder": "feat/improvement",
     "junie.onboarding.icon.badge.shown": "true",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
@@ -71,7 +74,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1780982942889</updated>
-      <workItem from="1780982943953" duration="8396000" />
+      <workItem from="1780982943953" duration="13868000" />
     </task>
     <servers />
   </component>

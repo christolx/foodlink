@@ -100,6 +100,7 @@ export type DeliveryProposal = {
   receiverId: string;
   volunteerId: string;
   status: ProposalStatus;
+  volunteerContactOverride?: string;
   donorAcceptedAt?: string;
   receiverAcceptedAt?: string;
   rejectedByUserId?: string;
@@ -158,6 +159,7 @@ export type CreateDonationRequest = {
 export type CreateDeliveryProposalRequest = {
   donationId: string;
   receiverId: string;
+  volunteerContactOverride?: string;
 };
 
 export type UpdateProfileRequest = {
