@@ -403,14 +403,14 @@ func (s *Store) CreateDeliveryProposal(donationID, receiverID, volunteerID strin
 		}
 		now := time.Now().UTC()
 		proposal = models.DeliveryProposal{
-			ID:                      NewID("proposal"),
-			DonationID:              donationID,
-			ReceiverID:              receiverID,
-			VolunteerID:             volunteerID,
-			Status:                  string(api.ProposalStatusPending),
+			ID:                       NewID("proposal"),
+			DonationID:               donationID,
+			ReceiverID:               receiverID,
+			VolunteerID:              volunteerID,
+			Status:                   string(api.ProposalStatusPending),
 			VolunteerContactOverride: volunteerContactOverride,
-			CreatedAt:               now,
-			UpdatedAt:               now,
+			CreatedAt:                now,
+			UpdatedAt:                now,
 		}
 		if err := tx.Create(&proposal).Error; err != nil {
 			return err
