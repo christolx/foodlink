@@ -53,16 +53,17 @@ type Profile struct {
 }
 
 type DeliveryProposal struct {
-	ID                 string `gorm:"primaryKey"`
-	DonationID         string `gorm:"index"`
-	ReceiverID         string `gorm:"index"`
-	VolunteerID        string `gorm:"index"`
-	Status             string `gorm:"index"`
-	DonorAcceptedAt    *time.Time
-	ReceiverAcceptedAt *time.Time
-	RejectedByUserID   *string
-	CreatedAt          time.Time
-	UpdatedAt          time.Time
+	ID                      string `gorm:"primaryKey"`
+	DonationID              string `gorm:"index"`
+	ReceiverID              string `gorm:"index"`
+	VolunteerID             string `gorm:"index"`
+	Status                  string `gorm:"index"`
+	VolunteerContactOverride *string
+	DonorAcceptedAt         *time.Time
+	ReceiverAcceptedAt      *time.Time
+	RejectedByUserID        *string
+	CreatedAt               time.Time
+	UpdatedAt               time.Time
 }
 
 type Pickup struct {

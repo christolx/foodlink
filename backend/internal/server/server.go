@@ -277,7 +277,7 @@ func (s *Server) CreateDeliveryProposal(ctx context.Context, request api.CreateD
 	if request.Body == nil || request.Body.DonationId == "" || request.Body.ReceiverId == "" {
 		return api.CreateDeliveryProposal400JSONResponse{BadRequestJSONResponse: badRequest("donationId and receiverId are required")}, nil
 	}
-	proposal, err := s.store.CreateDeliveryProposal(request.Body.DonationId, request.Body.ReceiverId, user.ID)
+	proposal, err := s.store.CreateDeliveryProposal(request.Body.DonationId, request.Body.ReceiverId, user.ID, request.Body.VolunteerContactOverride)
 	if errors.Is(err, store.ErrNotFound) {
 		return api.CreateDeliveryProposal404JSONResponse{NotFoundJSONResponse: notFound("donation or receiver not found")}, nil
 	}
@@ -598,16 +598,17 @@ func requiredCloudinaryImageURL(value string) (string, error) {
 
 func (s *Server) deliveryProposalDTO(proposal models.DeliveryProposal) api.DeliveryProposal {
 	dto := api.DeliveryProposal{
-		Id:                 proposal.ID,
-		DonationId:         proposal.DonationID,
-		ReceiverId:         proposal.ReceiverID,
-		VolunteerId:        proposal.VolunteerID,
-		Status:             api.ProposalStatus(proposal.Status),
-		DonorAcceptedAt:    proposal.DonorAcceptedAt,
-		ReceiverAcceptedAt: proposal.ReceiverAcceptedAt,
-		RejectedByUserId:   proposal.RejectedByUserID,
-		CreatedAt:          proposal.CreatedAt,
-		UpdatedAt:          proposal.UpdatedAt,
+		Id:                       proposal.ID,
+		DonationId:               proposal.DonationID,
+		ReceiverId:               proposal.ReceiverID,
+		VolunteerId:              proposal.VolunteerID,
+		Status:                   api.ProposalStatus(proposal.Status),
+		VolunteerContactOverride: proposal.VolunteerContactOverride,
+		DonorAcceptedAt:          proposal.DonorAcceptedAt,
+		ReceiverAcceptedAt:       proposal.ReceiverAcceptedAt,
+		RejectedByUserId:         proposal.RejectedByUserID,
+		CreatedAt:                proposal.CreatedAt,
+		UpdatedAt:                proposal.UpdatedAt,
 	}
 	s.enrichDashboardRelations(&dto, nil)
 	return dto

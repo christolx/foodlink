@@ -96,8 +96,9 @@ type ContactMethod string
 
 // CreateDeliveryProposalRequest defines model for CreateDeliveryProposalRequest.
 type CreateDeliveryProposalRequest struct {
-	DonationId string `json:"donationId"`
-	ReceiverId string `json:"receiverId"`
+	DonationId               string  `json:"donationId"`
+	ReceiverId               string  `json:"receiverId"`
+	VolunteerContactOverride *string `json:"volunteerContactOverride,omitempty"`
 }
 
 // CreateDonationRequest defines model for CreateDonationRequest.
@@ -114,20 +115,21 @@ type CreateDonationRequest struct {
 
 // DeliveryProposal defines model for DeliveryProposal.
 type DeliveryProposal struct {
-	CreatedAt          time.Time      `json:"createdAt"`
-	Donation           *Donation      `json:"donation,omitempty"`
-	DonationId         string         `json:"donationId"`
-	DonorAcceptedAt    *time.Time     `json:"donorAcceptedAt,omitempty"`
-	DonorProfile       *Profile       `json:"donorProfile,omitempty"`
-	Id                 string         `json:"id"`
-	ReceiverAcceptedAt *time.Time     `json:"receiverAcceptedAt,omitempty"`
-	ReceiverId         string         `json:"receiverId"`
-	ReceiverProfile    *Profile       `json:"receiverProfile,omitempty"`
-	RejectedByUserId   *string        `json:"rejectedByUserId,omitempty"`
-	Status             ProposalStatus `json:"status"`
-	UpdatedAt          time.Time      `json:"updatedAt"`
-	VolunteerId        string         `json:"volunteerId"`
-	VolunteerProfile   *Profile       `json:"volunteerProfile,omitempty"`
+	CreatedAt                time.Time      `json:"createdAt"`
+	Donation                 *Donation      `json:"donation,omitempty"`
+	DonationId               string         `json:"donationId"`
+	DonorAcceptedAt          *time.Time     `json:"donorAcceptedAt,omitempty"`
+	DonorProfile             *Profile       `json:"donorProfile,omitempty"`
+	Id                       string         `json:"id"`
+	ReceiverAcceptedAt       *time.Time     `json:"receiverAcceptedAt,omitempty"`
+	ReceiverId               string         `json:"receiverId"`
+	ReceiverProfile          *Profile       `json:"receiverProfile,omitempty"`
+	RejectedByUserId         *string        `json:"rejectedByUserId,omitempty"`
+	Status                   ProposalStatus `json:"status"`
+	UpdatedAt                time.Time      `json:"updatedAt"`
+	VolunteerContactOverride *string        `json:"volunteerContactOverride,omitempty"`
+	VolunteerId              string         `json:"volunteerId"`
+	VolunteerProfile         *Profile       `json:"volunteerProfile,omitempty"`
 }
 
 // DeliveryProposalAcceptResponse defines model for DeliveryProposalAcceptResponse.
