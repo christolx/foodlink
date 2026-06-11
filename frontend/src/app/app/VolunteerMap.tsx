@@ -73,12 +73,18 @@ export default function VolunteerMap({
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       {donorCoords && (
-        <Marker position={donorCoords} icon={makeIcon("#2f7a46", donorLabel ?? "Donor")}>
+        <Marker
+          position={donorCoords}
+          icon={makeIcon("#2f7a46", donorLabel ?? "Donor")}
+        >
           <Popup>{donorLabel ?? "Donor"}</Popup>
         </Marker>
       )}
       {receiverCoords && (
-        <Marker position={receiverCoords} icon={makeIcon("#ffb91f", receiverLabel ?? "Receiver")}>
+        <Marker
+          position={receiverCoords}
+          icon={makeIcon("#ffb91f", receiverLabel ?? "Receiver")}
+        >
           <Popup>{receiverLabel ?? "Receiver"}</Popup>
         </Marker>
       )}

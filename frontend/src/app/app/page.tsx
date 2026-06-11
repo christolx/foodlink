@@ -8,7 +8,14 @@ import {
   type CloudinaryUploadWidgetInfo,
   type CloudinaryUploadWidgetResults,
 } from "next-cloudinary";
-import { type FormEvent, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type FormEvent,
+  type ReactNode,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { createPortal } from "react-dom";
 import {
   acceptDeliveryProposal,
@@ -59,10 +66,9 @@ import {
   statusClass,
 } from "./dashboard-ui";
 
-const LocationPickerMapDynamic = dynamic(
-  () => import("./LocationPickerMap"),
-  { ssr: false },
-);
+const LocationPickerMapDynamic = dynamic(() => import("./LocationPickerMap"), {
+  ssr: false,
+});
 
 const VolunteerMapDynamic = dynamic(() => import("./VolunteerMap"), {
   ssr: false,
@@ -279,9 +285,11 @@ function Modal({
 
   return createPortal(
     <>
-      <div
+      <button
+        aria-label="Close modal"
         className="fixed inset-0 z-[1100] bg-black/40 backdrop-blur-sm"
         onClick={onClose}
+        type="button"
       />
       <div className="fixed left-1/2 top-1/2 z-[1101] max-h-[88vh] w-full max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl bg-[#fffdf8] shadow-2xl">
         <header className="sticky top-0 flex items-center gap-3 border-b border-[#e4ddcf] bg-[#fffdf8] px-6 py-5">
@@ -325,9 +333,11 @@ function SlidePanel({
 
   return createPortal(
     <>
-      <div
+      <button
+        aria-label="Close panel"
         className="fixed inset-0 z-[1100] bg-black/40 backdrop-blur-sm"
         onClick={onClose}
+        type="button"
       />
       <div className="fixed right-0 top-0 z-[1101] flex h-full w-full max-w-sm flex-col bg-[#fffdf8] shadow-2xl">
         <header className="flex items-center gap-3 border-b border-[#e4ddcf] px-6 py-5">
@@ -361,13 +371,23 @@ function ProfilePanelContent({
   initials: string;
 }) {
   const rows = [
-    { label: "Role", value: data.user.role.charAt(0).toUpperCase() + data.user.role.slice(1) },
+    {
+      label: "Role",
+      value: data.user.role.charAt(0).toUpperCase() + data.user.role.slice(1),
+    },
     { label: "Email", value: data.user.email },
-    { label: "Contact", value: `${data.profile.contactMethod} · ${data.profile.contactValue}` },
+    {
+      label: "Contact",
+      value: `${data.profile.contactMethod} · ${data.profile.contactValue}`,
+    },
     { label: "City", value: data.profile.location.city || "—" },
     { label: "Region", value: data.profile.location.region || "—" },
-    ...(data.profile.entityType ? [{ label: "Entity", value: data.profile.entityType.replace(/_/g, " ") }] : []),
-    ...(data.profile.operationalHours ? [{ label: "Hours", value: data.profile.operationalHours }] : []),
+    ...(data.profile.entityType
+      ? [{ label: "Entity", value: data.profile.entityType.replace(/_/g, " ") }]
+      : []),
+    ...(data.profile.operationalHours
+      ? [{ label: "Hours", value: data.profile.operationalHours }]
+      : []),
   ];
   return (
     <div className="grid gap-6">
@@ -394,8 +414,12 @@ function ProfilePanelContent({
       </div>
       {data.profile.notes && (
         <div className="rounded-lg bg-[#f0f7eb] p-4 text-sm">
-          <strong className="block text-xs font-black uppercase tracking-wide text-[#2f7a46] mb-2">Notes</strong>
-          <p className="font-bold text-[#1f2a23] leading-5">{data.profile.notes}</p>
+          <strong className="block text-xs font-black uppercase tracking-wide text-[#2f7a46] mb-2">
+            Notes
+          </strong>
+          <p className="font-bold text-[#1f2a23] leading-5">
+            {data.profile.notes}
+          </p>
         </div>
       )}
     </div>
@@ -408,12 +432,26 @@ function SettingsPanelContent() {
   const [notifDelivery, setNotifDelivery] = useState(false);
   const [compactMode, setCompactMode] = useState(false);
 
-  function Toggle({ checked, onChange, label, description }: { checked: boolean; onChange: () => void; label: string; description: string }) {
+  function Toggle({
+    checked,
+    onChange,
+    label,
+    description,
+  }: {
+    checked: boolean;
+    onChange: () => void;
+    label: string;
+    description: string;
+  }) {
     return (
       <label className="flex cursor-pointer items-start justify-between gap-4 py-3">
         <div>
-          <strong className="block text-sm font-black text-[#101812]">{label}</strong>
-          <span className="mt-0.5 block text-xs font-bold text-[#46534a]">{description}</span>
+          <strong className="block text-sm font-black text-[#101812]">
+            {label}
+          </strong>
+          <span className="mt-0.5 block text-xs font-bold text-[#46534a]">
+            {description}
+          </span>
         </div>
         <button
           type="button"
@@ -422,7 +460,9 @@ function SettingsPanelContent() {
           onClick={onChange}
           className={cx(
             "relative mt-0.5 h-6 w-11 shrink-0 rounded-full border-2 transition-colors",
-            checked ? "border-[#14733a] bg-[#14733a]" : "border-[#c9c4b8] bg-[#e8e4dc]",
+            checked
+              ? "border-[#14733a] bg-[#14733a]"
+              : "border-[#c9c4b8] bg-[#e8e4dc]",
           )}
         >
           <span
@@ -439,21 +479,47 @@ function SettingsPanelContent() {
   return (
     <div className="grid gap-6">
       <div>
-        <h3 className="mb-1 text-xs font-black uppercase tracking-wider text-[#46534a]">Notifications</h3>
+        <h3 className="mb-1 text-xs font-black uppercase tracking-wider text-[#46534a]">
+          Notifications
+        </h3>
         <div className="divide-y divide-[#e4ddcf] rounded-lg border border-[#e4ddcf] bg-white px-4">
-          <Toggle checked={notifPickup} onChange={() => setNotifPickup(v => !v)} label="Pickup assigned" description="When a new pickup is assigned to you" />
-          <Toggle checked={notifProposal} onChange={() => setNotifProposal(v => !v)} label="Proposal accepted" description="When your proposal is accepted" />
-          <Toggle checked={notifDelivery} onChange={() => setNotifDelivery(v => !v)} label="Delivery confirmed" description="When the receiver confirms delivery" />
+          <Toggle
+            checked={notifPickup}
+            onChange={() => setNotifPickup((v) => !v)}
+            label="Pickup assigned"
+            description="When a new pickup is assigned to you"
+          />
+          <Toggle
+            checked={notifProposal}
+            onChange={() => setNotifProposal((v) => !v)}
+            label="Proposal accepted"
+            description="When your proposal is accepted"
+          />
+          <Toggle
+            checked={notifDelivery}
+            onChange={() => setNotifDelivery((v) => !v)}
+            label="Delivery confirmed"
+            description="When the receiver confirms delivery"
+          />
         </div>
       </div>
       <div>
-        <h3 className="mb-1 text-xs font-black uppercase tracking-wider text-[#46534a]">Display</h3>
+        <h3 className="mb-1 text-xs font-black uppercase tracking-wider text-[#46534a]">
+          Display
+        </h3>
         <div className="divide-y divide-[#e4ddcf] rounded-lg border border-[#e4ddcf] bg-white px-4">
-          <Toggle checked={compactMode} onChange={() => setCompactMode(v => !v)} label="Compact mode" description="Reduce spacing in donation list" />
+          <Toggle
+            checked={compactMode}
+            onChange={() => setCompactMode((v) => !v)}
+            label="Compact mode"
+            description="Reduce spacing in donation list"
+          />
         </div>
       </div>
       <div>
-        <h3 className="mb-1 text-xs font-black uppercase tracking-wider text-[#46534a]">Account</h3>
+        <h3 className="mb-1 text-xs font-black uppercase tracking-wider text-[#46534a]">
+          Account
+        </h3>
         <div className="rounded-lg border border-[#e4ddcf] bg-white px-4 py-3 text-sm font-bold text-[#46534a]">
           Settings are saved automatically.
         </div>
@@ -466,38 +532,96 @@ function ReportsPanelContent({ data }: { data: DashboardData }) {
   const delivered = data.pickups.filter((p) => p.status === "delivered").length;
   const pickedUp = data.pickups.filter((p) => p.status === "picked_up").length;
   const totalPickups = data.pickups.length;
-  const acceptedProposals = data.proposals.filter((p) => p.status === "accepted").length;
-  const pendingProposals = data.proposals.filter((p) => p.status === "pending").length;
+  const acceptedProposals = data.proposals.filter(
+    (p) => p.status === "accepted",
+  ).length;
+  const pendingProposals = data.proposals.filter(
+    (p) => p.status === "pending",
+  ).length;
   const donationsHelped = new Set(data.pickups.map((p) => p.donationId)).size;
 
   const stats = [
-    { label: "Deliveries completed", value: delivered, color: "bg-[#e5f1df] text-[#14733a]" },
-    { label: "In progress", value: pickedUp, color: "bg-[#fff3cd] text-[#856404]" },
-    { label: "Total pickups", value: totalPickups, color: "bg-[#e8f0fe] text-[#1a56db]" },
-    { label: "Proposals accepted", value: acceptedProposals, color: "bg-[#e5f1df] text-[#14733a]" },
-    { label: "Proposals pending", value: pendingProposals, color: "bg-[#fff3cd] text-[#856404]" },
-    { label: "Donations helped", value: donationsHelped, color: "bg-[#fce8ff] text-[#7e22ce]" },
+    {
+      label: "Deliveries completed",
+      value: delivered,
+      color: "bg-[#e5f1df] text-[#14733a]",
+    },
+    {
+      label: "In progress",
+      value: pickedUp,
+      color: "bg-[#fff3cd] text-[#856404]",
+    },
+    {
+      label: "Total pickups",
+      value: totalPickups,
+      color: "bg-[#e8f0fe] text-[#1a56db]",
+    },
+    {
+      label: "Proposals accepted",
+      value: acceptedProposals,
+      color: "bg-[#e5f1df] text-[#14733a]",
+    },
+    {
+      label: "Proposals pending",
+      value: pendingProposals,
+      color: "bg-[#fff3cd] text-[#856404]",
+    },
+    {
+      label: "Donations helped",
+      value: donationsHelped,
+      color: "bg-[#fce8ff] text-[#7e22ce]",
+    },
   ];
 
   return (
     <div className="grid gap-6">
-      <p className="text-sm font-bold text-[#46534a]">Your activity summary across all sessions.</p>
+      <p className="text-sm font-bold text-[#46534a]">
+        Your activity summary across all sessions.
+      </p>
       <div className="grid grid-cols-2 gap-3">
         {stats.map(({ label, value, color }) => (
-          <div key={label} className={cx("rounded-xl p-4", color.split(" ")[0], "border border-black/5")}>
+          <div
+            key={label}
+            className={cx(
+              "rounded-xl p-4",
+              color.split(" ")[0],
+              "border border-black/5",
+            )}
+          >
             <strong className="block text-2xl font-black">{value}</strong>
-            <span className={cx("mt-1 block text-xs font-bold", color.split(" ")[1])}>{label}</span>
+            <span
+              className={cx(
+                "mt-1 block text-xs font-bold",
+                color.split(" ")[1],
+              )}
+            >
+              {label}
+            </span>
           </div>
         ))}
       </div>
       {data.pickups.length > 0 && (
         <div>
-          <h3 className="mb-2 text-xs font-black uppercase tracking-wider text-[#46534a]">Recent pickups</h3>
+          <h3 className="mb-2 text-xs font-black uppercase tracking-wider text-[#46534a]">
+            Recent pickups
+          </h3>
           <div className="grid gap-2">
             {[...data.pickups].slice(0, 4).map((pickup) => (
-              <div key={pickup.id} className="flex items-center justify-between rounded-lg border border-[#e4ddcf] bg-white px-3 py-2 text-xs">
-                <span className="font-black text-[#101812]">#{pickup.id.slice(0, 8)}</span>
-                <span className={cx(badgeBase, pickup.status === "delivered" ? "bg-[#dcebd5] text-[#14351f]" : "bg-[#fee8ba] text-[#4d3510]")}>
+              <div
+                key={pickup.id}
+                className="flex items-center justify-between rounded-lg border border-[#e4ddcf] bg-white px-3 py-2 text-xs"
+              >
+                <span className="font-black text-[#101812]">
+                  #{pickup.id.slice(0, 8)}
+                </span>
+                <span
+                  className={cx(
+                    badgeBase,
+                    pickup.status === "delivered"
+                      ? "bg-[#dcebd5] text-[#14351f]"
+                      : "bg-[#fee8ba] text-[#4d3510]",
+                  )}
+                >
                   {pickup.status.replace(/_/g, " ")}
                 </span>
               </div>
@@ -540,10 +664,15 @@ function HelpPanelContent() {
 
   return (
     <div className="grid gap-4">
-      <p className="text-sm font-bold text-[#46534a]">Common questions about using FoodLink as a volunteer.</p>
+      <p className="text-sm font-bold text-[#46534a]">
+        Common questions about using FoodLink as a volunteer.
+      </p>
       <div className="grid gap-2">
         {faqs.map(({ q, a }, i) => (
-          <div key={q} className="overflow-hidden rounded-lg border border-[#e4ddcf]">
+          <div
+            key={q}
+            className="overflow-hidden rounded-lg border border-[#e4ddcf]"
+          >
             <button
               type="button"
               className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm font-black text-[#101812] hover:bg-[#f7f5f0]"
@@ -552,7 +681,10 @@ function HelpPanelContent() {
               {q}
               <AppIcon
                 name="chevron"
-                className={cx("h-4 w-4 shrink-0 text-[#46534a] transition-transform", openIndex === i && "rotate-180")}
+                className={cx(
+                  "h-4 w-4 shrink-0 text-[#46534a] transition-transform",
+                  openIndex === i && "rotate-180",
+                )}
               />
             </button>
             {openIndex === i && (
@@ -617,26 +749,79 @@ function DashboardSidebar({
         (d) => d.status === "available",
       ).length;
       return [
-        { label: "Dashboard", icon: "dashboard" as IconName, href: "#dashboard-title" },
-        { label: "Available donations", icon: "bag" as IconName, href: "#available-donations", badge: availableCount },
-        { label: "Receivers", icon: "team" as IconName, href: "#receiver-directory" },
-        { label: "My proposals", icon: "box" as IconName, href: "#my-proposals" },
-        { label: "Pickups", icon: "pickup" as IconName, href: "#active-pickup" },
-        { label: "History", icon: "clock" as IconName, href: "#today-at-a-glance" },
-        { label: "Messages", icon: "message" as IconName, href: "#notifications" },
-        { label: "Reports", icon: "chart" as IconName, panel: "reports" as SidePanelType },
-        { label: "Profile", icon: "profile" as IconName, panel: "profile" as SidePanelType },
-        { label: "Settings", icon: "settings" as IconName, panel: "settings" as SidePanelType },
-        { label: "Help & support", icon: "message" as IconName, panel: "help" as SidePanelType },
+        {
+          label: "Dashboard",
+          icon: "dashboard" as IconName,
+          href: "#dashboard-title",
+        },
+        {
+          label: "Available donations",
+          icon: "bag" as IconName,
+          href: "#available-donations",
+          badge: availableCount,
+        },
+        {
+          label: "Receivers",
+          icon: "team" as IconName,
+          href: "#receiver-directory",
+        },
+        {
+          label: "My proposals",
+          icon: "box" as IconName,
+          href: "#my-proposals",
+        },
+        {
+          label: "Pickups",
+          icon: "pickup" as IconName,
+          href: "#active-pickup",
+        },
+        {
+          label: "History",
+          icon: "clock" as IconName,
+          href: "#today-at-a-glance",
+        },
+        {
+          label: "Messages",
+          icon: "message" as IconName,
+          href: "#notifications",
+        },
+        {
+          label: "Reports",
+          icon: "chart" as IconName,
+          panel: "reports" as SidePanelType,
+        },
+        {
+          label: "Profile",
+          icon: "profile" as IconName,
+          panel: "profile" as SidePanelType,
+        },
+        {
+          label: "Settings",
+          icon: "settings" as IconName,
+          panel: "settings" as SidePanelType,
+        },
+        {
+          label: "Help & support",
+          icon: "message" as IconName,
+          panel: "help" as SidePanelType,
+        },
       ];
     }
     // Donor
     return [
-      { label: "Dashboard", icon: "dashboard" as IconName, href: "#dashboard-title" },
+      {
+        label: "Dashboard",
+        icon: "dashboard" as IconName,
+        href: "#dashboard-title",
+      },
       { label: "My donations", icon: "bag" as IconName, href: "#my-donations" },
       { label: "Proposals", icon: "box" as IconName, href: "#proposal-queue" },
       { label: "Pickups", icon: "pickup" as IconName, href: "#work" },
-      { label: "Notifications", icon: "bell" as IconName, href: "#notifications" },
+      {
+        label: "Notifications",
+        icon: "bell" as IconName,
+        href: "#notifications",
+      },
     ];
   }, [role, data]);
 
@@ -772,20 +957,22 @@ function DashboardSidebar({
       {topHeader}
       <nav className="flex flex-col gap-1 overflow-y-auto pr-1 min-h-0 custom-scrollbar">
         {navItems.map((item) => {
-          const isActive = "panel" in item && item.panel
-            ? activePanel === item.panel
-            : "href" in item && item.href === activeHref;
+          const isActive =
+            "panel" in item && item.panel
+              ? activePanel === item.panel
+              : "href" in item && item.href === activeHref;
           const sharedClass = cx(
             "flex min-h-10 items-center gap-3.5 rounded-lg px-4 text-sm font-black transition shrink-0",
             isActive
               ? "bg-[#116b35] shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]"
               : "hover:bg-white/10",
           );
-          const badge = item.badge !== undefined && item.badge > 0 ? (
-            <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-[#ffbd1a] px-1 text-[0.65rem] font-black text-[#052b12]">
-              {item.badge}
-            </span>
-          ) : null;
+          const badge =
+            item.badge !== undefined && item.badge > 0 ? (
+              <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-[#ffbd1a] px-1 text-[0.65rem] font-black text-[#052b12]">
+                {item.badge}
+              </span>
+            ) : null;
 
           if ("panel" in item && item.panel) {
             return (
@@ -793,7 +980,13 @@ function DashboardSidebar({
                 key={item.label}
                 type="button"
                 className={sharedClass}
-                onClick={() => setActivePanel(activePanel === item.panel ? null : item.panel as SidePanelType)}
+                onClick={() =>
+                  setActivePanel(
+                    activePanel === item.panel
+                      ? null
+                      : (item.panel as SidePanelType),
+                  )
+                }
               >
                 <AppIcon name={item.icon} className="h-5 w-5 shrink-0" />
                 {item.label}
@@ -807,7 +1000,10 @@ function DashboardSidebar({
               key={item.label}
               className={sharedClass}
               href={item.href}
-              onClick={() => { setActiveHref(item.href ?? ""); setActivePanel(null); }}
+              onClick={() => {
+                setActiveHref(item.href ?? "");
+                setActivePanel(null);
+              }}
             >
               <AppIcon name={item.icon} className="h-5 w-5 shrink-0" />
               {item.label}
@@ -820,20 +1016,28 @@ function DashboardSidebar({
       {activePanel && (
         <SlidePanel
           title={
-            activePanel === "profile" ? "My profile"
-            : activePanel === "settings" ? "Settings"
-            : activePanel === "reports" ? "Reports"
-            : "Help & support"
+            activePanel === "profile"
+              ? "My profile"
+              : activePanel === "settings"
+                ? "Settings"
+                : activePanel === "reports"
+                  ? "Reports"
+                  : "Help & support"
           }
           icon={
-            activePanel === "profile" ? "profile"
-            : activePanel === "settings" ? "settings"
-            : activePanel === "reports" ? "chart"
-            : "message"
+            activePanel === "profile"
+              ? "profile"
+              : activePanel === "settings"
+                ? "settings"
+                : activePanel === "reports"
+                  ? "chart"
+                  : "message"
           }
           onClose={() => setActivePanel(null)}
         >
-          {activePanel === "profile" && <ProfilePanelContent data={data} initials={initials} />}
+          {activePanel === "profile" && (
+            <ProfilePanelContent data={data} initials={initials} />
+          )}
           {activePanel === "settings" && <SettingsPanelContent />}
           {activePanel === "reports" && <ReportsPanelContent data={data} />}
           {activePanel === "help" && <HelpPanelContent />}
@@ -1084,11 +1288,19 @@ function DonorDashboard({
 }) {
   const [uploadedImageUrl, setUploadedImageUrl] = useState("");
   const [uploadError, setUploadError] = useState("");
-  const [donorCoords, setDonorCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [donorCoords, setDonorCoords] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
   const [locationMode, setLocationMode] = useState<"gps" | "map">("gps");
-  const [pickedCoords, setPickedCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [pickedCoords, setPickedCoords] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
   const [showMapPicker, setShowMapPicker] = useState(false);
-  const [mapCenter, setMapCenter] = useState<[number, number]>([-6.2088, 106.8456]);
+  const [mapCenter, setMapCenter] = useState<[number, number]>([
+    -6.2088, 106.8456,
+  ]);
   const [geocoding, setGeocoding] = useState(false);
   const locationInputRef = useRef<HTMLInputElement>(null);
 
@@ -1103,7 +1315,11 @@ function DonorDashboard({
     setDefaultUntil(localLater.toISOString().slice(0, 16));
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (pos) => setDonorCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        (pos) =>
+          setDonorCoords({
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+          }),
         () => {},
         { enableHighAccuracy: true },
       );
@@ -1132,7 +1348,8 @@ function DonorDashboard({
         imageUrl: uploadedImageUrl || defaultDonationImage,
         pickupLocation: {
           ...demoLocation,
-          addressLine1: locationInputRef.current?.value || demoLocation.addressLine1,
+          addressLine1:
+            locationInputRef.current?.value || demoLocation.addressLine1,
           ...(locationMode === "map" && pickedCoords
             ? { latitude: pickedCoords.lat, longitude: pickedCoords.lng }
             : locationMode === "gps" && donorCoords
@@ -1152,312 +1369,333 @@ function DonorDashboard({
 
   return (
     <>
-    <div className="grid items-start gap-5 2xl:grid-cols-[minmax(0,1fr)_26rem]">
-      <div className="grid gap-5" id="work">
-        <section className="grid gap-5 lg:grid-cols-[minmax(28rem,1.08fr)_minmax(24rem,0.92fr)]">
-          <form
-            className={cx(panel, "grid content-start gap-4 p-6")}
-            onSubmit={handleCreateDonation}
-          >
-            <div className="flex items-center gap-4">
-              <span className="grid h-12 w-12 place-items-center rounded-full bg-[#f4ead6] text-[#064c25]">
-                <AppIcon name="leaf" className="h-6 w-6" />
-              </span>
-              <h2 className={heading}>Create donation</h2>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_13rem]">
-              <label className="grid gap-2 text-xs font-bold text-[#46534a]">
-                Title
-                <input
-                  className={input}
-                  name="title"
-                  placeholder="e.g. Fresh vegetables from today"
-                  required
-                />
-              </label>
-              <label className="grid gap-2 text-xs font-bold text-[#46534a]">
-                Quantity
-                <input
-                  className={input}
-                  name="quantity"
-                  placeholder="e.g. 15 kg, 10 packs"
-                  required
-                />
-              </label>
-            </div>
-
-            <label className="grid gap-2 text-xs font-bold text-[#46534a]">
-              Description
-              <textarea
-                className={cx(input, "min-h-20 resize-y")}
-                name="description"
-                placeholder="Describe the food, condition, and anything important."
-                required
-              />
-            </label>
-
-            <div className="grid gap-2">
-              <span className="flex items-center justify-between text-xs font-bold text-[#46534a]">
-                Pickup location
-                <span className="flex gap-1 rounded-lg border border-[#cfc8ba] bg-[#f4f0e8] p-0.5">
-                  <button
-                    type="button"
-                    className={cx(
-                      "rounded-md px-3 py-1 text-[0.65rem] font-black transition-colors",
-                      locationMode === "gps"
-                        ? "bg-white text-[#064c25] shadow-sm"
-                        : "text-[#46534a] hover:text-[#101812]",
-                    )}
-                    onClick={() => setLocationMode("gps")}
-                  >
-                    Use GPS
-                  </button>
-                  <button
-                    type="button"
-                    className={cx(
-                      "rounded-md px-3 py-1 text-[0.65rem] font-black transition-colors",
-                      locationMode === "map"
-                        ? "bg-white text-[#064c25] shadow-sm"
-                        : "text-[#46534a] hover:text-[#101812]",
-                    )}
-                    onClick={() => setLocationMode("map")}
-                  >
-                    Pick on map
-                  </button>
+      <div className="grid items-start gap-5 2xl:grid-cols-[minmax(0,1fr)_26rem]">
+        <div className="grid gap-5" id="work">
+          <section className="grid gap-5 lg:grid-cols-[minmax(28rem,1.08fr)_minmax(24rem,0.92fr)]">
+            <form
+              className={cx(panel, "grid content-start gap-4 p-6")}
+              onSubmit={handleCreateDonation}
+            >
+              <div className="flex items-center gap-4">
+                <span className="grid h-12 w-12 place-items-center rounded-full bg-[#f4ead6] text-[#064c25]">
+                  <AppIcon name="leaf" className="h-6 w-6" />
                 </span>
-              </span>
-
-              <span className="grid grid-cols-[2.5rem_1fr_2.5rem] overflow-hidden rounded-[0.65rem] border border-[#cfc8ba] bg-[#fffdf8]">
-                <span className="grid place-items-center text-[#064c25]">
-                  <AppIcon name="map" className="h-5 w-5" />
-                </span>
-                <input
-                  ref={locationInputRef}
-                  className="min-h-10 bg-transparent px-2 text-sm font-bold outline-none"
-                  name="location"
-                  placeholder="Jl. Melati No. 12, Kebayoran Baru, Jakarta Selatan"
-                />
-                {locationMode === "gps" ? (
-                  <span className="grid place-items-center border-l border-[#cfc8ba] px-2">
-                    {donorCoords ? (
-                      <span className="h-2 w-2 rounded-full bg-[#14733a]" title="GPS detected" />
-                    ) : (
-                      <span className="h-2 w-2 animate-pulse rounded-full bg-[#cfc8ba]" title="Detecting…" />
-                    )}
-                  </span>
-                ) : (
-                  <button
-                    type="button"
-                    disabled={geocoding}
-                    className="grid place-items-center border-l border-[#cfc8ba] px-2 text-[#064c25] hover:bg-[#e5f1df] disabled:opacity-50"
-                    title="Open map picker"
-                    onClick={async () => {
-                      const addr = locationInputRef.current?.value ?? "";
-                      let center: [number, number] = donorCoords
-                        ? [donorCoords.lat, donorCoords.lng]
-                        : [-6.2088, 106.8456];
-                      if (addr) {
-                        setGeocoding(true);
-                        try {
-                          const res = await fetch(
-                            `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(addr)}&format=json&limit=1`,
-                          );
-                          const data = await res.json();
-                          if (Array.isArray(data) && data[0]) {
-                            center = [parseFloat(data[0].lat), parseFloat(data[0].lon)];
-                          }
-                        } catch {
-                          // fall back to GPS/Jakarta
-                        } finally {
-                          setGeocoding(false);
-                        }
-                      }
-                      setMapCenter(center);
-                      setShowMapPicker(true);
-                    }}
-                  >
-                    {geocoding ? (
-                      <span className="h-3 w-3 animate-spin rounded-full border-2 border-[#0b5b2b] border-t-transparent" />
-                    ) : (
-                      <AppIcon name="map" className="h-5 w-5" />
-                    )}
-                  </button>
-                )}
-              </span>
-
-              {locationMode === "gps" && (
-                <span className="text-[0.65rem] font-bold text-[#9aab9c]">
-                  {donorCoords
-                    ? `GPS: ${donorCoords.lat.toFixed(5)}, ${donorCoords.lng.toFixed(5)}`
-                    : "Detecting GPS location…"}
-                </span>
-              )}
-              {locationMode === "map" && (
-                <span className={cx("text-[0.65rem] font-bold", pickedCoords ? "text-[#14733a]" : "text-[#9aab9c]")}>
-                  {pickedCoords
-                    ? `Pinned: ${pickedCoords.lat.toFixed(5)}, ${pickedCoords.lng.toFixed(5)}`
-                    : "Click the map icon to pin a location"}
-                </span>
-              )}
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="grid gap-2 text-xs font-bold text-[#46534a]">
-                Available from
-                <span className="relative block">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#064c25] pointer-events-none">
-                    <AppIcon name="calendar" className="h-4.5 w-4.5" />
-                  </span>
-                  <input
-                    className={cx(input, "pl-10 pr-8")}
-                    name="availableFrom"
-                    type="datetime-local"
-                    defaultValue={defaultFrom}
-                  />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#46534a] pointer-events-none">
-                    <AppIcon name="chevron" className="h-4 w-4" />
-                  </span>
-                </span>
-              </label>
-              <label className="grid gap-2 text-xs font-bold text-[#46534a]">
-                Available until
-                <span className="relative block">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#064c25] pointer-events-none">
-                    <AppIcon name="calendar" className="h-4.5 w-4.5" />
-                  </span>
-                  <input
-                    className={cx(input, "pl-10 pr-8")}
-                    name="availableUntil"
-                    type="datetime-local"
-                    defaultValue={defaultUntil}
-                  />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#46534a] pointer-events-none">
-                    <AppIcon name="chevron" className="h-4 w-4" />
-                  </span>
-                </span>
-              </label>
-            </div>
-
-            <label className="grid gap-2 text-xs font-bold text-[#46534a]">
-              Special instructions (optional)
-              <textarea
-                className={cx(input, "min-h-16 resize-y")}
-                name="instructions"
-                placeholder="Parking info, access notes, packaging, etc."
-              />
-            </label>
-
-            {cloudinaryUploadEnabled ? (
-              <CldUploadWidget
-                uploadPreset={cloudinaryUploadPreset}
-                options={{
-                  clientAllowedFormats: ["jpg", "jpeg", "png", "webp"],
-                  maxFiles: 1,
-                  multiple: false,
-                  resourceType: "image",
-                  sources: ["local", "camera"],
-                }}
-                onError={(error) => {
-                  setUploadError(uploadErrorMessage(error));
-                }}
-                onSuccess={(result) => {
-                  const info = uploadResultInfo(result);
-                  if (!info?.secure_url) {
-                    setUploadError("Cloudinary did not return image URL.");
-                    return;
-                  }
-                  setUploadedImageUrl(info.secure_url);
-                  setUploadError("");
-                }}
-              >
-                {({ open }) => (
-                  <button
-                    className="justify-self-start border-0 bg-transparent p-0 text-xs font-black text-[#064c25]"
-                    type="button"
-                    onClick={() => open()}
-                  >
-                    {uploadedImageUrl
-                      ? "Replace donation photo"
-                      : "Add donation photo"}
-                  </button>
-                )}
-              </CldUploadWidget>
-            ) : null}
-            {uploadError ? (
-              <p className="text-xs font-black text-[#80251d]">{uploadError}</p>
-            ) : null}
-
-            <button className={primaryButton} type="submit">
-              <AppIcon name="leaf" className="h-5 w-5" />
-              Post donation
-            </button>
-            {uploadedImageUrl ? (
-              <div className="mt-2 overflow-hidden rounded-lg border border-[#cfc8ba] shadow-sm transition-all duration-300">
-                {/* biome-ignore lint/performance/noImgElement: Uploaded image preview */}
-                <img
-                  alt="Uploaded donation preview"
-                  className="h-48 w-full object-cover"
-                  src={uploadedImageUrl}
-                />
+                <h2 className={heading}>Create donation</h2>
               </div>
-            ) : null}
-          </form>
 
-          <ProposalQueue
+              <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_13rem]">
+                <label className="grid gap-2 text-xs font-bold text-[#46534a]">
+                  Title
+                  <input
+                    className={input}
+                    name="title"
+                    placeholder="e.g. Fresh vegetables from today"
+                    required
+                  />
+                </label>
+                <label className="grid gap-2 text-xs font-bold text-[#46534a]">
+                  Quantity
+                  <input
+                    className={input}
+                    name="quantity"
+                    placeholder="e.g. 15 kg, 10 packs"
+                    required
+                  />
+                </label>
+              </div>
+
+              <label className="grid gap-2 text-xs font-bold text-[#46534a]">
+                Description
+                <textarea
+                  className={cx(input, "min-h-20 resize-y")}
+                  name="description"
+                  placeholder="Describe the food, condition, and anything important."
+                  required
+                />
+              </label>
+
+              <div className="grid gap-2">
+                <span className="flex items-center justify-between text-xs font-bold text-[#46534a]">
+                  Pickup location
+                  <span className="flex gap-1 rounded-lg border border-[#cfc8ba] bg-[#f4f0e8] p-0.5">
+                    <button
+                      type="button"
+                      className={cx(
+                        "rounded-md px-3 py-1 text-[0.65rem] font-black transition-colors",
+                        locationMode === "gps"
+                          ? "bg-white text-[#064c25] shadow-sm"
+                          : "text-[#46534a] hover:text-[#101812]",
+                      )}
+                      onClick={() => setLocationMode("gps")}
+                    >
+                      Use GPS
+                    </button>
+                    <button
+                      type="button"
+                      className={cx(
+                        "rounded-md px-3 py-1 text-[0.65rem] font-black transition-colors",
+                        locationMode === "map"
+                          ? "bg-white text-[#064c25] shadow-sm"
+                          : "text-[#46534a] hover:text-[#101812]",
+                      )}
+                      onClick={() => setLocationMode("map")}
+                    >
+                      Pick on map
+                    </button>
+                  </span>
+                </span>
+
+                <span className="grid grid-cols-[2.5rem_1fr_2.5rem] overflow-hidden rounded-[0.65rem] border border-[#cfc8ba] bg-[#fffdf8]">
+                  <span className="grid place-items-center text-[#064c25]">
+                    <AppIcon name="map" className="h-5 w-5" />
+                  </span>
+                  <input
+                    ref={locationInputRef}
+                    className="min-h-10 bg-transparent px-2 text-sm font-bold outline-none"
+                    name="location"
+                    placeholder="Jl. Melati No. 12, Kebayoran Baru, Jakarta Selatan"
+                  />
+                  {locationMode === "gps" ? (
+                    <span className="grid place-items-center border-l border-[#cfc8ba] px-2">
+                      {donorCoords ? (
+                        <span
+                          className="h-2 w-2 rounded-full bg-[#14733a]"
+                          title="GPS detected"
+                        />
+                      ) : (
+                        <span
+                          className="h-2 w-2 animate-pulse rounded-full bg-[#cfc8ba]"
+                          title="Detecting…"
+                        />
+                      )}
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={geocoding}
+                      className="grid place-items-center border-l border-[#cfc8ba] px-2 text-[#064c25] hover:bg-[#e5f1df] disabled:opacity-50"
+                      title="Open map picker"
+                      onClick={async () => {
+                        const addr = locationInputRef.current?.value ?? "";
+                        let center: [number, number] = donorCoords
+                          ? [donorCoords.lat, donorCoords.lng]
+                          : [-6.2088, 106.8456];
+                        if (addr) {
+                          setGeocoding(true);
+                          try {
+                            const res = await fetch(
+                              `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(addr)}&format=json&limit=1`,
+                            );
+                            const data = await res.json();
+                            if (Array.isArray(data) && data[0]) {
+                              center = [
+                                parseFloat(data[0].lat),
+                                parseFloat(data[0].lon),
+                              ];
+                            }
+                          } catch {
+                            // fall back to GPS/Jakarta
+                          } finally {
+                            setGeocoding(false);
+                          }
+                        }
+                        setMapCenter(center);
+                        setShowMapPicker(true);
+                      }}
+                    >
+                      {geocoding ? (
+                        <span className="h-3 w-3 animate-spin rounded-full border-2 border-[#0b5b2b] border-t-transparent" />
+                      ) : (
+                        <AppIcon name="map" className="h-5 w-5" />
+                      )}
+                    </button>
+                  )}
+                </span>
+
+                {locationMode === "gps" && (
+                  <span className="text-[0.65rem] font-bold text-[#9aab9c]">
+                    {donorCoords
+                      ? `GPS: ${donorCoords.lat.toFixed(5)}, ${donorCoords.lng.toFixed(5)}`
+                      : "Detecting GPS location…"}
+                  </span>
+                )}
+                {locationMode === "map" && (
+                  <span
+                    className={cx(
+                      "text-[0.65rem] font-bold",
+                      pickedCoords ? "text-[#14733a]" : "text-[#9aab9c]",
+                    )}
+                  >
+                    {pickedCoords
+                      ? `Pinned: ${pickedCoords.lat.toFixed(5)}, ${pickedCoords.lng.toFixed(5)}`
+                      : "Click the map icon to pin a location"}
+                  </span>
+                )}
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="grid gap-2 text-xs font-bold text-[#46534a]">
+                  Available from
+                  <span className="relative block">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#064c25] pointer-events-none">
+                      <AppIcon name="calendar" className="h-4.5 w-4.5" />
+                    </span>
+                    <input
+                      className={cx(input, "pl-10 pr-8")}
+                      name="availableFrom"
+                      type="datetime-local"
+                      defaultValue={defaultFrom}
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#46534a] pointer-events-none">
+                      <AppIcon name="chevron" className="h-4 w-4" />
+                    </span>
+                  </span>
+                </label>
+                <label className="grid gap-2 text-xs font-bold text-[#46534a]">
+                  Available until
+                  <span className="relative block">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#064c25] pointer-events-none">
+                      <AppIcon name="calendar" className="h-4.5 w-4.5" />
+                    </span>
+                    <input
+                      className={cx(input, "pl-10 pr-8")}
+                      name="availableUntil"
+                      type="datetime-local"
+                      defaultValue={defaultUntil}
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#46534a] pointer-events-none">
+                      <AppIcon name="chevron" className="h-4 w-4" />
+                    </span>
+                  </span>
+                </label>
+              </div>
+
+              <label className="grid gap-2 text-xs font-bold text-[#46534a]">
+                Special instructions (optional)
+                <textarea
+                  className={cx(input, "min-h-16 resize-y")}
+                  name="instructions"
+                  placeholder="Parking info, access notes, packaging, etc."
+                />
+              </label>
+
+              {cloudinaryUploadEnabled ? (
+                <CldUploadWidget
+                  uploadPreset={cloudinaryUploadPreset}
+                  options={{
+                    clientAllowedFormats: ["jpg", "jpeg", "png", "webp"],
+                    maxFiles: 1,
+                    multiple: false,
+                    resourceType: "image",
+                    sources: ["local", "camera"],
+                  }}
+                  onError={(error) => {
+                    setUploadError(uploadErrorMessage(error));
+                  }}
+                  onSuccess={(result) => {
+                    const info = uploadResultInfo(result);
+                    if (!info?.secure_url) {
+                      setUploadError("Cloudinary did not return image URL.");
+                      return;
+                    }
+                    setUploadedImageUrl(info.secure_url);
+                    setUploadError("");
+                  }}
+                >
+                  {({ open }) => (
+                    <button
+                      className="justify-self-start border-0 bg-transparent p-0 text-xs font-black text-[#064c25]"
+                      type="button"
+                      onClick={() => open()}
+                    >
+                      {uploadedImageUrl
+                        ? "Replace donation photo"
+                        : "Add donation photo"}
+                    </button>
+                  )}
+                </CldUploadWidget>
+              ) : null}
+              {uploadError ? (
+                <p className="text-xs font-black text-[#80251d]">
+                  {uploadError}
+                </p>
+              ) : null}
+
+              <button className={primaryButton} type="submit">
+                <AppIcon name="leaf" className="h-5 w-5" />
+                Post donation
+              </button>
+              {uploadedImageUrl ? (
+                <div className="mt-2 overflow-hidden rounded-lg border border-[#cfc8ba] shadow-sm transition-all duration-300">
+                  {/* biome-ignore lint/performance/noImgElement: Uploaded image preview */}
+                  <img
+                    alt="Uploaded donation preview"
+                    className="h-48 w-full object-cover"
+                    src={uploadedImageUrl}
+                  />
+                </div>
+              ) : null}
+            </form>
+
+            <ProposalQueue
+              donations={data.donations}
+              proposals={data.proposals}
+              viewerRole="donor"
+              token={token}
+              runAction={runAction}
+            />
+          </section>
+
+          <DonationsTable
             donations={data.donations}
             proposals={data.proposals}
-            viewerRole="donor"
-            token={token}
-            runAction={runAction}
+            title="My donations"
           />
-        </section>
+        </div>
 
-        <DonationsTable
-          donations={data.donations}
-          proposals={data.proposals}
-          title="My donations"
+        <NotificationsPanel
+          notifications={data.notifications}
+          viewerRole={data.user.role}
+          token={token}
+          runAction={runAction}
         />
       </div>
 
-      <NotificationsPanel
-        notifications={data.notifications}
-        viewerRole={data.user.role}
-        token={token}
-        runAction={runAction}
-      />
-    </div>
-
-    {showMapPicker && createPortal(
-      <div className="fixed inset-0 z-[1200] flex items-end justify-center bg-black/60 sm:items-center sm:p-6">
-        <div className="flex h-[88vh] w-full flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:h-[80vh] sm:max-w-2xl sm:rounded-2xl">
-          <div className="flex shrink-0 items-center justify-between border-b border-[#ded7c9] px-5 py-4">
-            <div>
-              <h3 className="text-sm font-black text-[#101812]">Pick pickup location</h3>
-              <p className="text-xs text-[#46534a]">Click or drag the pin to set the exact spot</p>
+      {showMapPicker &&
+        createPortal(
+          <div className="fixed inset-0 z-[1200] flex items-end justify-center bg-black/60 sm:items-center sm:p-6">
+            <div className="flex h-[88vh] w-full flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:h-[80vh] sm:max-w-2xl sm:rounded-2xl">
+              <div className="flex shrink-0 items-center justify-between border-b border-[#ded7c9] px-5 py-4">
+                <div>
+                  <h3 className="text-sm font-black text-[#101812]">
+                    Pick pickup location
+                  </h3>
+                  <p className="text-xs text-[#46534a]">
+                    Click or drag the pin to set the exact spot
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="grid h-8 w-8 place-items-center rounded-full text-[#46534a] hover:bg-[#f4f0e8]"
+                  onClick={() => setShowMapPicker(false)}
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="min-h-0 flex-1">
+                <LocationPickerMapDynamic
+                  initialCenter={mapCenter}
+                  onConfirm={(coords) => {
+                    setPickedCoords(coords);
+                    setShowMapPicker(false);
+                  }}
+                  onClose={() => setShowMapPicker(false)}
+                />
+              </div>
             </div>
-            <button
-              type="button"
-              className="grid h-8 w-8 place-items-center rounded-full text-[#46534a] hover:bg-[#f4f0e8]"
-              onClick={() => setShowMapPicker(false)}
-            >
-              ✕
-            </button>
-          </div>
-          <div className="min-h-0 flex-1">
-            <LocationPickerMapDynamic
-              initialCenter={mapCenter}
-              onConfirm={(coords) => {
-                setPickedCoords(coords);
-                setShowMapPicker(false);
-              }}
-              onClose={() => setShowMapPicker(false)}
-            />
-          </div>
-        </div>
-      </div>,
-      document.body,
-    )}
+          </div>,
+          document.body,
+        )}
     </>
   );
 }
@@ -1471,8 +1709,12 @@ function VolunteerDashboard({
   token: string;
   runAction: (callback: () => Promise<void>, success: string) => Promise<void>;
 }) {
-  const [selectedDonationId, setSelectedDonationId] = useState<string | null>(null);
-  const [selectedReceiverId, setSelectedReceiverId] = useState<string | null>(null);
+  const [selectedDonationId, setSelectedDonationId] = useState<string | null>(
+    null,
+  );
+  const [selectedReceiverId, setSelectedReceiverId] = useState<string | null>(
+    null,
+  );
   const [showProposalModal, setShowProposalModal] = useState(false);
   const [phoneMode, setPhoneMode] = useState<"profile" | "custom">("profile");
   const [customPhone, setCustomPhone] = useState("");
@@ -1497,9 +1739,10 @@ function VolunteerDashboard({
       throw new Error("Need available donation and receiver first.");
     }
 
-    const resolvedContact = phoneMode === "custom"
-      ? customPhone.trim()
-      : data.profile.contactValue ?? "";
+    const resolvedContact =
+      phoneMode === "custom"
+        ? customPhone.trim()
+        : (data.profile.contactValue ?? "");
 
     await createDeliveryProposal(token, {
       donationId: availableDonation.id,
@@ -1522,137 +1765,172 @@ function VolunteerDashboard({
 
   return (
     <>
-    <div className="grid gap-3">
-      <section className="grid min-h-[41rem] gap-0 overflow-hidden rounded-xl border border-[#ded7c9] bg-[#fffdf8]/78 shadow-[0_1rem_2.8rem_rgba(49,43,24,0.08)] 2xl:grid-cols-[minmax(23rem,1.04fr)_minmax(21rem,0.96fr)_minmax(19rem,0.78fr)]">
-        <VolunteerDonationsPanel
-          donations={data.donations}
-          selectedDonation={availableDonation}
-          onSelect={setSelectedDonationId}
-        />
-        <VolunteerMapPanel donation={availableDonation} receiver={receiver} />
-        <VolunteerReceiversPanel
-          receivers={data.receivers}
-          selectedReceiver={receiver}
-          onSelect={setSelectedReceiverId}
-        />
-      </section>
+      <div className="grid gap-3">
+        <section className="grid min-h-[41rem] gap-0 overflow-hidden rounded-xl border border-[#ded7c9] bg-[#fffdf8]/78 shadow-[0_1rem_2.8rem_rgba(49,43,24,0.08)] 2xl:grid-cols-[minmax(23rem,1.04fr)_minmax(21rem,0.96fr)_minmax(19rem,0.78fr)]">
+          <VolunteerDonationsPanel
+            donations={data.donations}
+            selectedDonation={availableDonation}
+            onSelect={setSelectedDonationId}
+          />
+          <VolunteerMapPanel donation={availableDonation} receiver={receiver} />
+          <VolunteerReceiversPanel
+            receivers={data.receivers}
+            selectedReceiver={receiver}
+            onSelect={setSelectedReceiverId}
+          />
+        </section>
 
-      <section className="grid gap-3 xl:grid-cols-[minmax(0,1.35fr)_18rem]">
-        <VolunteerProposalPanel
-          donation={availableDonation}
-          receiver={receiver}
-          onCreate={() => setShowProposalModal(true)}
-          disabled={!availableDonation || !receiver}
-        />
-        <VolunteerPickupPanel
-          activePickup={activePickup}
-          token={token}
-          runAction={runAction}
-        />
-      </section>
+        <section className="grid gap-3 xl:grid-cols-[minmax(0,1.35fr)_18rem]">
+          <VolunteerProposalPanel
+            donation={availableDonation}
+            receiver={receiver}
+            onCreate={() => setShowProposalModal(true)}
+            disabled={!availableDonation || !receiver}
+          />
+          <VolunteerPickupPanel
+            activePickup={activePickup}
+            token={token}
+            runAction={runAction}
+          />
+        </section>
 
-      <VolunteerGlancePanel
-        availableCount={availableDonations.length}
-        pendingCount={pendingProposals}
-        pickupCount={data.pickups.length}
-      />
-    </div>
+        <VolunteerGlancePanel
+          availableCount={availableDonations.length}
+          pendingCount={pendingProposals}
+          pickupCount={data.pickups.length}
+        />
+      </div>
 
-    {showProposalModal && createPortal(
-      <>
-        <div className="fixed inset-0 z-[1100] bg-black/40 backdrop-blur-sm" onClick={() => setShowProposalModal(false)} />
-        <div className="fixed left-1/2 top-1/2 z-[1101] w-full max-w-md -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl bg-[#fffdf8] shadow-2xl">
-          <header className="flex items-center gap-3 border-b border-[#e4ddcf] px-6 py-5">
-            <span className="grid h-9 w-9 place-items-center rounded-full bg-[#e5f1df] text-[#14733a]">
-              <AppIcon name="message" className="h-5 w-5" />
-            </span>
-            <div className="flex-1">
-              <h2 className="font-serif text-lg font-black tracking-tight text-[#061e0e]">Confirm proposal</h2>
-              <p className="text-xs font-bold text-[#46534a]">Choose a WhatsApp number to notify the receiver</p>
-            </div>
+      {showProposalModal &&
+        createPortal(
+          <>
             <button
-              type="button"
-              className="grid h-8 w-8 place-items-center rounded-full text-[#46534a] hover:bg-[#f0ece4]"
+              aria-label="Close proposal modal"
+              className="fixed inset-0 z-[1100] bg-black/40 backdrop-blur-sm"
               onClick={() => setShowProposalModal(false)}
-            >
-              <AppIcon name="close" className="h-5 w-5" />
-            </button>
-          </header>
-
-          <div className="grid gap-3 p-6">
-            <button
               type="button"
-              onClick={() => setPhoneMode("profile")}
-              className={cx(
-                "grid grid-cols-[1.25rem_1fr] items-start gap-3 rounded-xl border-2 p-4 text-left transition-colors",
-                phoneMode === "profile"
-                  ? "border-[#0b5b2b] bg-[#e5f1df]"
-                  : "border-[#ded7c9] bg-[#fafaf7] hover:border-[#9aab9c]",
-              )}
-            >
-              <span className={cx("mt-0.5 h-4 w-4 shrink-0 rounded-full border-2", phoneMode === "profile" ? "border-[#0b5b2b] bg-[#0b5b2b]" : "border-[#9aab9c]")} />
-              <span className="grid gap-0.5">
-                <strong className="text-sm font-black text-[#101812]">Use my profile number</strong>
-                <span className="font-mono text-xs font-bold text-[#46534a]">{profilePhone || "No number on profile"}</span>
-              </span>
-            </button>
+            />
+            <div className="fixed left-1/2 top-1/2 z-[1101] w-full max-w-md -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl bg-[#fffdf8] shadow-2xl">
+              <header className="flex items-center gap-3 border-b border-[#e4ddcf] px-6 py-5">
+                <span className="grid h-9 w-9 place-items-center rounded-full bg-[#e5f1df] text-[#14733a]">
+                  <AppIcon name="message" className="h-5 w-5" />
+                </span>
+                <div className="flex-1">
+                  <h2 className="font-serif text-lg font-black tracking-tight text-[#061e0e]">
+                    Confirm proposal
+                  </h2>
+                  <p className="text-xs font-bold text-[#46534a]">
+                    Choose a WhatsApp number to notify the receiver
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="grid h-8 w-8 place-items-center rounded-full text-[#46534a] hover:bg-[#f0ece4]"
+                  onClick={() => setShowProposalModal(false)}
+                >
+                  <AppIcon name="close" className="h-5 w-5" />
+                </button>
+              </header>
 
-            <button
-              type="button"
-              onClick={() => setPhoneMode("custom")}
-              className={cx(
-                "grid grid-cols-[1.25rem_1fr] items-start gap-3 rounded-xl border-2 p-4 text-left transition-colors",
-                phoneMode === "custom"
-                  ? "border-[#0b5b2b] bg-[#e5f1df]"
-                  : "border-[#ded7c9] bg-[#fafaf7] hover:border-[#9aab9c]",
-              )}
-            >
-              <span className={cx("mt-0.5 h-4 w-4 shrink-0 rounded-full border-2", phoneMode === "custom" ? "border-[#0b5b2b] bg-[#0b5b2b]" : "border-[#9aab9c]")} />
-              <span className="grid gap-2">
-                <strong className="text-sm font-black text-[#101812]">Use a different number</strong>
-                {phoneMode === "custom" && (
-                  <input
-                    autoFocus
-                    className="rounded-lg border border-[#cfc8ba] bg-white px-3 py-2 font-mono text-sm font-bold outline-none focus:border-[#0b5b2b]"
-                    placeholder="+62 812 3456 7890"
-                    value={customPhone}
-                    onChange={(e) => setCustomPhone(e.target.value)}
-                    onClick={(e) => e.stopPropagation()}
+              <div className="grid gap-3 p-6">
+                <button
+                  type="button"
+                  onClick={() => setPhoneMode("profile")}
+                  className={cx(
+                    "grid grid-cols-[1.25rem_1fr] items-start gap-3 rounded-xl border-2 p-4 text-left transition-colors",
+                    phoneMode === "profile"
+                      ? "border-[#0b5b2b] bg-[#e5f1df]"
+                      : "border-[#ded7c9] bg-[#fafaf7] hover:border-[#9aab9c]",
+                  )}
+                >
+                  <span
+                    className={cx(
+                      "mt-0.5 h-4 w-4 shrink-0 rounded-full border-2",
+                      phoneMode === "profile"
+                        ? "border-[#0b5b2b] bg-[#0b5b2b]"
+                        : "border-[#9aab9c]",
+                    )}
                   />
-                )}
-              </span>
-            </button>
-          </div>
+                  <span className="grid gap-0.5">
+                    <strong className="text-sm font-black text-[#101812]">
+                      Use my profile number
+                    </strong>
+                    <span className="font-mono text-xs font-bold text-[#46534a]">
+                      {profilePhone || "No number on profile"}
+                    </span>
+                  </span>
+                </button>
 
-          <footer className="flex gap-3 border-t border-[#e4ddcf] px-6 py-4">
-            <button
-              type="button"
-              className="flex-1 rounded-lg border border-[#cfc8ba] py-2.5 text-sm font-black text-[#46534a] hover:bg-[#f4f0e8]"
-              onClick={() => {
-                void runAction(handleCreateProposal, "Delivery proposal created.");
-                setShowProposalModal(false);
-              }}
-            >
-              Skip & create
-            </button>
-            <button
-              type="button"
-              disabled={phoneMode === "custom" && !customPhone.trim()}
-              className={cx(primaryButton, "flex-1 disabled:opacity-50")}
-              onClick={() => {
-                void runAction(handleCreateProposal, "Delivery proposal created.");
-                openWhatsApp();
-                setShowProposalModal(false);
-              }}
-            >
-              <AppIcon name="message" className="h-4 w-4" />
-              Create &amp; notify
-            </button>
-          </footer>
-        </div>
-      </>,
-      document.body,
-    )}
+                <button
+                  type="button"
+                  onClick={() => setPhoneMode("custom")}
+                  className={cx(
+                    "grid grid-cols-[1.25rem_1fr] items-start gap-3 rounded-xl border-2 p-4 text-left transition-colors",
+                    phoneMode === "custom"
+                      ? "border-[#0b5b2b] bg-[#e5f1df]"
+                      : "border-[#ded7c9] bg-[#fafaf7] hover:border-[#9aab9c]",
+                  )}
+                >
+                  <span
+                    className={cx(
+                      "mt-0.5 h-4 w-4 shrink-0 rounded-full border-2",
+                      phoneMode === "custom"
+                        ? "border-[#0b5b2b] bg-[#0b5b2b]"
+                        : "border-[#9aab9c]",
+                    )}
+                  />
+                  <span className="grid gap-2">
+                    <strong className="text-sm font-black text-[#101812]">
+                      Use a different number
+                    </strong>
+                    {phoneMode === "custom" && (
+                      <input
+                        className="rounded-lg border border-[#cfc8ba] bg-white px-3 py-2 font-mono text-sm font-bold outline-none focus:border-[#0b5b2b]"
+                        placeholder="+62 812 3456 7890"
+                        value={customPhone}
+                        onChange={(e) => setCustomPhone(e.target.value)}
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    )}
+                  </span>
+                </button>
+              </div>
+
+              <footer className="flex gap-3 border-t border-[#e4ddcf] px-6 py-4">
+                <button
+                  type="button"
+                  className="flex-1 rounded-lg border border-[#cfc8ba] py-2.5 text-sm font-black text-[#46534a] hover:bg-[#f4f0e8]"
+                  onClick={() => {
+                    void runAction(
+                      handleCreateProposal,
+                      "Delivery proposal created.",
+                    );
+                    setShowProposalModal(false);
+                  }}
+                >
+                  Skip & create
+                </button>
+                <button
+                  type="button"
+                  disabled={phoneMode === "custom" && !customPhone.trim()}
+                  className={cx(primaryButton, "flex-1 disabled:opacity-50")}
+                  onClick={() => {
+                    void runAction(
+                      handleCreateProposal,
+                      "Delivery proposal created.",
+                    );
+                    openWhatsApp();
+                    setShowProposalModal(false);
+                  }}
+                >
+                  <AppIcon name="message" className="h-4 w-4" />
+                  Create &amp; notify
+                </button>
+              </footer>
+            </div>
+          </>,
+          document.body,
+        )}
     </>
   );
 }
@@ -1666,7 +1944,9 @@ function VolunteerDonationsPanel({
   selectedDonation?: Donation;
   onSelect: (id: string) => void;
 }) {
-  const [filter, setFilter] = useState<"All" | "Available" | "Proposal pending">("All");
+  const [filter, setFilter] = useState<
+    "All" | "Available" | "Proposal pending"
+  >("All");
   const [sortNewest, setSortNewest] = useState(false);
 
   const filtered = donations.filter((d) => {
@@ -1715,7 +1995,8 @@ function VolunteerDonationsPanel({
           type="button"
           onClick={() => setSortNewest((v) => !v)}
         >
-          {sortNewest ? "Newest" : "Nearest"} <AppIcon name="chevron" className="h-4 w-4" />
+          {sortNewest ? "Newest" : "Nearest"}{" "}
+          <AppIcon name="chevron" className="h-4 w-4" />
         </button>
       </div>
       <div className="grid gap-2">
@@ -1840,7 +2121,9 @@ function VolunteerMapPanel({
         <VolunteerMapDynamic
           donorLocation={donation?.pickupLocation}
           receiverLocation={receiver?.location}
-          donorLabel={donation ? donorDisplayName(donation) ?? "Donor" : undefined}
+          donorLabel={
+            donation ? (donorDisplayName(donation) ?? "Donor") : undefined
+          }
           receiverLabel={receiver?.displayName}
         />
         {donation ? (
@@ -2267,7 +2550,9 @@ function VolunteerPickupPanel({
               : undefined
           }
         >
-          {activePickup?.status === "delivered" ? "Delivered ✓" : "Mark delivered"}
+          {activePickup?.status === "delivered"
+            ? "Delivered ✓"
+            : "Mark delivered"}
         </button>
       </div>
     </section>
@@ -2506,7 +2791,8 @@ function ReceiverProposalInbox({
 
   const sortedProposals = useMemo(() => {
     return [...proposals].sort((a, b) => {
-      const diff = new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      const diff =
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       return sortNewest ? diff : -diff;
     });
   }, [proposals, sortNewest]);
@@ -2532,7 +2818,8 @@ function ReceiverProposalInbox({
           type="button"
           onClick={() => setSortNewest((v) => !v)}
         >
-          Sort: {sortNewest ? "Newest" : "Oldest"} <AppIcon name="chevron" className="h-4 w-4" />
+          Sort: {sortNewest ? "Newest" : "Oldest"}{" "}
+          <AppIcon name="chevron" className="h-4 w-4" />
         </button>
       </header>
 
@@ -2583,13 +2870,29 @@ function ReceiverProposalCard({
   const donorName =
     proposal.donorProfile?.displayName ?? donorDisplayName(donation);
 
-  function openMaps(loc?: { latitude?: number; longitude?: number; addressLine1?: string; city?: string; region?: string }) {
+  function openMaps(loc?: {
+    latitude?: number;
+    longitude?: number;
+    addressLine1?: string;
+    city?: string;
+    region?: string;
+  }) {
     if (!loc) return;
     if (loc.latitude && loc.longitude) {
-      window.open(`https://www.google.com/maps?q=${loc.latitude},${loc.longitude}`, "_blank", "noopener,noreferrer");
+      window.open(
+        `https://www.google.com/maps?q=${loc.latitude},${loc.longitude}`,
+        "_blank",
+        "noopener,noreferrer",
+      );
     } else {
-      const addr = [loc.addressLine1, loc.city, loc.region].filter(Boolean).join(", ");
-      window.open(`https://www.google.com/maps/search/${encodeURIComponent(addr)}`, "_blank", "noopener,noreferrer");
+      const addr = [loc.addressLine1, loc.city, loc.region]
+        .filter(Boolean)
+        .join(", ");
+      window.open(
+        `https://www.google.com/maps/search/${encodeURIComponent(addr)}`,
+        "_blank",
+        "noopener,noreferrer",
+      );
     }
   }
   const volunteerName =
@@ -2701,8 +3004,11 @@ function ReceiverProposalCard({
               title="Pickup location"
               body={[
                 donorName ?? "Donor",
-                donation?.pickupLocation.addressLine1 ?? "Jl. Kemang Raya No.10",
-                [donation?.pickupLocation.city, donation?.pickupLocation.region].filter(Boolean).join(", ") || "Jakarta",
+                donation?.pickupLocation.addressLine1 ??
+                  "Jl. Kemang Raya No.10",
+                [donation?.pickupLocation.city, donation?.pickupLocation.region]
+                  .filter(Boolean)
+                  .join(", ") || "Jakarta",
               ]}
               action="Open in Maps"
               onActionClick={() => openMaps(donation?.pickupLocation)}
@@ -2712,8 +3018,14 @@ function ReceiverProposalCard({
               title="Delivery to"
               body={[
                 proposal.receiverProfile?.displayName ?? "Receiver",
-                proposal.receiverProfile?.location.addressLine1 ?? "Jl. Damai No. 25",
-                [proposal.receiverProfile?.location.city, proposal.receiverProfile?.location.region].filter(Boolean).join(", ") || "Jakarta",
+                proposal.receiverProfile?.location.addressLine1 ??
+                  "Jl. Damai No. 25",
+                [
+                  proposal.receiverProfile?.location.city,
+                  proposal.receiverProfile?.location.region,
+                ]
+                  .filter(Boolean)
+                  .join(", ") || "Jakarta",
               ]}
               action="Open in Maps"
               onActionClick={() => openMaps(proposal.receiverProfile?.location)}
@@ -2990,114 +3302,129 @@ function ReceiverTimelineCard({
 
   return (
     <>
-    <section className={cx(panel, "grid gap-4 p-5")}>
-      <header>
-        <h2 className="font-serif text-[1.35rem] leading-none tracking-[-0.045em] text-[#061e0e]">
-          Accepted delivery timeline
-        </h2>
-        <p className="mt-2 text-xs font-bold text-[#46534a]">
-          Latest accepted delivery
-        </p>
-      </header>
-      <article className="grid grid-cols-[4.6rem_1fr] gap-3 rounded-lg border border-[#b9d4b7] bg-[#e7f3df] p-3">
-        <DonationThumbnail donation={donation} size="md" />
-        <div className="min-w-0">
-          <strong className="block truncate text-sm font-black">
-            {donation?.title ?? "Fresh Fruit & Bread Pack"}
-          </strong>
-          <span className="mt-1 block truncate text-xs font-bold text-[#46534a]">
-            {donorDisplayName(donation)}
-          </span>
-          <span className="mt-2 block text-xs font-bold text-[#46534a]">
-            Today, {donation ? formatTime(donation.availableUntil) : "02:00 PM"}
-          </span>
-        </div>
-      </article>
-      <ol className="grid gap-0">
-        {timelineItems.map(({ title, detail, time, done }) => (
-          <li className="grid grid-cols-[2rem_1fr] gap-3" key={title}>
-            <span className="grid justify-items-center">
-              <span
-                className={cx(
-                  "grid h-7 w-7 place-items-center rounded-full text-white",
-                  done ? "bg-[#14733a]" : "bg-[#a9aaa4]",
-                )}
-              >
-                <AppIcon name={done ? "check" : "clock"} className="h-4 w-4" />
-              </span>
-              <span className="h-10 w-px bg-[#c6c9c0] last:hidden" />
+      <section className={cx(panel, "grid gap-4 p-5")}>
+        <header>
+          <h2 className="font-serif text-[1.35rem] leading-none tracking-[-0.045em] text-[#061e0e]">
+            Accepted delivery timeline
+          </h2>
+          <p className="mt-2 text-xs font-bold text-[#46534a]">
+            Latest accepted delivery
+          </p>
+        </header>
+        <article className="grid grid-cols-[4.6rem_1fr] gap-3 rounded-lg border border-[#b9d4b7] bg-[#e7f3df] p-3">
+          <DonationThumbnail donation={donation} size="md" />
+          <div className="min-w-0">
+            <strong className="block truncate text-sm font-black">
+              {donation?.title ?? "Fresh Fruit & Bread Pack"}
+            </strong>
+            <span className="mt-1 block truncate text-xs font-bold text-[#46534a]">
+              {donorDisplayName(donation)}
             </span>
-            <span className="grid pb-3 text-xs font-bold text-[#46534a]">
-              <strong className="text-sm font-black text-[#101812]">
-                {title}
-              </strong>
-              {detail}
-              {time ? <span className="mt-1">{time}</span> : null}
+            <span className="mt-2 block text-xs font-bold text-[#46534a]">
+              Today,{" "}
+              {donation ? formatTime(donation.availableUntil) : "02:00 PM"}
             </span>
-          </li>
-        ))}
-      </ol>
-      {pickup?.status === "picked_up" && (
-        <button
-          className={cx(primaryButton, "w-full")}
-          type="button"
-          onClick={() =>
-            runAction(async () => {
-              await markPickupDelivered(token, pickup.id);
-            }, "Delivery confirmed successfully.")
-          }
-        >
-          Confirm delivery received
-        </button>
-      )}
-      <button
-        type="button"
-        className="flex min-h-11 items-center justify-center gap-3 rounded-lg border border-[#ded7c9] bg-[#fffdf8] text-sm font-black text-[#064c25] hover:bg-[#f4f0e8]"
-        onClick={() => setShowAllDeliveries(true)}
-      >
-        View all deliveries <AppIcon name="arrow" className="h-4 w-4" />
-      </button>
-    </section>
-
-    {showAllDeliveries && (
-      <SlidePanel title="All deliveries" icon="pickup" onClose={() => setShowAllDeliveries(false)}>
-        <div className="grid gap-3 p-1">
-          {allProposals.length === 0 ? (
-            <p className="py-8 text-center text-sm font-bold text-[#46534a]">No deliveries yet.</p>
-          ) : (
-            allProposals.map((p) => {
-              const don = p.donation ?? donationsById.get(p.donationId);
-              const statusColors: Record<string, string> = {
-                pending: "bg-[#fff3cd] text-[#7a4f00]",
-                accepted: "bg-[#dbeafe] text-[#1e40af]",
-                rejected: "bg-[#fee2e2] text-[#991b1b]",
-                canceled: "bg-[#f3f4f6] text-[#6b7280]",
-              };
-              return (
-                <article
-                  key={p.id}
-                  className="grid grid-cols-[3rem_1fr_auto] items-start gap-3 rounded-xl border border-[#ded7c9] bg-[#fafaf7] p-4"
+          </div>
+        </article>
+        <ol className="grid gap-0">
+          {timelineItems.map(({ title, detail, time, done }) => (
+            <li className="grid grid-cols-[2rem_1fr] gap-3" key={title}>
+              <span className="grid justify-items-center">
+                <span
+                  className={cx(
+                    "grid h-7 w-7 place-items-center rounded-full text-white",
+                    done ? "bg-[#14733a]" : "bg-[#a9aaa4]",
+                  )}
                 >
-                  <DonationThumbnail donation={don} size="sm" />
-                  <div className="min-w-0">
-                    <strong className="block truncate text-sm font-black text-[#101812]">
-                      {don?.title ?? "Donation"}
-                    </strong>
-                    <span className="mt-1 block text-xs font-bold text-[#46534a]">
-                      {don ? formatDate(don.availableFrom) : ""}
+                  <AppIcon
+                    name={done ? "check" : "clock"}
+                    className="h-4 w-4"
+                  />
+                </span>
+                <span className="h-10 w-px bg-[#c6c9c0] last:hidden" />
+              </span>
+              <span className="grid pb-3 text-xs font-bold text-[#46534a]">
+                <strong className="text-sm font-black text-[#101812]">
+                  {title}
+                </strong>
+                {detail}
+                {time ? <span className="mt-1">{time}</span> : null}
+              </span>
+            </li>
+          ))}
+        </ol>
+        {pickup?.status === "picked_up" && (
+          <button
+            className={cx(primaryButton, "w-full")}
+            type="button"
+            onClick={() =>
+              runAction(async () => {
+                await markPickupDelivered(token, pickup.id);
+              }, "Delivery confirmed successfully.")
+            }
+          >
+            Confirm delivery received
+          </button>
+        )}
+        <button
+          type="button"
+          className="flex min-h-11 items-center justify-center gap-3 rounded-lg border border-[#ded7c9] bg-[#fffdf8] text-sm font-black text-[#064c25] hover:bg-[#f4f0e8]"
+          onClick={() => setShowAllDeliveries(true)}
+        >
+          View all deliveries <AppIcon name="arrow" className="h-4 w-4" />
+        </button>
+      </section>
+
+      {showAllDeliveries && (
+        <SlidePanel
+          title="All deliveries"
+          icon="pickup"
+          onClose={() => setShowAllDeliveries(false)}
+        >
+          <div className="grid gap-3 p-1">
+            {allProposals.length === 0 ? (
+              <p className="py-8 text-center text-sm font-bold text-[#46534a]">
+                No deliveries yet.
+              </p>
+            ) : (
+              allProposals.map((p) => {
+                const don = p.donation ?? donationsById.get(p.donationId);
+                const statusColors: Record<string, string> = {
+                  pending: "bg-[#fff3cd] text-[#7a4f00]",
+                  accepted: "bg-[#dbeafe] text-[#1e40af]",
+                  rejected: "bg-[#fee2e2] text-[#991b1b]",
+                  canceled: "bg-[#f3f4f6] text-[#6b7280]",
+                };
+                return (
+                  <article
+                    key={p.id}
+                    className="grid grid-cols-[3rem_1fr_auto] items-start gap-3 rounded-xl border border-[#ded7c9] bg-[#fafaf7] p-4"
+                  >
+                    <DonationThumbnail donation={don} size="sm" />
+                    <div className="min-w-0">
+                      <strong className="block truncate text-sm font-black text-[#101812]">
+                        {don?.title ?? "Donation"}
+                      </strong>
+                      <span className="mt-1 block text-xs font-bold text-[#46534a]">
+                        {don ? formatDate(don.availableFrom) : ""}
+                      </span>
+                    </div>
+                    <span
+                      className={cx(
+                        "rounded-full px-2 py-1 text-[0.65rem] font-black capitalize",
+                        statusColors[p.status] ?? "bg-[#f3f4f6] text-[#6b7280]",
+                      )}
+                    >
+                      {p.status}
                     </span>
-                  </div>
-                  <span className={cx("rounded-full px-2 py-1 text-[0.65rem] font-black capitalize", statusColors[p.status] ?? "bg-[#f3f4f6] text-[#6b7280]")}>
-                    {p.status}
-                  </span>
-                </article>
-              );
-            })
-          )}
-        </div>
-      </SlidePanel>
-    )}
-  </>
+                  </article>
+                );
+              })
+            )}
+          </div>
+        </SlidePanel>
+      )}
+    </>
   );
 }
 
@@ -3149,109 +3476,119 @@ function ReceiverNeedsCard({
 
   return (
     <>
-    <section className={cx(panel, "grid gap-4 p-5")} id="my-food-requests">
-      <header className="flex items-center justify-between gap-3">
-        <h2 className="font-serif text-[1.15rem] leading-none tracking-[-0.035em] text-[#061e0e]">
-          My food requests / needs
-        </h2>
-        <button
-          className="rounded-md bg-[#ffbd1a] px-3 py-2 text-xs font-black text-[#10140d]"
-          type="button"
-          onClick={handleUpdateNeeds}
-        >
-          Update needs
-        </button>
-      </header>
-      <div className="grid gap-3">
-        {needs.map(([title, description, date], index) => (
-          <article
-            className="grid grid-cols-[3rem_1fr_auto] items-start gap-3"
-            key={title}
-          >
-            <span
-              className={cx(
-                "grid h-10 w-10 place-items-center rounded-full",
-                index === 1
-                  ? "bg-[#fee8ba] text-[#4d3510]"
-                  : "bg-[#dcebd5] text-[#064c25]",
-              )}
-            >
-              <AppIcon
-                name={index === 2 ? "leaf" : index === 1 ? "package" : "bag"}
-                className="h-5 w-5"
-              />
-            </span>
-            <span className="grid">
-              <strong className="text-xs font-black text-[#101812]">
-                {title}
-              </strong>
-              <span className="mt-1 text-xs font-bold leading-5 text-[#46534a]">
-                {index === 0 && profile.notes ? profile.notes : description}
-              </span>
-            </span>
-            <span className="text-[0.65rem] font-bold text-[#7a817b]">
-              Updated
-              <br />
-              {date}
-            </span>
-          </article>
-        ))}
-      </div>
-      <button
-        type="button"
-        className="flex min-h-10 items-center justify-center gap-3 rounded-lg border border-[#ded7c9] bg-[#fffdf8] text-xs font-black text-[#064c25] hover:bg-[#f4f0e8]"
-        onClick={() => setShowAllNeeds(true)}
-      >
-        View all needs <AppIcon name="arrow" className="h-4 w-4" />
-      </button>
-    </section>
-
-    {showAllNeeds && (
-      <SlidePanel title="My food requests / needs" icon="bag" onClose={() => setShowAllNeeds(false)}>
-        <div className="grid gap-4 p-1">
+      <section className={cx(panel, "grid gap-4 p-5")} id="my-food-requests">
+        <header className="flex items-center justify-between gap-3">
+          <h2 className="font-serif text-[1.15rem] leading-none tracking-[-0.035em] text-[#061e0e]">
+            My food requests / needs
+          </h2>
           <button
-            className="justify-self-end rounded-md bg-[#ffbd1a] px-3 py-2 text-xs font-black text-[#10140d] hover:bg-[#f0ac00]"
+            className="rounded-md bg-[#ffbd1a] px-3 py-2 text-xs font-black text-[#10140d]"
             type="button"
             onClick={handleUpdateNeeds}
           >
             Update needs
           </button>
-          <div className="grid gap-4">
-            {needs.map(([title, description, date], index) => (
-              <article
-                className="grid grid-cols-[3rem_1fr_auto] items-start gap-3 rounded-xl border border-[#ded7c9] bg-[#fafaf7] p-4"
-                key={title}
+        </header>
+        <div className="grid gap-3">
+          {needs.map(([title, description, date], index) => (
+            <article
+              className="grid grid-cols-[3rem_1fr_auto] items-start gap-3"
+              key={title}
+            >
+              <span
+                className={cx(
+                  "grid h-10 w-10 place-items-center rounded-full",
+                  index === 1
+                    ? "bg-[#fee8ba] text-[#4d3510]"
+                    : "bg-[#dcebd5] text-[#064c25]",
+                )}
               >
-                <span
-                  className={cx(
-                    "grid h-10 w-10 place-items-center rounded-full",
-                    index === 1
-                      ? "bg-[#fee8ba] text-[#4d3510]"
-                      : "bg-[#dcebd5] text-[#064c25]",
-                  )}
-                >
-                  <AppIcon
-                    name={index === 2 ? "leaf" : index === 1 ? "package" : "bag"}
-                    className="h-5 w-5"
-                  />
+                <AppIcon
+                  name={index === 2 ? "leaf" : index === 1 ? "package" : "bag"}
+                  className="h-5 w-5"
+                />
+              </span>
+              <span className="grid">
+                <strong className="text-xs font-black text-[#101812]">
+                  {title}
+                </strong>
+                <span className="mt-1 text-xs font-bold leading-5 text-[#46534a]">
+                  {index === 0 && profile.notes ? profile.notes : description}
                 </span>
-                <span className="grid">
-                  <strong className="text-sm font-black text-[#101812]">{title}</strong>
-                  <span className="mt-1 text-xs font-bold leading-5 text-[#46534a]">
-                    {index === 0 && profile.notes ? profile.notes : description}
-                  </span>
-                </span>
-                <span className="text-[0.65rem] font-bold text-[#7a817b]">
-                  Updated
-                  <br />
-                  {date}
-                </span>
-              </article>
-            ))}
-          </div>
+              </span>
+              <span className="text-[0.65rem] font-bold text-[#7a817b]">
+                Updated
+                <br />
+                {date}
+              </span>
+            </article>
+          ))}
         </div>
-      </SlidePanel>
-    )}
+        <button
+          type="button"
+          className="flex min-h-10 items-center justify-center gap-3 rounded-lg border border-[#ded7c9] bg-[#fffdf8] text-xs font-black text-[#064c25] hover:bg-[#f4f0e8]"
+          onClick={() => setShowAllNeeds(true)}
+        >
+          View all needs <AppIcon name="arrow" className="h-4 w-4" />
+        </button>
+      </section>
+
+      {showAllNeeds && (
+        <SlidePanel
+          title="My food requests / needs"
+          icon="bag"
+          onClose={() => setShowAllNeeds(false)}
+        >
+          <div className="grid gap-4 p-1">
+            <button
+              className="justify-self-end rounded-md bg-[#ffbd1a] px-3 py-2 text-xs font-black text-[#10140d] hover:bg-[#f0ac00]"
+              type="button"
+              onClick={handleUpdateNeeds}
+            >
+              Update needs
+            </button>
+            <div className="grid gap-4">
+              {needs.map(([title, description, date], index) => (
+                <article
+                  className="grid grid-cols-[3rem_1fr_auto] items-start gap-3 rounded-xl border border-[#ded7c9] bg-[#fafaf7] p-4"
+                  key={title}
+                >
+                  <span
+                    className={cx(
+                      "grid h-10 w-10 place-items-center rounded-full",
+                      index === 1
+                        ? "bg-[#fee8ba] text-[#4d3510]"
+                        : "bg-[#dcebd5] text-[#064c25]",
+                    )}
+                  >
+                    <AppIcon
+                      name={
+                        index === 2 ? "leaf" : index === 1 ? "package" : "bag"
+                      }
+                      className="h-5 w-5"
+                    />
+                  </span>
+                  <span className="grid">
+                    <strong className="text-sm font-black text-[#101812]">
+                      {title}
+                    </strong>
+                    <span className="mt-1 text-xs font-bold leading-5 text-[#46534a]">
+                      {index === 0 && profile.notes
+                        ? profile.notes
+                        : description}
+                    </span>
+                  </span>
+                  <span className="text-[0.65rem] font-bold text-[#7a817b]">
+                    Updated
+                    <br />
+                    {date}
+                  </span>
+                </article>
+              ))}
+            </div>
+          </div>
+        </SlidePanel>
+      )}
     </>
   );
 }
@@ -3273,256 +3610,320 @@ function ProposalQueue({
     () => new Map(donations.map((donation) => [donation.id, donation])),
     [donations],
   );
-  const [detailProposal, setDetailProposal] = useState<{ proposal: DeliveryProposal; donation?: Donation } | null>(null);
+  const [detailProposal, setDetailProposal] = useState<{
+    proposal: DeliveryProposal;
+    donation?: Donation;
+  } | null>(null);
 
   return (
     <>
-    <section className={cx(panel, "min-h-full p-6")} id="proposal-queue">
-      <header className="mb-4 flex items-start justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <span className="grid h-12 w-12 place-items-center rounded-full bg-[#e5f1df] text-[#064c25]">
-            <AppIcon name="team" className="h-6 w-6" />
-          </span>
-          <div>
-            <h2 className={heading}>Proposal queue</h2>
-            <p className="mt-1 text-xs font-bold text-[#1f2a23]">
-              {viewerRole === "donor"
-                ? "Review proposals from volunteers and receivers."
-                : "Review food offers."}
-            </p>
+      <section className={cx(panel, "min-h-full p-6")} id="proposal-queue">
+        <header className="mb-4 flex items-start justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <span className="grid h-12 w-12 place-items-center rounded-full bg-[#e5f1df] text-[#064c25]">
+              <AppIcon name="team" className="h-6 w-6" />
+            </span>
+            <div>
+              <h2 className={heading}>Proposal queue</h2>
+              <p className="mt-1 text-xs font-bold text-[#1f2a23]">
+                {viewerRole === "donor"
+                  ? "Review proposals from volunteers and receivers."
+                  : "Review food offers."}
+              </p>
+            </div>
           </div>
-        </div>
-        <a className="text-xs font-black text-[#064c25]" href="#my-donations">
-          View all
-        </a>
-      </header>
-      <div className="grid gap-3">
-        {proposals.length > 0 ? (
-          proposals.map((proposal) => {
-            const donation =
-              proposal.donation ?? donationsById.get(proposal.donationId);
-            const donorAccepted = Boolean(proposal.donorAcceptedAt);
-            const receiverAccepted = Boolean(proposal.receiverAcceptedAt);
+          <a className="text-xs font-black text-[#064c25]" href="#my-donations">
+            View all
+          </a>
+        </header>
+        <div className="grid gap-3">
+          {proposals.length > 0 ? (
+            proposals.map((proposal) => {
+              const donation =
+                proposal.donation ?? donationsById.get(proposal.donationId);
+              const donorAccepted = Boolean(proposal.donorAcceptedAt);
+              const receiverAccepted = Boolean(proposal.receiverAcceptedAt);
 
-            const volunteerName =
-              proposal.volunteerProfile?.displayName ??
-              (proposal.volunteerId === "user_volunteer" ||
-              proposal.volunteerId === "demo_volunteer"
-                ? "Budi Santoso"
-                : proposal.volunteerId
-                    .replace(/^(user_|demo_)/, "")
-                    .replace("_", " ")
-                    .replace(/\b\w/g, (c) => c.toUpperCase()));
-            const receiverName =
-              proposal.receiverProfile?.displayName ??
-              (proposal.receiverId === "user_receiver" ||
-              proposal.receiverId === "demo_receiver"
-                ? "Panti Harapan"
-                : proposal.receiverId
-                    .replace(/^(user_|demo_)/, "")
-                    .replace("_", " ")
-                    .replace(/\b\w/g, (c) => c.toUpperCase()));
+              const volunteerName =
+                proposal.volunteerProfile?.displayName ??
+                (proposal.volunteerId === "user_volunteer" ||
+                proposal.volunteerId === "demo_volunteer"
+                  ? "Budi Santoso"
+                  : proposal.volunteerId
+                      .replace(/^(user_|demo_)/, "")
+                      .replace("_", " ")
+                      .replace(/\b\w/g, (c) => c.toUpperCase()));
+              const receiverName =
+                proposal.receiverProfile?.displayName ??
+                (proposal.receiverId === "user_receiver" ||
+                proposal.receiverId === "demo_receiver"
+                  ? "Panti Harapan"
+                  : proposal.receiverId
+                      .replace(/^(user_|demo_)/, "")
+                      .replace("_", " ")
+                      .replace(/\b\w/g, (c) => c.toUpperCase()));
 
-            const volunteerInitials = volunteerName
-              .split(" ")
-              .map((p) => p[0])
-              .join("")
-              .toUpperCase()
-              .slice(0, 2);
+              const volunteerInitials = volunteerName
+                .split(" ")
+                .map((p) => p[0])
+                .join("")
+                .toUpperCase()
+                .slice(0, 2);
 
-            return (
-              <article
-                className="grid gap-4 rounded-lg border border-[#ded7c9] bg-[#fffdf8] p-3 2xl:grid-cols-[6rem_1fr_auto]"
-                key={proposal.id}
-              >
-                <DonationThumbnail donation={donation} size="lg" />
-                <div>
-                  <strong className="block text-sm font-black text-[#101812]">
-                    {donation
-                      ? donation.title
-                      : `Donation ${proposal.donationId}`}
-                  </strong>
-                  <p className="mt-1 text-xs font-bold text-[#111a14]">
-                    {donation ? formatDate(donation.availableFrom) : "Today"}{" "}
-                    <span className="px-2">•</span>
-                    {donation?.quantity ?? "Open quantity"}
-                  </p>
-                  <div className="mt-3 grid gap-2 text-xs font-bold">
-                    <span className="flex items-center gap-2">
-                      <span className="text-[#5c6860]">Volunteer</span>
-                      <span className="grid h-5 w-5 place-items-center rounded-full bg-[#ead7c5] text-[0.65rem] font-bold text-[#5c3e21]">
-                        {volunteerInitials}
+              return (
+                <article
+                  className="grid gap-4 rounded-lg border border-[#ded7c9] bg-[#fffdf8] p-3 2xl:grid-cols-[6rem_1fr_auto]"
+                  key={proposal.id}
+                >
+                  <DonationThumbnail donation={donation} size="lg" />
+                  <div>
+                    <strong className="block text-sm font-black text-[#101812]">
+                      {donation
+                        ? donation.title
+                        : `Donation ${proposal.donationId}`}
+                    </strong>
+                    <p className="mt-1 text-xs font-bold text-[#111a14]">
+                      {donation ? formatDate(donation.availableFrom) : "Today"}{" "}
+                      <span className="px-2">•</span>
+                      {donation?.quantity ?? "Open quantity"}
+                    </p>
+                    <div className="mt-3 grid gap-2 text-xs font-bold">
+                      <span className="flex items-center gap-2">
+                        <span className="text-[#5c6860]">Volunteer</span>
+                        <span className="grid h-5 w-5 place-items-center rounded-full bg-[#ead7c5] text-[0.65rem] font-bold text-[#5c3e21]">
+                          {volunteerInitials}
+                        </span>
+                        <span className="font-black text-[#101812]">
+                          {volunteerName}
+                        </span>
                       </span>
-                      <span className="font-black text-[#101812]">
-                        {volunteerName}
+                      <span className="flex items-center gap-2">
+                        <span className="text-[#5c6860]">Receiver</span>
+                        <span className="grid h-5 w-5 place-items-center rounded-full bg-[#fff4df] text-[#c46b00]">
+                          <AppIcon name="leaf" className="h-3.5 w-3.5" />
+                        </span>
+                        <span className="font-black text-[#101812]">
+                          {receiverName}
+                        </span>
                       </span>
-                    </span>
-                    <span className="flex items-center gap-2">
-                      <span className="text-[#5c6860]">Receiver</span>
-                      <span className="grid h-5 w-5 place-items-center rounded-full bg-[#fff4df] text-[#c46b00]">
-                        <AppIcon name="leaf" className="h-3.5 w-3.5" />
-                      </span>
-                      <span className="font-black text-[#101812]">
-                        {receiverName}
-                      </span>
-                    </span>
+                    </div>
                   </div>
-                </div>
-                <div className="grid content-between gap-3">
-                  <div className="grid gap-2 sm:grid-cols-2 2xl:grid-cols-1">
-                    <span
-                      className={cx(
-                        badgeBase,
-                        donorAccepted
-                          ? "bg-[#e4f1e0] text-[#116b35]"
-                          : "bg-[#fff3df] text-[#c46b00]",
-                      )}
-                    >
-                      Donor {donorAccepted ? "Accepted" : "Pending"}
-                    </span>
-                    <span
-                      className={cx(
-                        badgeBase,
-                        receiverAccepted
-                          ? "bg-[#e4f1e0] text-[#116b35]"
-                          : proposal.status === "rejected"
-                            ? "bg-[#fde9e4] text-[#9b2118]"
+                  <div className="grid content-between gap-3">
+                    <div className="grid gap-2 sm:grid-cols-2 2xl:grid-cols-1">
+                      <span
+                        className={cx(
+                          badgeBase,
+                          donorAccepted
+                            ? "bg-[#e4f1e0] text-[#116b35]"
                             : "bg-[#fff3df] text-[#c46b00]",
-                      )}
-                    >
-                      Receiver{" "}
-                      {proposal.status === "rejected"
-                        ? "Rejected"
-                        : receiverAccepted
-                          ? "Accepted"
-                          : "Pending"}
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-2 justify-self-end">
-                    {viewerRole === "donor" && (() => {
-                      const rawPhone = proposal.volunteerContactOverride ?? proposal.volunteerProfile?.contactValue ?? "";
-                      if (!rawPhone) return null;
-                      const digits = rawPhone.replace(/\D/g, "");
-                      const number = digits.startsWith("0") ? `62${digits.slice(1)}` : digits;
-                      const text = encodeURIComponent(
-                        `Halo ${volunteerName}, saya donor dari FoodLink. Ingin konfirmasi proposal pengiriman untuk donasi "${donation?.title ?? ""}". Terima kasih!`,
-                      );
-                      return (
-                        <a
-                          href={`https://wa.me/${number}?text=${text}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={cx(ghostButton, "inline-flex items-center gap-1.5 !text-[#14733a]")}
-                        >
-                          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
-                            <path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.118 1.528 5.845L.057 23.882l6.198-1.624A11.944 11.944 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.006-1.368l-.36-.214-3.68.964.981-3.595-.234-.37A9.818 9.818 0 012.182 12C2.182 6.58 6.58 2.182 12 2.182S21.818 6.58 21.818 12 17.42 21.818 12 21.818z"/>
-                          </svg>
-                          WhatsApp
-                        </a>
-                      );
-                    })()}
-                    <button
-                      className={ghostButton}
-                      type="button"
-                      onClick={() =>
-                        runAction(async () => {
-                          await rejectDeliveryProposal(token, proposal.id);
-                        }, "Proposal rejected.")
-                      }
-                    >
-                      Reject
-                    </button>
-                    {proposal.status === "pending" ? (
-                      <button
-                        className={primaryButton}
-                        type="button"
-                        onClick={() =>
-                          runAction(async () => {
-                            await acceptDeliveryProposal(token, proposal.id);
-                          }, "Proposal accepted.")
-                        }
+                        )}
                       >
-                        Accept
-                      </button>
-                    ) : (
+                        Donor {donorAccepted ? "Accepted" : "Pending"}
+                      </span>
+                      <span
+                        className={cx(
+                          badgeBase,
+                          receiverAccepted
+                            ? "bg-[#e4f1e0] text-[#116b35]"
+                            : proposal.status === "rejected"
+                              ? "bg-[#fde9e4] text-[#9b2118]"
+                              : "bg-[#fff3df] text-[#c46b00]",
+                        )}
+                      >
+                        Receiver{" "}
+                        {proposal.status === "rejected"
+                          ? "Rejected"
+                          : receiverAccepted
+                            ? "Accepted"
+                            : "Pending"}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-2 justify-self-end">
+                      {viewerRole === "donor" &&
+                        (() => {
+                          const rawPhone =
+                            proposal.volunteerContactOverride ??
+                            proposal.volunteerProfile?.contactValue ??
+                            "";
+                          if (!rawPhone) return null;
+                          const digits = rawPhone.replace(/\D/g, "");
+                          const number = digits.startsWith("0")
+                            ? `62${digits.slice(1)}`
+                            : digits;
+                          const text = encodeURIComponent(
+                            `Halo ${volunteerName}, saya donor dari FoodLink. Ingin konfirmasi proposal pengiriman untuk donasi "${donation?.title ?? ""}". Terima kasih!`,
+                          );
+                          return (
+                            <a
+                              href={`https://wa.me/${number}?text=${text}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={cx(
+                                ghostButton,
+                                "inline-flex items-center gap-1.5 !text-[#14733a]",
+                              )}
+                            >
+                              <svg
+                                aria-hidden="true"
+                                className="h-3.5 w-3.5"
+                                focusable="false"
+                                viewBox="0 0 24 24"
+                                fill="currentColor"
+                              >
+                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
+                                <path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.118 1.528 5.845L.057 23.882l6.198-1.624A11.944 11.944 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.006-1.368l-.36-.214-3.68.964.981-3.595-.234-.37A9.818 9.818 0 012.182 12C2.182 6.58 6.58 2.182 12 2.182S21.818 6.58 21.818 12 17.42 21.818 12 21.818z" />
+                              </svg>
+                              WhatsApp
+                            </a>
+                          );
+                        })()}
                       <button
                         className={ghostButton}
                         type="button"
-                        onClick={() => setDetailProposal({ proposal, donation })}
+                        onClick={() =>
+                          runAction(async () => {
+                            await rejectDeliveryProposal(token, proposal.id);
+                          }, "Proposal rejected.")
+                        }
                       >
-                        View details
+                        Reject
                       </button>
-                    )}
+                      {proposal.status === "pending" ? (
+                        <button
+                          className={primaryButton}
+                          type="button"
+                          onClick={() =>
+                            runAction(async () => {
+                              await acceptDeliveryProposal(token, proposal.id);
+                            }, "Proposal accepted.")
+                          }
+                        >
+                          Accept
+                        </button>
+                      ) : (
+                        <button
+                          className={ghostButton}
+                          type="button"
+                          onClick={() =>
+                            setDetailProposal({ proposal, donation })
+                          }
+                        >
+                          View details
+                        </button>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </article>
-            );
-          })
-        ) : (
-          <div className="rounded-lg border border-dashed border-[#d8cfba] bg-[#fffdf8] p-6 text-sm font-bold text-[#46534a]">
-            No proposals yet.
-          </div>
-        )}
-      </div>
-    </section>
-
-    {detailProposal && (
-      <Modal title="Proposal details" onClose={() => setDetailProposal(null)}>
-
-        <div className="grid gap-5">
-          <div className="flex gap-4">
-            <DonationThumbnail donation={detailProposal.donation} size="lg" />
-            <div className="min-w-0">
-              <strong className="block text-lg font-black text-[#101812]">
-                {detailProposal.donation?.title ?? readableDonationId(detailProposal.proposal.donationId)}
-              </strong>
-              <p className="mt-1 text-sm font-bold text-[#46534a]">
-                {detailProposal.donation?.description ?? "Food donation"}
-              </p>
-              <span className={cx(badgeBase, statusClass(detailProposal.proposal.status), "mt-2 inline-block")}>
-                {detailProposal.proposal.status}
-              </span>
+                </article>
+              );
+            })
+          ) : (
+            <div className="rounded-lg border border-dashed border-[#d8cfba] bg-[#fffdf8] p-6 text-sm font-bold text-[#46534a]">
+              No proposals yet.
             </div>
-          </div>
-
-          <div className="grid gap-3 text-sm">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-lg bg-[#f7f5f0] p-3">
-                <span className="block text-xs font-bold text-[#46534a]">Donor accepted</span>
-                <strong className={cx("mt-1 block font-black", detailProposal.proposal.donorAcceptedAt ? "text-[#14733a]" : "text-[#9d5b00]")}>
-                  {detailProposal.proposal.donorAcceptedAt ? "Yes" : "Pending"}
-                </strong>
-              </div>
-              <div className="rounded-lg bg-[#f7f5f0] p-3">
-                <span className="block text-xs font-bold text-[#46534a]">Receiver accepted</span>
-                <strong className={cx("mt-1 block font-black", detailProposal.proposal.receiverAcceptedAt ? "text-[#14733a]" : "text-[#9d5b00]")}>
-                  {detailProposal.proposal.receiverAcceptedAt ? "Yes" : "Pending"}
-                </strong>
-              </div>
-            </div>
-            {detailProposal.proposal.volunteerProfile && (
-              <div className="rounded-lg border border-[#e4ddcf] p-3">
-                <span className="block text-xs font-bold text-[#46534a]">Volunteer</span>
-                <span className="mt-1 block font-black text-[#101812]">{detailProposal.proposal.volunteerProfile.displayName}</span>
-                <span className="text-xs font-bold text-[#46534a]">{detailProposal.proposal.volunteerProfile.contactValue}</span>
-              </div>
-            )}
-            {detailProposal.proposal.receiverProfile && (
-              <div className="rounded-lg border border-[#e4ddcf] p-3">
-                <span className="block text-xs font-bold text-[#46534a]">Receiver</span>
-                <span className="mt-1 block font-black text-[#101812]">{detailProposal.proposal.receiverProfile.displayName}</span>
-                <span className="text-xs font-bold text-[#46534a]">{detailProposal.proposal.receiverProfile.location.city}</span>
-              </div>
-            )}
-            <div className="rounded-lg border border-[#e4ddcf] p-3">
-              <span className="block text-xs font-bold text-[#46534a]">Created</span>
-              <span className="mt-1 block font-black text-[#101812]">{formatDate(detailProposal.proposal.createdAt)}</span>
-            </div>
-          </div>
+          )}
         </div>
-      </Modal>
-    )}
+      </section>
+
+      {detailProposal && (
+        <Modal title="Proposal details" onClose={() => setDetailProposal(null)}>
+          <div className="grid gap-5">
+            <div className="flex gap-4">
+              <DonationThumbnail donation={detailProposal.donation} size="lg" />
+              <div className="min-w-0">
+                <strong className="block text-lg font-black text-[#101812]">
+                  {detailProposal.donation?.title ??
+                    readableDonationId(detailProposal.proposal.donationId)}
+                </strong>
+                <p className="mt-1 text-sm font-bold text-[#46534a]">
+                  {detailProposal.donation?.description ?? "Food donation"}
+                </p>
+                <span
+                  className={cx(
+                    badgeBase,
+                    statusClass(detailProposal.proposal.status),
+                    "mt-2 inline-block",
+                  )}
+                >
+                  {detailProposal.proposal.status}
+                </span>
+              </div>
+            </div>
+
+            <div className="grid gap-3 text-sm">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-lg bg-[#f7f5f0] p-3">
+                  <span className="block text-xs font-bold text-[#46534a]">
+                    Donor accepted
+                  </span>
+                  <strong
+                    className={cx(
+                      "mt-1 block font-black",
+                      detailProposal.proposal.donorAcceptedAt
+                        ? "text-[#14733a]"
+                        : "text-[#9d5b00]",
+                    )}
+                  >
+                    {detailProposal.proposal.donorAcceptedAt
+                      ? "Yes"
+                      : "Pending"}
+                  </strong>
+                </div>
+                <div className="rounded-lg bg-[#f7f5f0] p-3">
+                  <span className="block text-xs font-bold text-[#46534a]">
+                    Receiver accepted
+                  </span>
+                  <strong
+                    className={cx(
+                      "mt-1 block font-black",
+                      detailProposal.proposal.receiverAcceptedAt
+                        ? "text-[#14733a]"
+                        : "text-[#9d5b00]",
+                    )}
+                  >
+                    {detailProposal.proposal.receiverAcceptedAt
+                      ? "Yes"
+                      : "Pending"}
+                  </strong>
+                </div>
+              </div>
+              {detailProposal.proposal.volunteerProfile && (
+                <div className="rounded-lg border border-[#e4ddcf] p-3">
+                  <span className="block text-xs font-bold text-[#46534a]">
+                    Volunteer
+                  </span>
+                  <span className="mt-1 block font-black text-[#101812]">
+                    {detailProposal.proposal.volunteerProfile.displayName}
+                  </span>
+                  <span className="text-xs font-bold text-[#46534a]">
+                    {detailProposal.proposal.volunteerProfile.contactValue}
+                  </span>
+                </div>
+              )}
+              {detailProposal.proposal.receiverProfile && (
+                <div className="rounded-lg border border-[#e4ddcf] p-3">
+                  <span className="block text-xs font-bold text-[#46534a]">
+                    Receiver
+                  </span>
+                  <span className="mt-1 block font-black text-[#101812]">
+                    {detailProposal.proposal.receiverProfile.displayName}
+                  </span>
+                  <span className="text-xs font-bold text-[#46534a]">
+                    {detailProposal.proposal.receiverProfile.location.city}
+                  </span>
+                </div>
+              )}
+              <div className="rounded-lg border border-[#e4ddcf] p-3">
+                <span className="block text-xs font-bold text-[#46534a]">
+                  Created
+                </span>
+                <span className="mt-1 block font-black text-[#101812]">
+                  {formatDate(detailProposal.proposal.createdAt)}
+                </span>
+              </div>
+            </div>
+          </div>
+        </Modal>
+      )}
     </>
   );
 }
@@ -3543,203 +3944,245 @@ function DonationsTable({
   const [detailDonation, setDetailDonation] = useState<Donation | null>(null);
 
   const statuses = [...new Set(donations.map((d) => d.status))];
-  const visible = statusFilter === "all" ? donations : donations.filter((d) => d.status === statusFilter);
+  const visible =
+    statusFilter === "all"
+      ? donations
+      : donations.filter((d) => d.status === statusFilter);
 
   return (
     <>
-    <section
-      className={cx(panel, "p-6", compact && "min-h-full")}
-      id="my-donations"
-    >
-      <header className="mb-4 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <span className="grid h-12 w-12 place-items-center rounded-full bg-[#f4ead6] text-[#064c25]">
-            <AppIcon name="package" className="h-6 w-6" />
-          </span>
-          <h2 className={heading}>{title}</h2>
-        </div>
-        <select
-          className={cx(ghostButton, "cursor-pointer pr-2")}
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-        >
-          <option value="all">All statuses</option>
-          {statuses.map((s) => (
-            <option key={s} value={s}>{s.replace(/_/g, " ")}</option>
-          ))}
-        </select>
-      </header>
-      <div className="mt-3 overflow-x-auto">
-        <table className="w-full min-w-[56rem] border-collapse">
-          <thead className="text-left">
-            <tr>
-              {[
-                "Donation",
-                "Quantity",
-                "Available window",
-                "Status",
-                "Latest update",
-                "Proposals",
-                "Actions",
-              ].map((label) => (
-                <th
-                  className="border-b border-[#ded7c9] px-3 py-3 text-xs font-black text-[#111a14]"
-                  key={label}
-                >
-                  {label}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {visible.length > 0 ? (
-              visible.map((donation) => (
-                <tr key={donation.id}>
-                  <td className="border-b border-[#ded7c9] px-3 py-3 font-black">
-                    <div className="flex items-center gap-3">
-                      <DonationThumbnail donation={donation} />
-                      <div>
-                        <strong className="block text-sm">
-                          {donation.title}
-                        </strong>
-                        <small className="block text-xs font-bold text-[#46534a]">
-                          {donation.description}
-                        </small>
+      <section
+        className={cx(panel, "p-6", compact && "min-h-full")}
+        id="my-donations"
+      >
+        <header className="mb-4 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <span className="grid h-12 w-12 place-items-center rounded-full bg-[#f4ead6] text-[#064c25]">
+              <AppIcon name="package" className="h-6 w-6" />
+            </span>
+            <h2 className={heading}>{title}</h2>
+          </div>
+          <select
+            className={cx(ghostButton, "cursor-pointer pr-2")}
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <option value="all">All statuses</option>
+            {statuses.map((s) => (
+              <option key={s} value={s}>
+                {s.replace(/_/g, " ")}
+              </option>
+            ))}
+          </select>
+        </header>
+        <div className="mt-3 overflow-x-auto">
+          <table className="w-full min-w-[56rem] border-collapse">
+            <thead className="text-left">
+              <tr>
+                {[
+                  "Donation",
+                  "Quantity",
+                  "Available window",
+                  "Status",
+                  "Latest update",
+                  "Proposals",
+                  "Actions",
+                ].map((label) => (
+                  <th
+                    className="border-b border-[#ded7c9] px-3 py-3 text-xs font-black text-[#111a14]"
+                    key={label}
+                  >
+                    {label}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {visible.length > 0 ? (
+                visible.map((donation) => (
+                  <tr key={donation.id}>
+                    <td className="border-b border-[#ded7c9] px-3 py-3 font-black">
+                      <div className="flex items-center gap-3">
+                        <DonationThumbnail donation={donation} />
+                        <div>
+                          <strong className="block text-sm">
+                            {donation.title}
+                          </strong>
+                          <small className="block text-xs font-bold text-[#46534a]">
+                            {donation.description}
+                          </small>
+                        </div>
                       </div>
-                    </div>
-                  </td>
-                  <td className="border-b border-[#ded7c9] px-3 py-3 text-sm font-bold">
-                    {donation.quantity}
-                  </td>
-                  <td className="border-b border-[#ded7c9] px-3 py-3 text-sm font-bold">
-                    {formatDate(donation.availableFrom)} –{" "}
-                    {formatDate(donation.availableUntil)}
-                  </td>
-                  <td className="border-b border-[#ded7c9] px-3 py-3">
-                    <span
-                      className={cx(badgeBase, statusClass(donation.status))}
-                    >
-                      {donation.status.replace(/_/g, " ")}
-                    </span>
-                  </td>
-                  <td className="border-b border-[#ded7c9] px-3 py-3 text-sm font-bold">
-                    {formatDate(donation.updatedAt)}
-                  </td>
-                  <td className="border-b border-[#ded7c9] px-3 py-3 text-sm font-bold">
-                    {
-                      proposals.filter(
-                        (proposal) => proposal.donationId === donation.id,
-                      ).length
-                    }
-                  </td>
-                  <td className="relative border-b border-[#ded7c9] px-3 py-3">
-                    <button
-                      className="grid h-8 w-8 place-items-center rounded-md border border-[#ded7c9] bg-[#fffdf8] font-black"
-                      type="button"
-                      aria-label={`Donation actions for ${donation.title}`}
-                      onClick={() => setMenuId(menuId === donation.id ? null : donation.id)}
-                    >
-                      ⋮
-                    </button>
-                    {menuId === donation.id && (
-                      <div className="absolute right-3 top-12 z-20 min-w-[9rem] rounded-lg border border-[#ded7c9] bg-[#fffdf8] py-1 shadow-lg">
-                        <button
-                          className="block w-full px-4 py-2 text-left text-xs font-bold text-[#1f2a23] hover:bg-[#f4f1eb]"
-                          type="button"
-                          onClick={() => { navigator.clipboard.writeText(donation.id); setMenuId(null); }}
-                        >
-                          Copy ID
-                        </button>
-                        <button
-                          className="block w-full px-4 py-2 text-left text-xs font-bold text-[#1f2a23] hover:bg-[#f4f1eb]"
-                          type="button"
-                          onClick={() => { setDetailDonation(donation); setMenuId(null); }}
-                        >
-                          View details
-                        </button>
-                      </div>
-                    )}
+                    </td>
+                    <td className="border-b border-[#ded7c9] px-3 py-3 text-sm font-bold">
+                      {donation.quantity}
+                    </td>
+                    <td className="border-b border-[#ded7c9] px-3 py-3 text-sm font-bold">
+                      {formatDate(donation.availableFrom)} –{" "}
+                      {formatDate(donation.availableUntil)}
+                    </td>
+                    <td className="border-b border-[#ded7c9] px-3 py-3">
+                      <span
+                        className={cx(badgeBase, statusClass(donation.status))}
+                      >
+                        {donation.status.replace(/_/g, " ")}
+                      </span>
+                    </td>
+                    <td className="border-b border-[#ded7c9] px-3 py-3 text-sm font-bold">
+                      {formatDate(donation.updatedAt)}
+                    </td>
+                    <td className="border-b border-[#ded7c9] px-3 py-3 text-sm font-bold">
+                      {
+                        proposals.filter(
+                          (proposal) => proposal.donationId === donation.id,
+                        ).length
+                      }
+                    </td>
+                    <td className="relative border-b border-[#ded7c9] px-3 py-3">
+                      <button
+                        className="grid h-8 w-8 place-items-center rounded-md border border-[#ded7c9] bg-[#fffdf8] font-black"
+                        type="button"
+                        aria-label={`Donation actions for ${donation.title}`}
+                        onClick={() =>
+                          setMenuId(menuId === donation.id ? null : donation.id)
+                        }
+                      >
+                        ⋮
+                      </button>
+                      {menuId === donation.id && (
+                        <div className="absolute right-3 top-12 z-20 min-w-[9rem] rounded-lg border border-[#ded7c9] bg-[#fffdf8] py-1 shadow-lg">
+                          <button
+                            className="block w-full px-4 py-2 text-left text-xs font-bold text-[#1f2a23] hover:bg-[#f4f1eb]"
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(donation.id);
+                              setMenuId(null);
+                            }}
+                          >
+                            Copy ID
+                          </button>
+                          <button
+                            className="block w-full px-4 py-2 text-left text-xs font-bold text-[#1f2a23] hover:bg-[#f4f1eb]"
+                            type="button"
+                            onClick={() => {
+                              setDetailDonation(donation);
+                              setMenuId(null);
+                            }}
+                          >
+                            View details
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td
+                    className="border-b border-[#ded7c9] px-3 py-4 font-bold text-[#34443a]"
+                    colSpan={7}
+                  >
+                    No donations visible yet.
                   </td>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td
-                  className="border-b border-[#ded7c9] px-3 py-4 font-bold text-[#34443a]"
-                  colSpan={7}
+              )}
+            </tbody>
+          </table>
+        </div>
+        {visible.length > 0 ? (
+          <div className="mt-5 text-center text-xs font-bold text-[#5c6860] border-t border-[#ded7c9]/40 pt-4">
+            Showing {visible.length} of {donations.length} donations
+          </div>
+        ) : null}
+      </section>
+
+      {detailDonation && (
+        <Modal title="Donation details" onClose={() => setDetailDonation(null)}>
+          <div className="grid gap-5">
+            <div className="flex gap-4">
+              <DonationThumbnail donation={detailDonation} size="lg" />
+              <div className="min-w-0">
+                <strong className="block text-lg font-black text-[#101812]">
+                  {detailDonation.title}
+                </strong>
+                <p className="mt-1 text-sm font-bold text-[#46534a]">
+                  {detailDonation.description}
+                </p>
+                <span
+                  className={cx(
+                    badgeBase,
+                    statusClass(detailDonation.status),
+                    "mt-2 inline-block",
+                  )}
                 >
-                  No donations visible yet.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-      {visible.length > 0 ? (
-        <div className="mt-5 text-center text-xs font-bold text-[#5c6860] border-t border-[#ded7c9]/40 pt-4">
-          Showing {visible.length} of {donations.length} donations
-        </div>
-      ) : null}
-    </section>
-
-    {detailDonation && (
-      <Modal title="Donation details" onClose={() => setDetailDonation(null)}>
-        <div className="grid gap-5">
-          <div className="flex gap-4">
-            <DonationThumbnail donation={detailDonation} size="lg" />
-            <div className="min-w-0">
-              <strong className="block text-lg font-black text-[#101812]">
-                {detailDonation.title}
-              </strong>
-              <p className="mt-1 text-sm font-bold text-[#46534a]">
-                {detailDonation.description}
-              </p>
-              <span className={cx(badgeBase, statusClass(detailDonation.status), "mt-2 inline-block")}>
-                {detailDonation.status.replace(/_/g, " ")}
-              </span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-lg bg-[#f7f5f0] p-3">
-              <span className="block text-xs font-bold text-[#46534a]">Quantity</span>
-              <strong className="mt-1 block text-base font-black text-[#101812]">{detailDonation.quantity}</strong>
-            </div>
-            <div className="rounded-lg bg-[#f7f5f0] p-3">
-              <span className="block text-xs font-bold text-[#46534a]">Proposals</span>
-              <strong className="mt-1 block text-base font-black text-[#101812]">
-                {proposals.filter((p) => p.donationId === detailDonation.id).length}
-              </strong>
-            </div>
-          </div>
-
-          <div className="grid gap-3 text-sm">
-            <div className="rounded-lg border border-[#e4ddcf] p-3">
-              <span className="block text-xs font-bold text-[#46534a]">Available window</span>
-              <span className="mt-1 block font-black text-[#101812]">
-                {formatDate(detailDonation.availableFrom)} – {formatDate(detailDonation.availableUntil)}
-              </span>
-            </div>
-            <div className="rounded-lg border border-[#e4ddcf] p-3">
-              <span className="block text-xs font-bold text-[#46534a]">Pickup location</span>
-              <span className="mt-1 block font-black text-[#101812]">
-                {detailDonation.pickupLocation.addressLine1}, {detailDonation.pickupLocation.city}
-              </span>
-            </div>
-            {detailDonation.specialInstructions && (
-              <div className="rounded-lg bg-[#f0f7eb] p-3">
-                <span className="block text-xs font-black text-[#2f7a46]">Special instructions</span>
-                <p className="mt-1 font-bold leading-5 text-[#1f2a23]">{detailDonation.specialInstructions}</p>
+                  {detailDonation.status.replace(/_/g, " ")}
+                </span>
               </div>
-            )}
-            <div className="rounded-lg border border-[#e4ddcf] p-3">
-              <span className="block text-xs font-bold text-[#46534a]">Last updated</span>
-              <span className="mt-1 block font-black text-[#101812]">{formatDate(detailDonation.updatedAt)}</span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-lg bg-[#f7f5f0] p-3">
+                <span className="block text-xs font-bold text-[#46534a]">
+                  Quantity
+                </span>
+                <strong className="mt-1 block text-base font-black text-[#101812]">
+                  {detailDonation.quantity}
+                </strong>
+              </div>
+              <div className="rounded-lg bg-[#f7f5f0] p-3">
+                <span className="block text-xs font-bold text-[#46534a]">
+                  Proposals
+                </span>
+                <strong className="mt-1 block text-base font-black text-[#101812]">
+                  {
+                    proposals.filter((p) => p.donationId === detailDonation.id)
+                      .length
+                  }
+                </strong>
+              </div>
+            </div>
+
+            <div className="grid gap-3 text-sm">
+              <div className="rounded-lg border border-[#e4ddcf] p-3">
+                <span className="block text-xs font-bold text-[#46534a]">
+                  Available window
+                </span>
+                <span className="mt-1 block font-black text-[#101812]">
+                  {formatDate(detailDonation.availableFrom)} –{" "}
+                  {formatDate(detailDonation.availableUntil)}
+                </span>
+              </div>
+              <div className="rounded-lg border border-[#e4ddcf] p-3">
+                <span className="block text-xs font-bold text-[#46534a]">
+                  Pickup location
+                </span>
+                <span className="mt-1 block font-black text-[#101812]">
+                  {detailDonation.pickupLocation.addressLine1},{" "}
+                  {detailDonation.pickupLocation.city}
+                </span>
+              </div>
+              {detailDonation.specialInstructions && (
+                <div className="rounded-lg bg-[#f0f7eb] p-3">
+                  <span className="block text-xs font-black text-[#2f7a46]">
+                    Special instructions
+                  </span>
+                  <p className="mt-1 font-bold leading-5 text-[#1f2a23]">
+                    {detailDonation.specialInstructions}
+                  </p>
+                </div>
+              )}
+              <div className="rounded-lg border border-[#e4ddcf] p-3">
+                <span className="block text-xs font-bold text-[#46534a]">
+                  Last updated
+                </span>
+                <span className="mt-1 block font-black text-[#101812]">
+                  {formatDate(detailDonation.updatedAt)}
+                </span>
+              </div>
             </div>
           </div>
-        </div>
-      </Modal>
-    )}
+        </Modal>
+      )}
     </>
   );
 }
@@ -3757,7 +4200,9 @@ function NotificationsPanel({
 }) {
   const unread = notifications.filter((item) => !item.read).length;
   const receiverVariant = viewerRole === "receiver";
-  const [notificationFilter, setNotificationFilter] = useState<"all" | "unread">("all");
+  const [notificationFilter, setNotificationFilter] = useState<
+    "all" | "unread"
+  >("all");
   const [showAllModal, setShowAllModal] = useState(false);
   const visibleNotifications =
     receiverVariant && notificationFilter === "unread"
@@ -3766,194 +4211,115 @@ function NotificationsPanel({
 
   return (
     <>
-    <aside
-      className={cx(panel, "sticky top-5 p-6")}
-      id="notifications"
-      aria-label="Notifications"
-    >
-      <header className="mb-3 flex items-center gap-3">
-        <h2 className={heading}>Notifications</h2>
-        {unread > 0 ? (
-          <span className="rounded-md bg-[#e5f1df] px-2 py-1 text-xs font-black text-[#064c25]">
-            {unread} unread
-          </span>
-        ) : null}
-        <button
-          className="ml-auto text-[#101812]"
-          type="button"
-          aria-label="Notification settings"
-        >
-          <AppIcon name="settings" className="h-5 w-5" />
-        </button>
-        <button className="text-[#101812]" type="button" aria-label="Close">
-          <AppIcon name="close" className="h-5 w-5" />
-        </button>
-      </header>
-      {receiverVariant ? (
-        <div className="mb-4 grid grid-cols-2 border-b border-[#ded7c9] text-center text-sm font-bold">
-          <button
-            className={cx(
-              "py-3",
-              notificationFilter === "all"
-                ? "border-b-2 border-[#0b5b2b] text-[#064c25]"
-                : "text-[#46534a]",
-            )}
-            type="button"
-            onClick={() => setNotificationFilter("all")}
-          >
-            All
-          </button>
-          <button
-            className={cx(
-              "py-3",
-              notificationFilter === "unread"
-                ? "border-b-2 border-[#0b5b2b] text-[#064c25]"
-                : "text-[#46534a]",
-            )}
-            type="button"
-            onClick={() => setNotificationFilter("unread")}
-          >
-            Unread ({unread})
-          </button>
-        </div>
-      ) : null}
-      <div className="grid">
-        {visibleNotifications.length > 0
-          ? visibleNotifications.map((notification) => (
-              <article
-                className={cx(
-                  "grid grid-cols-[3rem_1fr] gap-3 border-t border-[#ded7c9] py-5 first:border-t-0",
-                  receiverVariant && "grid-cols-[3.5rem_1fr]",
-                  notification.read && "opacity-60",
-                )}
-                key={notification.id}
-              >
-                <span
-                  className={cx(
-                    "grid h-11 w-11 place-items-center rounded-full",
-                    notification.type === "proposal_accepted"
-                      ? "bg-[#ffe9c1] text-[#dd6700]"
-                      : notification.type === "pickup_assigned"
-                        ? "bg-[#deedf8] text-[#1c6796]"
-                        : notification.type === "pickup_completed"
-                          ? "bg-[#dfeedd] text-[#116b35]"
-                          : "bg-[#e5f1df] text-[#064c25]",
-                  )}
-                  aria-hidden="true"
-                >
-                  <AppIcon
-                    name={
-                      notification.type === "pickup_assigned"
-                        ? "pickup"
-                        : notification.type === "pickup_completed"
-                          ? "check"
-                          : notification.type === "proposal_created"
-                            ? "package"
-                            : "team"
-                    }
-                    className="h-5 w-5"
-                  />
-                </span>
-                <div className="min-w-0">
-                  <div className="flex items-start justify-between gap-3">
-                    <strong className="block text-sm font-black text-[#101812] min-w-0">
-                      {receiverNotificationTitle(notification)}
-                    </strong>
-                    <div className="flex items-center gap-1.5 flex-shrink-0">
-                      <span className="whitespace-nowrap text-xs font-bold text-[#46534a]">
-                        {formatDate(notification.createdAt)}
-                      </span>
-                      {!notification.read ? (
-                        <span className="h-2 w-2 rounded-full bg-[#ffbd1a]" />
-                      ) : null}
-                    </div>
-                  </div>
-                  <p className="mt-2 text-sm font-bold leading-6 text-[#1f2a23]">
-                    {notification.body}
-                  </p>
-                </div>
-                {!notification.read ? (
-                  <button
-                    className="col-start-2 justify-self-start border-0 bg-transparent p-0 text-sm font-black text-[#064c25] transition hover:text-[#116b35]"
-                    type="button"
-                    onClick={() =>
-                      runAction(async () => {
-                        await markNotificationRead(token, notification.id);
-                      }, "Notification marked read.")
-                    }
-                  >
-                    Mark read
-                  </button>
-                ) : null}
-              </article>
-            ))
-          : emptyCopy(
-              notificationFilter === "unread"
-                ? "No unread notifications."
-                : "No notifications yet.",
-            )}
-      </div>
-      <button
-        className="mt-4 flex min-h-12 w-full items-center justify-center gap-3 rounded-md border border-[#9eb69f] bg-[#fffdf8] text-sm font-black text-[#064c25] transition hover:bg-[#f0f7eb]"
-        type="button"
-        onClick={() => setShowAllModal(true)}
+      <aside
+        className={cx(panel, "sticky top-5 p-6")}
+        id="notifications"
+        aria-label="Notifications"
       >
-        View all notifications <span className="text-lg">→</span>
-      </button>
-    </aside>
-
-    {showAllModal && (
-      <SlidePanel title="All notifications" icon="bell" onClose={() => setShowAllModal(false)}>
+        <header className="mb-3 flex items-center gap-3">
+          <h2 className={heading}>Notifications</h2>
+          {unread > 0 ? (
+            <span className="rounded-md bg-[#e5f1df] px-2 py-1 text-xs font-black text-[#064c25]">
+              {unread} unread
+            </span>
+          ) : null}
+          <button
+            className="ml-auto text-[#101812]"
+            type="button"
+            aria-label="Notification settings"
+          >
+            <AppIcon name="settings" className="h-5 w-5" />
+          </button>
+          <button className="text-[#101812]" type="button" aria-label="Close">
+            <AppIcon name="close" className="h-5 w-5" />
+          </button>
+        </header>
+        {receiverVariant ? (
+          <div className="mb-4 grid grid-cols-2 border-b border-[#ded7c9] text-center text-sm font-bold">
+            <button
+              className={cx(
+                "py-3",
+                notificationFilter === "all"
+                  ? "border-b-2 border-[#0b5b2b] text-[#064c25]"
+                  : "text-[#46534a]",
+              )}
+              type="button"
+              onClick={() => setNotificationFilter("all")}
+            >
+              All
+            </button>
+            <button
+              className={cx(
+                "py-3",
+                notificationFilter === "unread"
+                  ? "border-b-2 border-[#0b5b2b] text-[#064c25]"
+                  : "text-[#46534a]",
+              )}
+              type="button"
+              onClick={() => setNotificationFilter("unread")}
+            >
+              Unread ({unread})
+            </button>
+          </div>
+        ) : null}
         <div className="grid">
-          {notifications.length > 0 ? (
-            notifications.map((notification) => (
-              <article
-                className={cx(
-                  "grid grid-cols-[3rem_1fr] gap-3 border-t border-[#e4ddcf] py-4 first:border-t-0",
-                  notification.read && "opacity-60",
-                )}
-                key={notification.id}
-              >
-                <span
+          {visibleNotifications.length > 0
+            ? visibleNotifications.map((notification) => (
+                <article
                   className={cx(
-                    "grid h-11 w-11 place-items-center rounded-full",
-                    notification.type === "proposal_accepted"
-                      ? "bg-[#ffe9c1] text-[#dd6700]"
-                      : notification.type === "pickup_assigned"
-                        ? "bg-[#deedf8] text-[#1c6796]"
-                        : notification.type === "pickup_completed"
-                          ? "bg-[#dfeedd] text-[#116b35]"
-                          : "bg-[#e5f1df] text-[#064c25]",
+                    "grid grid-cols-[3rem_1fr] gap-3 border-t border-[#ded7c9] py-5 first:border-t-0",
+                    receiverVariant && "grid-cols-[3.5rem_1fr]",
+                    notification.read && "opacity-60",
                   )}
+                  key={notification.id}
                 >
-                  <AppIcon
-                    name={
-                      notification.type === "pickup_assigned"
-                        ? "pickup"
-                        : notification.type === "pickup_completed"
-                          ? "check"
-                          : notification.type === "proposal_created"
-                            ? "package"
-                            : "team"
-                    }
-                    className="h-5 w-5"
-                  />
-                </span>
-                <div className="min-w-0">
-                  <div className="flex items-start justify-between gap-2">
-                    <strong className="block text-sm font-black text-[#101812]">
-                      {receiverNotificationTitle(notification)}
-                    </strong>
-                    {!notification.read && (
-                      <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[#ffbd1a]" />
+                  <span
+                    className={cx(
+                      "grid h-11 w-11 place-items-center rounded-full",
+                      notification.type === "proposal_accepted"
+                        ? "bg-[#ffe9c1] text-[#dd6700]"
+                        : notification.type === "pickup_assigned"
+                          ? "bg-[#deedf8] text-[#1c6796]"
+                          : notification.type === "pickup_completed"
+                            ? "bg-[#dfeedd] text-[#116b35]"
+                            : "bg-[#e5f1df] text-[#064c25]",
                     )}
-                  </div>
-                  <span className="mt-0.5 block text-xs font-bold text-[#46534a]">
-                    {formatDate(notification.createdAt)}
+                    aria-hidden="true"
+                  >
+                    <AppIcon
+                      name={
+                        notification.type === "pickup_assigned"
+                          ? "pickup"
+                          : notification.type === "pickup_completed"
+                            ? "check"
+                            : notification.type === "proposal_created"
+                              ? "package"
+                              : "team"
+                      }
+                      className="h-5 w-5"
+                    />
                   </span>
-                  {!notification.read && (
+                  <div className="min-w-0">
+                    <div className="flex items-start justify-between gap-3">
+                      <strong className="block text-sm font-black text-[#101812] min-w-0">
+                        {receiverNotificationTitle(notification)}
+                      </strong>
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        <span className="whitespace-nowrap text-xs font-bold text-[#46534a]">
+                          {formatDate(notification.createdAt)}
+                        </span>
+                        {!notification.read ? (
+                          <span className="h-2 w-2 rounded-full bg-[#ffbd1a]" />
+                        ) : null}
+                      </div>
+                    </div>
+                    <p className="mt-2 text-sm font-bold leading-6 text-[#1f2a23]">
+                      {notification.body}
+                    </p>
+                  </div>
+                  {!notification.read ? (
                     <button
-                      className="mt-2 text-xs font-black text-[#064c25] hover:text-[#116b35]"
+                      className="col-start-2 justify-self-start border-0 bg-transparent p-0 text-sm font-black text-[#064c25] transition hover:text-[#116b35]"
                       type="button"
                       onClick={() =>
                         runAction(async () => {
@@ -3963,16 +4329,101 @@ function NotificationsPanel({
                     >
                       Mark read
                     </button>
-                  )}
-                </div>
-              </article>
-            ))
-          ) : (
-            <p className="py-8 text-center text-sm font-bold text-[#46534a]">No notifications yet.</p>
-          )}
+                  ) : null}
+                </article>
+              ))
+            : emptyCopy(
+                notificationFilter === "unread"
+                  ? "No unread notifications."
+                  : "No notifications yet.",
+              )}
         </div>
-      </SlidePanel>
-    )}
-  </>
+        <button
+          className="mt-4 flex min-h-12 w-full items-center justify-center gap-3 rounded-md border border-[#9eb69f] bg-[#fffdf8] text-sm font-black text-[#064c25] transition hover:bg-[#f0f7eb]"
+          type="button"
+          onClick={() => setShowAllModal(true)}
+        >
+          View all notifications <span className="text-lg">→</span>
+        </button>
+      </aside>
+
+      {showAllModal && (
+        <SlidePanel
+          title="All notifications"
+          icon="bell"
+          onClose={() => setShowAllModal(false)}
+        >
+          <div className="grid">
+            {notifications.length > 0 ? (
+              notifications.map((notification) => (
+                <article
+                  className={cx(
+                    "grid grid-cols-[3rem_1fr] gap-3 border-t border-[#e4ddcf] py-4 first:border-t-0",
+                    notification.read && "opacity-60",
+                  )}
+                  key={notification.id}
+                >
+                  <span
+                    className={cx(
+                      "grid h-11 w-11 place-items-center rounded-full",
+                      notification.type === "proposal_accepted"
+                        ? "bg-[#ffe9c1] text-[#dd6700]"
+                        : notification.type === "pickup_assigned"
+                          ? "bg-[#deedf8] text-[#1c6796]"
+                          : notification.type === "pickup_completed"
+                            ? "bg-[#dfeedd] text-[#116b35]"
+                            : "bg-[#e5f1df] text-[#064c25]",
+                    )}
+                  >
+                    <AppIcon
+                      name={
+                        notification.type === "pickup_assigned"
+                          ? "pickup"
+                          : notification.type === "pickup_completed"
+                            ? "check"
+                            : notification.type === "proposal_created"
+                              ? "package"
+                              : "team"
+                      }
+                      className="h-5 w-5"
+                    />
+                  </span>
+                  <div className="min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <strong className="block text-sm font-black text-[#101812]">
+                        {receiverNotificationTitle(notification)}
+                      </strong>
+                      {!notification.read && (
+                        <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[#ffbd1a]" />
+                      )}
+                    </div>
+                    <span className="mt-0.5 block text-xs font-bold text-[#46534a]">
+                      {formatDate(notification.createdAt)}
+                    </span>
+                    {!notification.read && (
+                      <button
+                        className="mt-2 text-xs font-black text-[#064c25] hover:text-[#116b35]"
+                        type="button"
+                        onClick={() =>
+                          runAction(async () => {
+                            await markNotificationRead(token, notification.id);
+                          }, "Notification marked read.")
+                        }
+                      >
+                        Mark read
+                      </button>
+                    )}
+                  </div>
+                </article>
+              ))
+            ) : (
+              <p className="py-8 text-center text-sm font-bold text-[#46534a]">
+                No notifications yet.
+              </p>
+            )}
+          </div>
+        </SlidePanel>
+      )}
+    </>
   );
 }
