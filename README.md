@@ -1,36 +1,89 @@
 # FoodLink
 
-Monorepo for FoodLink demo app.
+FoodLink is a demo-first food rescue app for connecting surplus food with people
+who need it, coordinated through donors, receivers, and volunteers.
 
-## Layout
+![FoodLink landing page preview](frontend/public/preview/uz3hu39s7mqbylgyoefz.webp)
 
-- `frontend` - Next.js app shell
-- `backend` - Go API service
-- `contracts` - shared API contracts
-- `docs` - scope, architecture, contracts
+## What is included
 
-## Current Rules
+- `frontend/` - Next.js app with React, TypeScript, Tailwind CSS, and Biome.
+- `backend/` - Go API service with demo JWT auth and PostgreSQL persistence.
+- `contracts/` - shared OpenAPI contract for `/api/v1`.
+- `docs/` - product scope, architecture, frontend, backend, and contract notes.
 
-- demo-first
-- monolith-first backend
-- service-ready later
-- one repo, separate deploys
-- in-app map uses Leaflet + OpenStreetMap
-- volunteer routing can hand off to Google Maps links
+## Current direction
 
-## Environment Configuration
+- Demo-first workflow with one volunteer-driven matching path end to end.
+- Monolith-first backend, service-ready later.
+- One repo with separate frontend and backend deploys.
+- In-app map planned with Leaflet and OpenStreetMap.
+- Volunteer navigation can hand off to Google Maps links.
 
-Both frontend and backend services can be configured via environment variables.
+## Tech stack
 
-### Frontend (`frontend/`)
-- `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`: Cloudinary cloud name for client-side image uploads.
-- `NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET`: Unsigned upload preset for client-side image uploads.
+- Frontend: Next.js, React, TypeScript, Tailwind CSS, Biome.
+- Backend: Go, GORM, PostgreSQL.
+- Contracts: OpenAPI 3.0.
+- Maps: Leaflet with OpenStreetMap tiles.
 
-See [frontend/README.md](file:///home/icemotion/CodeProjects/foodlink/frontend/README.md) for detailed configuration instructions.
+## Local development
 
-### Backend (`backend/`)
-- `PORT`: Port to run the Go API service on (default: `8080`).
-- `DATABASE_URL`: Connection string for PostgreSQL database.
-- `DEMO_JWT_SECRET`: Secret key for JWT signing.
+Run frontend commands from `frontend/`:
 
-See [backend/README.md](file:///home/icemotion/CodeProjects/foodlink/backend/README.md) for usage examples.
+```bash
+pnpm install
+pnpm dev
+```
+
+Frontend runs at `http://localhost:3000`.
+
+Run backend commands from `backend/`:
+
+```bash
+go run ./cmd/api
+```
+
+Backend uses `PORT` when set and defaults to `8080`.
+
+## Verification
+
+Frontend:
+
+```bash
+cd frontend
+pnpm lint
+pnpm build
+```
+
+Backend:
+
+```bash
+cd backend
+go test ./...
+go build ./cmd/api
+```
+
+## Environment configuration
+
+Frontend variables:
+
+- `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` - Cloudinary cloud name for client-side image uploads.
+- `NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET` - unsigned upload preset for client-side image uploads.
+
+See [frontend/README.md](frontend/README.md) for Cloudinary setup details.
+
+Backend variables:
+
+- `PORT` - API port, default `8080`.
+- `DATABASE_URL` - PostgreSQL connection string.
+- `DEMO_JWT_SECRET` - JWT signing secret for demo auth.
+
+See [backend/README.md](backend/README.md) for backend usage examples.
+
+## Docs
+
+- [Project docs](docs/README.md)
+- [Scope](docs/scope.md)
+- [Architecture](docs/architecture.md)
+- [Contracts](contracts/README.md)
