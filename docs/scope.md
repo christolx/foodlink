@@ -5,7 +5,7 @@
 - One volunteer-driven matching path end to end
 - Seeded demo users plus real database sync
 - Role-based backend behavior
-- Demo account picker later in frontend
+- Demo account picker for donor, receiver, and volunteer roles
 
 ## Role Direction
 
@@ -26,11 +26,16 @@
 
 ## Core UX Decisions
 
-- Real map later, using Leaflet + OpenStreetMap.
-- Volunteers can open external route/navigation links later.
+- Landing page explains roles, impact, and demo entry points.
+- Demo login stores a local browser token for the dashboard session.
+- Role dashboards are available for donor, receiver, and volunteer flows.
+- Dashboard map views use Leaflet + OpenStreetMap.
+- Donors can pick pickup coordinates on a map when creating donations.
+- Volunteers can see donor, receiver, and current-location map markers.
+- Volunteers can open external Google Maps links from available location data.
 - In-app acceptance is source of truth.
 - WhatsApp, Instagram, phone, email, or other contact values support external coordination.
-- In-app toast plus notification center later.
+- In-app action feedback plus notification center support dashboard coordination.
 - Indonesian and English UI later.
 - No admin screen for demo scope.
 
@@ -47,7 +52,7 @@
 - Multi-contact profiles
 - Auto volunteer matching
 - Push notifications
-- Route map or navigation inside app
+- Route drawing or turn-by-turn navigation inside app
 - Pickup scheduling
 - Bilingual polish
 - Audit/history

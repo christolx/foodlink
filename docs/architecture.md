@@ -2,7 +2,7 @@
 
 ## Current Direction
 
-- Frontend: Next.js shell
+- Frontend: Next.js App Router app
 - UI: React + TypeScript + Tailwind
 - Backend: Go core service
 - Database: PostgreSQL
@@ -24,12 +24,34 @@
 - Easier contract reuse
 - Cleaner local dev
 
-## Planned Repo Shape
+## Runtime Shape
 
-- `frontend/` for Next.js
-- `backend/` for Go service
-- `contracts/` for shared API contracts
-- `docs` for scope and decisions
+- `frontend/` owns the landing page, demo role picker, and authenticated dashboard.
+- `backend/` owns API routing, auth, role gates, persistence, seeding, and state transitions.
+- `contracts/openapi.yaml` is the API shape source of truth.
+- `docs/` tracks scope and implementation decisions.
+- Frontend calls `/api/v1` by default, or `NEXT_PUBLIC_API_BASE_URL` when set.
+- Browser sessions store the demo JWT in `localStorage` under `foodlink.demoToken`.
+- Donation image upload uses Cloudinary on the client; backend validates Cloudinary HTTPS image URLs.
+
+## Current Frontend Surfaces
+
+- `/` - landing page with role entry points and preview content.
+- `/demo` - demo account picker for donor, receiver, and volunteer.
+- `/app` - authenticated role dashboard.
+- Dashboard maps load client-side only to avoid SSR issues with Leaflet.
+
+## Current Backend Surfaces
+
+- `GET /health`
+- `/api/v1/auth/demo-login`
+- `/api/v1/me` and `/api/v1/me/profile`
+- `/api/v1/donations`
+- `/api/v1/receivers`
+- `/api/v1/delivery-proposals`
+- `/api/v1/pickups`
+- `/api/v1/notifications`
+- `/api/v1/notifications/stream`
 
 ## Future Split Candidates
 
