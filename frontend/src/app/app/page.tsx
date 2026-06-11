@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -7,7 +8,8 @@ import {
   type CloudinaryUploadWidgetInfo,
   type CloudinaryUploadWidgetResults,
 } from "next-cloudinary";
-import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { type FormEvent, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   acceptDeliveryProposal,
   createDeliveryProposal,
@@ -56,6 +58,20 @@ import {
   roleLabels,
   statusClass,
 } from "./dashboard-ui";
+
+const LocationPickerMapDynamic = dynamic(
+  () => import("./LocationPickerMap"),
+  { ssr: false },
+);
+
+const VolunteerMapDynamic = dynamic(() => import("./VolunteerMap"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-full items-center justify-center text-sm text-[#46534a]">
+      Loading map…
+    </div>
+  ),
+});
 
 type DashboardData = {
   user: User;
@@ -242,6 +258,315 @@ export default function AppPage() {
   );
 }
 
+type SidePanelType = "profile" | "settings" | "reports" | "help";
+
+function Modal({
+  title,
+  onClose,
+  children,
+}: {
+  title: string;
+  onClose: () => void;
+  children: ReactNode;
+}) {
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [onClose]);
+
+  return createPortal(
+    <>
+      <div
+        className="fixed inset-0 z-[1100] bg-black/40 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      <div className="fixed left-1/2 top-1/2 z-[1101] max-h-[88vh] w-full max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl bg-[#fffdf8] shadow-2xl">
+        <header className="sticky top-0 flex items-center gap-3 border-b border-[#e4ddcf] bg-[#fffdf8] px-6 py-5">
+          <h2 className="flex-1 font-serif text-lg font-black tracking-tight text-[#061e0e]">
+            {title}
+          </h2>
+          <button
+            className="grid h-8 w-8 place-items-center rounded-full text-[#46534a] hover:bg-[#f0ece4]"
+            onClick={onClose}
+            type="button"
+            aria-label="Close"
+          >
+            <AppIcon name="close" className="h-5 w-5" />
+          </button>
+        </header>
+        <div className="p-6">{children}</div>
+      </div>
+    </>,
+    document.body,
+  );
+}
+
+function SlidePanel({
+  title,
+  icon,
+  onClose,
+  children,
+}: {
+  title: string;
+  icon: IconName;
+  onClose: () => void;
+  children: ReactNode;
+}) {
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [onClose]);
+
+  return createPortal(
+    <>
+      <div
+        className="fixed inset-0 z-[1100] bg-black/40 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      <div className="fixed right-0 top-0 z-[1101] flex h-full w-full max-w-sm flex-col bg-[#fffdf8] shadow-2xl">
+        <header className="flex items-center gap-3 border-b border-[#e4ddcf] px-6 py-5">
+          <span className="grid h-9 w-9 place-items-center rounded-full bg-[#e5f1df] text-[#14733a]">
+            <AppIcon name={icon} className="h-5 w-5" />
+          </span>
+          <h2 className="flex-1 font-serif text-lg font-black tracking-tight text-[#061e0e]">
+            {title}
+          </h2>
+          <button
+            className="grid h-8 w-8 place-items-center rounded-full text-[#46534a] hover:bg-[#f0ece4]"
+            onClick={onClose}
+            type="button"
+            aria-label="Close"
+          >
+            <AppIcon name="close" className="h-5 w-5" />
+          </button>
+        </header>
+        <div className="flex-1 overflow-y-auto p-6">{children}</div>
+      </div>
+    </>,
+    document.body,
+  );
+}
+
+function ProfilePanelContent({
+  data,
+  initials,
+}: {
+  data: DashboardData;
+  initials: string;
+}) {
+  const rows = [
+    { label: "Role", value: data.user.role.charAt(0).toUpperCase() + data.user.role.slice(1) },
+    { label: "Email", value: data.user.email },
+    { label: "Contact", value: `${data.profile.contactMethod} · ${data.profile.contactValue}` },
+    { label: "City", value: data.profile.location.city || "—" },
+    { label: "Region", value: data.profile.location.region || "—" },
+    ...(data.profile.entityType ? [{ label: "Entity", value: data.profile.entityType.replace(/_/g, " ") }] : []),
+    ...(data.profile.operationalHours ? [{ label: "Hours", value: data.profile.operationalHours }] : []),
+  ];
+  return (
+    <div className="grid gap-6">
+      <div className="flex flex-col items-center gap-3 pb-6 border-b border-[#e4ddcf]">
+        <span className="grid h-20 w-20 place-items-center rounded-full bg-[#ffbd1a] text-2xl font-black text-[#052b12] shadow-md">
+          {initials}
+        </span>
+        <div className="text-center">
+          <strong className="block text-xl font-black text-[#101812]">
+            {data.profile.displayName}
+          </strong>
+          <span className="mt-1 block text-sm font-bold text-[#46534a]">
+            {data.user.email}
+          </span>
+        </div>
+      </div>
+      <div className="grid gap-3">
+        {rows.map(({ label, value }) => (
+          <div key={label} className="grid grid-cols-[7rem_1fr] gap-2 text-sm">
+            <span className="font-bold text-[#46534a]">{label}</span>
+            <span className="font-black text-[#101812] break-all">{value}</span>
+          </div>
+        ))}
+      </div>
+      {data.profile.notes && (
+        <div className="rounded-lg bg-[#f0f7eb] p-4 text-sm">
+          <strong className="block text-xs font-black uppercase tracking-wide text-[#2f7a46] mb-2">Notes</strong>
+          <p className="font-bold text-[#1f2a23] leading-5">{data.profile.notes}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SettingsPanelContent() {
+  const [notifPickup, setNotifPickup] = useState(true);
+  const [notifProposal, setNotifProposal] = useState(true);
+  const [notifDelivery, setNotifDelivery] = useState(false);
+  const [compactMode, setCompactMode] = useState(false);
+
+  function Toggle({ checked, onChange, label, description }: { checked: boolean; onChange: () => void; label: string; description: string }) {
+    return (
+      <label className="flex cursor-pointer items-start justify-between gap-4 py-3">
+        <div>
+          <strong className="block text-sm font-black text-[#101812]">{label}</strong>
+          <span className="mt-0.5 block text-xs font-bold text-[#46534a]">{description}</span>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={checked}
+          onClick={onChange}
+          className={cx(
+            "relative mt-0.5 h-6 w-11 shrink-0 rounded-full border-2 transition-colors",
+            checked ? "border-[#14733a] bg-[#14733a]" : "border-[#c9c4b8] bg-[#e8e4dc]",
+          )}
+        >
+          <span
+            className={cx(
+              "absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform",
+              checked ? "translate-x-5" : "translate-x-0.5",
+            )}
+          />
+        </button>
+      </label>
+    );
+  }
+
+  return (
+    <div className="grid gap-6">
+      <div>
+        <h3 className="mb-1 text-xs font-black uppercase tracking-wider text-[#46534a]">Notifications</h3>
+        <div className="divide-y divide-[#e4ddcf] rounded-lg border border-[#e4ddcf] bg-white px-4">
+          <Toggle checked={notifPickup} onChange={() => setNotifPickup(v => !v)} label="Pickup assigned" description="When a new pickup is assigned to you" />
+          <Toggle checked={notifProposal} onChange={() => setNotifProposal(v => !v)} label="Proposal accepted" description="When your proposal is accepted" />
+          <Toggle checked={notifDelivery} onChange={() => setNotifDelivery(v => !v)} label="Delivery confirmed" description="When the receiver confirms delivery" />
+        </div>
+      </div>
+      <div>
+        <h3 className="mb-1 text-xs font-black uppercase tracking-wider text-[#46534a]">Display</h3>
+        <div className="divide-y divide-[#e4ddcf] rounded-lg border border-[#e4ddcf] bg-white px-4">
+          <Toggle checked={compactMode} onChange={() => setCompactMode(v => !v)} label="Compact mode" description="Reduce spacing in donation list" />
+        </div>
+      </div>
+      <div>
+        <h3 className="mb-1 text-xs font-black uppercase tracking-wider text-[#46534a]">Account</h3>
+        <div className="rounded-lg border border-[#e4ddcf] bg-white px-4 py-3 text-sm font-bold text-[#46534a]">
+          Settings are saved automatically.
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ReportsPanelContent({ data }: { data: DashboardData }) {
+  const delivered = data.pickups.filter((p) => p.status === "delivered").length;
+  const pickedUp = data.pickups.filter((p) => p.status === "picked_up").length;
+  const totalPickups = data.pickups.length;
+  const acceptedProposals = data.proposals.filter((p) => p.status === "accepted").length;
+  const pendingProposals = data.proposals.filter((p) => p.status === "pending").length;
+  const donationsHelped = new Set(data.pickups.map((p) => p.donationId)).size;
+
+  const stats = [
+    { label: "Deliveries completed", value: delivered, color: "bg-[#e5f1df] text-[#14733a]" },
+    { label: "In progress", value: pickedUp, color: "bg-[#fff3cd] text-[#856404]" },
+    { label: "Total pickups", value: totalPickups, color: "bg-[#e8f0fe] text-[#1a56db]" },
+    { label: "Proposals accepted", value: acceptedProposals, color: "bg-[#e5f1df] text-[#14733a]" },
+    { label: "Proposals pending", value: pendingProposals, color: "bg-[#fff3cd] text-[#856404]" },
+    { label: "Donations helped", value: donationsHelped, color: "bg-[#fce8ff] text-[#7e22ce]" },
+  ];
+
+  return (
+    <div className="grid gap-6">
+      <p className="text-sm font-bold text-[#46534a]">Your activity summary across all sessions.</p>
+      <div className="grid grid-cols-2 gap-3">
+        {stats.map(({ label, value, color }) => (
+          <div key={label} className={cx("rounded-xl p-4", color.split(" ")[0], "border border-black/5")}>
+            <strong className="block text-2xl font-black">{value}</strong>
+            <span className={cx("mt-1 block text-xs font-bold", color.split(" ")[1])}>{label}</span>
+          </div>
+        ))}
+      </div>
+      {data.pickups.length > 0 && (
+        <div>
+          <h3 className="mb-2 text-xs font-black uppercase tracking-wider text-[#46534a]">Recent pickups</h3>
+          <div className="grid gap-2">
+            {[...data.pickups].slice(0, 4).map((pickup) => (
+              <div key={pickup.id} className="flex items-center justify-between rounded-lg border border-[#e4ddcf] bg-white px-3 py-2 text-xs">
+                <span className="font-black text-[#101812]">#{pickup.id.slice(0, 8)}</span>
+                <span className={cx(badgeBase, pickup.status === "delivered" ? "bg-[#dcebd5] text-[#14351f]" : "bg-[#fee8ba] text-[#4d3510]")}>
+                  {pickup.status.replace(/_/g, " ")}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function HelpPanelContent() {
+  const [openIndex, setOpenIndex] = useState<number | null>(0);
+  const faqs = [
+    {
+      q: "How do I accept a donation?",
+      a: "Browse available donations in the left panel. Select one, choose a receiver from the right panel, then click 'Create proposal' to submit a delivery proposal.",
+    },
+    {
+      q: "What happens after I create a proposal?",
+      a: "The donor reviews and accepts it. Once accepted, a pickup is automatically assigned to you. You'll see it in the 'Active pickup' panel.",
+    },
+    {
+      q: "How do I mark a pickup as complete?",
+      a: "In the Active pickup panel, first click 'Mark picked up' when you collect the food. After delivering it, click 'Mark delivered'. The receiver will confirm receipt.",
+    },
+    {
+      q: "What does 'Proposal pending' mean on a donation?",
+      a: "Another volunteer has already submitted a proposal for that donation and it's awaiting approval. You cannot select these donations.",
+    },
+    {
+      q: "How do I contact the donor or receiver?",
+      a: "Expand a proposal card to see contact details. Use the 'Message on WhatsApp' button to reach them directly.",
+    },
+    {
+      q: "Who can I contact for support?",
+      a: "Reach out to the FoodLink team via the contact details on the main website, or ask your coordinator directly.",
+    },
+  ];
+
+  return (
+    <div className="grid gap-4">
+      <p className="text-sm font-bold text-[#46534a]">Common questions about using FoodLink as a volunteer.</p>
+      <div className="grid gap-2">
+        {faqs.map(({ q, a }, i) => (
+          <div key={q} className="overflow-hidden rounded-lg border border-[#e4ddcf]">
+            <button
+              type="button"
+              className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm font-black text-[#101812] hover:bg-[#f7f5f0]"
+              onClick={() => setOpenIndex(openIndex === i ? null : i)}
+            >
+              {q}
+              <AppIcon
+                name="chevron"
+                className={cx("h-4 w-4 shrink-0 text-[#46534a] transition-transform", openIndex === i && "rotate-180")}
+              />
+            </button>
+            {openIndex === i && (
+              <div className="border-t border-[#e4ddcf] bg-[#fafaf7] px-4 py-3 text-xs font-bold leading-5 text-[#1f2a23]">
+                {a}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function DashboardSidebar({
   data,
   signOut,
@@ -256,6 +581,9 @@ function DashboardSidebar({
     .join("")
     .slice(0, 2)
     .toUpperCase();
+
+  const [activePanel, setActivePanel] = useState<SidePanelType | null>(null);
+  const [activeHref, setActiveHref] = useState<string>("#dashboard-title");
 
   const navItems = useMemo(() => {
     if (role === "receiver") {
@@ -282,11 +610,6 @@ function DashboardSidebar({
           href: "#notifications",
           badge: 2,
         },
-        {
-          label: "Profile",
-          icon: "profile" as IconName,
-          href: "#dashboard-title",
-        },
       ];
     }
     if (role === "volunteer") {
@@ -294,90 +617,26 @@ function DashboardSidebar({
         (d) => d.status === "available",
       ).length;
       return [
-        {
-          label: "Dashboard",
-          icon: "dashboard" as IconName,
-          href: "#dashboard-title",
-        },
-        {
-          label: "Available donations",
-          icon: "bag" as IconName,
-          href: "#available-donations",
-          badge: availableCount,
-        },
-        {
-          label: "Receivers",
-          icon: "team" as IconName,
-          href: "#receiver-directory",
-        },
-        {
-          label: "My proposals",
-          icon: "box" as IconName,
-          href: "#my-proposals",
-        },
-        {
-          label: "Pickups",
-          icon: "pickup" as IconName,
-          href: "#active-pickup",
-        },
-        {
-          label: "History",
-          icon: "clock" as IconName,
-          href: "#today-at-a-glance",
-        },
-        {
-          label: "Messages",
-          icon: "message" as IconName,
-          href: "#notifications",
-        },
-        {
-          label: "Reports",
-          icon: "chart" as IconName,
-          href: "#today-at-a-glance",
-        },
-        {
-          label: "Profile",
-          icon: "profile" as IconName,
-          href: "#dashboard-title",
-        },
-        {
-          label: "Settings",
-          icon: "settings" as IconName,
-          href: "#dashboard-title",
-        },
-        {
-          label: "Help & support",
-          icon: "message" as IconName,
-          href: "#dashboard-title",
-        },
+        { label: "Dashboard", icon: "dashboard" as IconName, href: "#dashboard-title" },
+        { label: "Available donations", icon: "bag" as IconName, href: "#available-donations", badge: availableCount },
+        { label: "Receivers", icon: "team" as IconName, href: "#receiver-directory" },
+        { label: "My proposals", icon: "box" as IconName, href: "#my-proposals" },
+        { label: "Pickups", icon: "pickup" as IconName, href: "#active-pickup" },
+        { label: "History", icon: "clock" as IconName, href: "#today-at-a-glance" },
+        { label: "Messages", icon: "message" as IconName, href: "#notifications" },
+        { label: "Reports", icon: "chart" as IconName, panel: "reports" as SidePanelType },
+        { label: "Profile", icon: "profile" as IconName, panel: "profile" as SidePanelType },
+        { label: "Settings", icon: "settings" as IconName, panel: "settings" as SidePanelType },
+        { label: "Help & support", icon: "message" as IconName, panel: "help" as SidePanelType },
       ];
     }
     // Donor
     return [
-      {
-        label: "Dashboard",
-        icon: "dashboard" as IconName,
-        href: "#dashboard-title",
-      },
+      { label: "Dashboard", icon: "dashboard" as IconName, href: "#dashboard-title" },
       { label: "My donations", icon: "bag" as IconName, href: "#my-donations" },
       { label: "Proposals", icon: "box" as IconName, href: "#proposal-queue" },
       { label: "Pickups", icon: "pickup" as IconName, href: "#work" },
-      {
-        label: "Messages",
-        icon: "message" as IconName,
-        href: "#notifications",
-      },
-      { label: "Reports", icon: "chart" as IconName, href: "#my-donations" },
-      {
-        label: "Profile",
-        icon: "profile" as IconName,
-        href: "#dashboard-title",
-      },
-      {
-        label: "Settings",
-        icon: "settings" as IconName,
-        href: "#dashboard-title",
-      },
+      { label: "Notifications", icon: "bell" as IconName, href: "#notifications" },
     ];
   }, [role, data]);
 
@@ -512,26 +771,74 @@ function DashboardSidebar({
     >
       {topHeader}
       <nav className="flex flex-col gap-1 overflow-y-auto pr-1 min-h-0 custom-scrollbar">
-        {navItems.map((item, index) => (
-          <a
-            className={cx(
-              "flex min-h-10 items-center gap-3.5 rounded-lg px-4 text-sm font-black transition hover:bg-white/10 shrink-0",
-              index === 0 &&
-                "bg-[#116b35] shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]",
-            )}
-            href={item.href}
-            key={item.label}
-          >
-            <AppIcon name={item.icon} className="h-5 w-5 shrink-0" />
-            {item.label}
-            {item.badge !== undefined && item.badge > 0 ? (
-              <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-[#ffbd1a] px-1 text-[0.65rem] font-black text-[#052b12]">
-                {item.badge}
-              </span>
-            ) : null}
-          </a>
-        ))}
+        {navItems.map((item) => {
+          const isActive = "panel" in item && item.panel
+            ? activePanel === item.panel
+            : "href" in item && item.href === activeHref;
+          const sharedClass = cx(
+            "flex min-h-10 items-center gap-3.5 rounded-lg px-4 text-sm font-black transition shrink-0",
+            isActive
+              ? "bg-[#116b35] shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]"
+              : "hover:bg-white/10",
+          );
+          const badge = item.badge !== undefined && item.badge > 0 ? (
+            <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-[#ffbd1a] px-1 text-[0.65rem] font-black text-[#052b12]">
+              {item.badge}
+            </span>
+          ) : null;
+
+          if ("panel" in item && item.panel) {
+            return (
+              <button
+                key={item.label}
+                type="button"
+                className={sharedClass}
+                onClick={() => setActivePanel(activePanel === item.panel ? null : item.panel as SidePanelType)}
+              >
+                <AppIcon name={item.icon} className="h-5 w-5 shrink-0" />
+                {item.label}
+                {badge}
+              </button>
+            );
+          }
+
+          return (
+            <a
+              key={item.label}
+              className={sharedClass}
+              href={item.href}
+              onClick={() => { setActiveHref(item.href ?? ""); setActivePanel(null); }}
+            >
+              <AppIcon name={item.icon} className="h-5 w-5 shrink-0" />
+              {item.label}
+              {badge}
+            </a>
+          );
+        })}
       </nav>
+
+      {activePanel && (
+        <SlidePanel
+          title={
+            activePanel === "profile" ? "My profile"
+            : activePanel === "settings" ? "Settings"
+            : activePanel === "reports" ? "Reports"
+            : "Help & support"
+          }
+          icon={
+            activePanel === "profile" ? "profile"
+            : activePanel === "settings" ? "settings"
+            : activePanel === "reports" ? "chart"
+            : "message"
+          }
+          onClose={() => setActivePanel(null)}
+        >
+          {activePanel === "profile" && <ProfilePanelContent data={data} initials={initials} />}
+          {activePanel === "settings" && <SettingsPanelContent />}
+          {activePanel === "reports" && <ReportsPanelContent data={data} />}
+          {activePanel === "help" && <HelpPanelContent />}
+        </SlidePanel>
+      )}
       {bottomCard}
       <button
         className="flex min-h-10 items-center gap-3.5 rounded-lg px-4 text-sm font-black transition hover:bg-white/10 shrink-0"
@@ -777,6 +1084,13 @@ function DonorDashboard({
 }) {
   const [uploadedImageUrl, setUploadedImageUrl] = useState("");
   const [uploadError, setUploadError] = useState("");
+  const [donorCoords, setDonorCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [locationMode, setLocationMode] = useState<"gps" | "map">("gps");
+  const [pickedCoords, setPickedCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [showMapPicker, setShowMapPicker] = useState(false);
+  const [mapCenter, setMapCenter] = useState<[number, number]>([-6.2088, 106.8456]);
+  const [geocoding, setGeocoding] = useState(false);
+  const locationInputRef = useRef<HTMLInputElement>(null);
 
   const [defaultFrom, setDefaultFrom] = useState("");
   const [defaultUntil, setDefaultUntil] = useState("");
@@ -787,6 +1101,13 @@ function DonorDashboard({
     const localLater = new Date(Date.now() - tzoffset + 4 * 60 * 60 * 1000);
     setDefaultFrom(localNow.toISOString().slice(0, 16));
     setDefaultUntil(localLater.toISOString().slice(0, 16));
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => setDonorCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        () => {},
+        { enableHighAccuracy: true },
+      );
+    }
   }, []);
 
   async function handleCreateDonation(event: FormEvent<HTMLFormElement>) {
@@ -809,7 +1130,15 @@ function DonorDashboard({
         ),
         quantity: String(form.get("quantity") || "10 packs"),
         imageUrl: uploadedImageUrl || defaultDonationImage,
-        pickupLocation: demoLocation,
+        pickupLocation: {
+          ...demoLocation,
+          addressLine1: locationInputRef.current?.value || demoLocation.addressLine1,
+          ...(locationMode === "map" && pickedCoords
+            ? { latitude: pickedCoords.lat, longitude: pickedCoords.lng }
+            : locationMode === "gps" && donorCoords
+              ? { latitude: donorCoords.lat, longitude: donorCoords.lng }
+              : {}),
+        },
         availableFrom: fromDate.toISOString(),
         availableUntil: untilDate.toISOString(),
         specialInstructions: String(form.get("instructions") || ""),
@@ -817,10 +1146,12 @@ function DonorDashboard({
       formElement.reset();
       setUploadedImageUrl("");
       setUploadError("");
+      setPickedCoords(null);
     }, "Donation posted.");
   }
 
   return (
+    <>
     <div className="grid items-start gap-5 2xl:grid-cols-[minmax(0,1fr)_26rem]">
       <div className="grid gap-5" id="work">
         <section className="grid gap-5 lg:grid-cols-[minmax(28rem,1.08fr)_minmax(24rem,0.92fr)]">
@@ -866,22 +1197,110 @@ function DonorDashboard({
               />
             </label>
 
-            <label className="grid gap-2 text-xs font-bold text-[#46534a]">
-              Pickup location
+            <div className="grid gap-2">
+              <span className="flex items-center justify-between text-xs font-bold text-[#46534a]">
+                Pickup location
+                <span className="flex gap-1 rounded-lg border border-[#cfc8ba] bg-[#f4f0e8] p-0.5">
+                  <button
+                    type="button"
+                    className={cx(
+                      "rounded-md px-3 py-1 text-[0.65rem] font-black transition-colors",
+                      locationMode === "gps"
+                        ? "bg-white text-[#064c25] shadow-sm"
+                        : "text-[#46534a] hover:text-[#101812]",
+                    )}
+                    onClick={() => setLocationMode("gps")}
+                  >
+                    Use GPS
+                  </button>
+                  <button
+                    type="button"
+                    className={cx(
+                      "rounded-md px-3 py-1 text-[0.65rem] font-black transition-colors",
+                      locationMode === "map"
+                        ? "bg-white text-[#064c25] shadow-sm"
+                        : "text-[#46534a] hover:text-[#101812]",
+                    )}
+                    onClick={() => setLocationMode("map")}
+                  >
+                    Pick on map
+                  </button>
+                </span>
+              </span>
+
               <span className="grid grid-cols-[2.5rem_1fr_2.5rem] overflow-hidden rounded-[0.65rem] border border-[#cfc8ba] bg-[#fffdf8]">
                 <span className="grid place-items-center text-[#064c25]">
                   <AppIcon name="map" className="h-5 w-5" />
                 </span>
                 <input
+                  ref={locationInputRef}
                   className="min-h-10 bg-transparent px-2 text-sm font-bold outline-none"
                   name="location"
                   placeholder="Jl. Melati No. 12, Kebayoran Baru, Jakarta Selatan"
                 />
-                <span className="grid place-items-center border-l border-[#cfc8ba] text-[#064c25]">
-                  <AppIcon name="map" className="h-5 w-5" />
-                </span>
+                {locationMode === "gps" ? (
+                  <span className="grid place-items-center border-l border-[#cfc8ba] px-2">
+                    {donorCoords ? (
+                      <span className="h-2 w-2 rounded-full bg-[#14733a]" title="GPS detected" />
+                    ) : (
+                      <span className="h-2 w-2 animate-pulse rounded-full bg-[#cfc8ba]" title="Detecting…" />
+                    )}
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={geocoding}
+                    className="grid place-items-center border-l border-[#cfc8ba] px-2 text-[#064c25] hover:bg-[#e5f1df] disabled:opacity-50"
+                    title="Open map picker"
+                    onClick={async () => {
+                      const addr = locationInputRef.current?.value ?? "";
+                      let center: [number, number] = donorCoords
+                        ? [donorCoords.lat, donorCoords.lng]
+                        : [-6.2088, 106.8456];
+                      if (addr) {
+                        setGeocoding(true);
+                        try {
+                          const res = await fetch(
+                            `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(addr)}&format=json&limit=1`,
+                          );
+                          const data = await res.json();
+                          if (Array.isArray(data) && data[0]) {
+                            center = [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+                          }
+                        } catch {
+                          // fall back to GPS/Jakarta
+                        } finally {
+                          setGeocoding(false);
+                        }
+                      }
+                      setMapCenter(center);
+                      setShowMapPicker(true);
+                    }}
+                  >
+                    {geocoding ? (
+                      <span className="h-3 w-3 animate-spin rounded-full border-2 border-[#0b5b2b] border-t-transparent" />
+                    ) : (
+                      <AppIcon name="map" className="h-5 w-5" />
+                    )}
+                  </button>
+                )}
               </span>
-            </label>
+
+              {locationMode === "gps" && (
+                <span className="text-[0.65rem] font-bold text-[#9aab9c]">
+                  {donorCoords
+                    ? `GPS: ${donorCoords.lat.toFixed(5)}, ${donorCoords.lng.toFixed(5)}`
+                    : "Detecting GPS location…"}
+                </span>
+              )}
+              {locationMode === "map" && (
+                <span className={cx("text-[0.65rem] font-bold", pickedCoords ? "text-[#14733a]" : "text-[#9aab9c]")}>
+                  {pickedCoords
+                    ? `Pinned: ${pickedCoords.lat.toFixed(5)}, ${pickedCoords.lng.toFixed(5)}`
+                    : "Click the map icon to pin a location"}
+                </span>
+              )}
+            </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="grid gap-2 text-xs font-bold text-[#46534a]">
@@ -1008,6 +1427,38 @@ function DonorDashboard({
         runAction={runAction}
       />
     </div>
+
+    {showMapPicker && createPortal(
+      <div className="fixed inset-0 z-[1200] flex items-end justify-center bg-black/60 sm:items-center sm:p-6">
+        <div className="flex h-[88vh] w-full flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:h-[80vh] sm:max-w-2xl sm:rounded-2xl">
+          <div className="flex shrink-0 items-center justify-between border-b border-[#ded7c9] px-5 py-4">
+            <div>
+              <h3 className="text-sm font-black text-[#101812]">Pick pickup location</h3>
+              <p className="text-xs text-[#46534a]">Click or drag the pin to set the exact spot</p>
+            </div>
+            <button
+              type="button"
+              className="grid h-8 w-8 place-items-center rounded-full text-[#46534a] hover:bg-[#f4f0e8]"
+              onClick={() => setShowMapPicker(false)}
+            >
+              ✕
+            </button>
+          </div>
+          <div className="min-h-0 flex-1">
+            <LocationPickerMapDynamic
+              initialCenter={mapCenter}
+              onConfirm={(coords) => {
+                setPickedCoords(coords);
+                setShowMapPicker(false);
+              }}
+              onClose={() => setShowMapPicker(false)}
+            />
+          </div>
+        </div>
+      </div>,
+      document.body,
+    )}
+    </>
   );
 }
 
@@ -1020,12 +1471,11 @@ function VolunteerDashboard({
   token: string;
   runAction: (callback: () => Promise<void>, success: string) => Promise<void>;
 }) {
-  const [selectedDonationId, setSelectedDonationId] = useState<string | null>(
-    null,
-  );
-  const [selectedReceiverId, setSelectedReceiverId] = useState<string | null>(
-    null,
-  );
+  const [selectedDonationId, setSelectedDonationId] = useState<string | null>(null);
+  const [selectedReceiverId, setSelectedReceiverId] = useState<string | null>(null);
+  const [showProposalModal, setShowProposalModal] = useState(false);
+  const [phoneMode, setPhoneMode] = useState<"profile" | "custom">("profile");
+  const [customPhone, setCustomPhone] = useState("");
   const pendingProposals = data.proposals.filter(
     (proposal) => proposal.status === "pending",
   ).length;
@@ -1047,13 +1497,31 @@ function VolunteerDashboard({
       throw new Error("Need available donation and receiver first.");
     }
 
+    const resolvedContact = phoneMode === "custom"
+      ? customPhone.trim()
+      : data.profile.contactValue ?? "";
+
     await createDeliveryProposal(token, {
       donationId: availableDonation.id,
       receiverId: receiver.userId,
+      volunteerContactOverride: resolvedContact || undefined,
     });
   }
 
+  const profilePhone = data.profile.contactValue ?? "";
+  const resolvedPhone = phoneMode === "custom" ? customPhone : profilePhone;
+
+  function openWhatsApp() {
+    const digits = resolvedPhone.replace(/\D/g, "");
+    const number = digits.startsWith("0") ? `62${digits.slice(1)}` : digits;
+    const text = encodeURIComponent(
+      `Halo! Saya ${data.profile.displayName} dari FoodLink. Saya telah membuat proposal pengiriman untuk donasi "${availableDonation?.title ?? ""}". Mohon dikonfirmasi. Terima kasih!`,
+    );
+    window.open(`https://wa.me/${number}?text=${text}`, "_blank");
+  }
+
   return (
+    <>
     <div className="grid gap-3">
       <section className="grid min-h-[41rem] gap-0 overflow-hidden rounded-xl border border-[#ded7c9] bg-[#fffdf8]/78 shadow-[0_1rem_2.8rem_rgba(49,43,24,0.08)] 2xl:grid-cols-[minmax(23rem,1.04fr)_minmax(21rem,0.96fr)_minmax(19rem,0.78fr)]">
         <VolunteerDonationsPanel
@@ -1073,9 +1541,7 @@ function VolunteerDashboard({
         <VolunteerProposalPanel
           donation={availableDonation}
           receiver={receiver}
-          onCreate={() =>
-            runAction(handleCreateProposal, "Delivery proposal created.")
-          }
+          onCreate={() => setShowProposalModal(true)}
           disabled={!availableDonation || !receiver}
         />
         <VolunteerPickupPanel
@@ -1091,6 +1557,103 @@ function VolunteerDashboard({
         pickupCount={data.pickups.length}
       />
     </div>
+
+    {showProposalModal && createPortal(
+      <>
+        <div className="fixed inset-0 z-[1100] bg-black/40 backdrop-blur-sm" onClick={() => setShowProposalModal(false)} />
+        <div className="fixed left-1/2 top-1/2 z-[1101] w-full max-w-md -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl bg-[#fffdf8] shadow-2xl">
+          <header className="flex items-center gap-3 border-b border-[#e4ddcf] px-6 py-5">
+            <span className="grid h-9 w-9 place-items-center rounded-full bg-[#e5f1df] text-[#14733a]">
+              <AppIcon name="message" className="h-5 w-5" />
+            </span>
+            <div className="flex-1">
+              <h2 className="font-serif text-lg font-black tracking-tight text-[#061e0e]">Confirm proposal</h2>
+              <p className="text-xs font-bold text-[#46534a]">Choose a WhatsApp number to notify the receiver</p>
+            </div>
+            <button
+              type="button"
+              className="grid h-8 w-8 place-items-center rounded-full text-[#46534a] hover:bg-[#f0ece4]"
+              onClick={() => setShowProposalModal(false)}
+            >
+              <AppIcon name="close" className="h-5 w-5" />
+            </button>
+          </header>
+
+          <div className="grid gap-3 p-6">
+            <button
+              type="button"
+              onClick={() => setPhoneMode("profile")}
+              className={cx(
+                "grid grid-cols-[1.25rem_1fr] items-start gap-3 rounded-xl border-2 p-4 text-left transition-colors",
+                phoneMode === "profile"
+                  ? "border-[#0b5b2b] bg-[#e5f1df]"
+                  : "border-[#ded7c9] bg-[#fafaf7] hover:border-[#9aab9c]",
+              )}
+            >
+              <span className={cx("mt-0.5 h-4 w-4 shrink-0 rounded-full border-2", phoneMode === "profile" ? "border-[#0b5b2b] bg-[#0b5b2b]" : "border-[#9aab9c]")} />
+              <span className="grid gap-0.5">
+                <strong className="text-sm font-black text-[#101812]">Use my profile number</strong>
+                <span className="font-mono text-xs font-bold text-[#46534a]">{profilePhone || "No number on profile"}</span>
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setPhoneMode("custom")}
+              className={cx(
+                "grid grid-cols-[1.25rem_1fr] items-start gap-3 rounded-xl border-2 p-4 text-left transition-colors",
+                phoneMode === "custom"
+                  ? "border-[#0b5b2b] bg-[#e5f1df]"
+                  : "border-[#ded7c9] bg-[#fafaf7] hover:border-[#9aab9c]",
+              )}
+            >
+              <span className={cx("mt-0.5 h-4 w-4 shrink-0 rounded-full border-2", phoneMode === "custom" ? "border-[#0b5b2b] bg-[#0b5b2b]" : "border-[#9aab9c]")} />
+              <span className="grid gap-2">
+                <strong className="text-sm font-black text-[#101812]">Use a different number</strong>
+                {phoneMode === "custom" && (
+                  <input
+                    autoFocus
+                    className="rounded-lg border border-[#cfc8ba] bg-white px-3 py-2 font-mono text-sm font-bold outline-none focus:border-[#0b5b2b]"
+                    placeholder="+62 812 3456 7890"
+                    value={customPhone}
+                    onChange={(e) => setCustomPhone(e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                )}
+              </span>
+            </button>
+          </div>
+
+          <footer className="flex gap-3 border-t border-[#e4ddcf] px-6 py-4">
+            <button
+              type="button"
+              className="flex-1 rounded-lg border border-[#cfc8ba] py-2.5 text-sm font-black text-[#46534a] hover:bg-[#f4f0e8]"
+              onClick={() => {
+                void runAction(handleCreateProposal, "Delivery proposal created.");
+                setShowProposalModal(false);
+              }}
+            >
+              Skip & create
+            </button>
+            <button
+              type="button"
+              disabled={phoneMode === "custom" && !customPhone.trim()}
+              className={cx(primaryButton, "flex-1 disabled:opacity-50")}
+              onClick={() => {
+                void runAction(handleCreateProposal, "Delivery proposal created.");
+                openWhatsApp();
+                setShowProposalModal(false);
+              }}
+            >
+              <AppIcon name="message" className="h-4 w-4" />
+              Create &amp; notify
+            </button>
+          </footer>
+        </div>
+      </>,
+      document.body,
+    )}
+    </>
   );
 }
 
@@ -1103,9 +1666,21 @@ function VolunteerDonationsPanel({
   selectedDonation?: Donation;
   onSelect: (id: string) => void;
 }) {
-  const sortedDonations = [...donations].sort((a, b) =>
-    a.status === "available" && b.status !== "available" ? -1 : 1,
-  );
+  const [filter, setFilter] = useState<"All" | "Available" | "Proposal pending">("All");
+  const [sortNewest, setSortNewest] = useState(false);
+
+  const filtered = donations.filter((d) => {
+    if (filter === "Available") return d.status === "available";
+    if (filter === "Proposal pending") return d.status === "proposal_pending";
+    return true;
+  });
+
+  const sortedDonations = [...filtered].sort((a, b) => {
+    if (sortNewest) {
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    }
+    return a.status === "available" && b.status !== "available" ? -1 : 1;
+  });
 
   return (
     <section className="grid content-start gap-4 border-[#ded7c9] p-5 2xl:border-r">
@@ -1114,21 +1689,22 @@ function VolunteerDonationsPanel({
           Available donations
         </h2>
         <span className="rounded-full bg-[#dcebd5] px-3 py-1 text-xs font-black text-[#14351f]">
-          {donations.length}
+          {filtered.length}
         </span>
       </header>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap gap-2">
-          {["All", "Available", "Proposal pending"].map((item, index) => (
+          {(["All", "Available", "Proposal pending"] as const).map((item) => (
             <button
               className={cx(
                 "min-h-9 rounded-full border px-4 text-xs font-black",
-                index === 0
+                filter === item
                   ? "border-[#2f7a46] bg-[#3f7d48] text-white"
                   : "border-[#d9d1c2] bg-[#fffdf8] text-[#1f2a23]",
               )}
               key={item}
               type="button"
+              onClick={() => setFilter(item)}
             >
               {item}
             </button>
@@ -1137,8 +1713,9 @@ function VolunteerDonationsPanel({
         <button
           className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-[#d9d1c2] bg-[#fffdf8] px-3 text-xs font-black"
           type="button"
+          onClick={() => setSortNewest((v) => !v)}
         >
-          Nearest <AppIcon name="chevron" className="h-4 w-4" />
+          {sortNewest ? "Newest" : "Nearest"} <AppIcon name="chevron" className="h-4 w-4" />
         </button>
       </div>
       <div className="grid gap-2">
@@ -1178,26 +1755,32 @@ function VolunteerDonationCard({
   onSelect: (id: string) => void;
 }) {
   const distance = `${(1.2 + index * 0.6).toFixed(1)} km`;
+  const selectable = donation.status === "available";
 
   return (
     <article
       className={cx(
-        "grid grid-cols-[1.75rem_5.4rem_1fr_auto] items-center gap-3 rounded-lg border bg-[#fffdf8] p-3 transition",
-        selected
-          ? "border-[#2f7a46] bg-[#f8fbf3] shadow-[0_0.7rem_1.7rem_rgba(47,122,70,0.09)]"
-          : "border-[#e4ddcf]",
+        "grid grid-cols-[1.75rem_5.4rem_1fr_auto] items-center gap-3 rounded-lg border p-3 transition",
+        selectable
+          ? selected
+            ? "cursor-pointer border-[#2f7a46] bg-[#f8fbf3] shadow-[0_0.7rem_1.7rem_rgba(47,122,70,0.09)]"
+            : "cursor-pointer border-[#e4ddcf] bg-[#fffdf8]"
+          : "cursor-default border-[#e4ddcf] bg-[#f7f5f0] opacity-60",
       )}
     >
       <button
         className={cx(
           "grid h-6 w-6 place-items-center rounded-full border",
-          selected
-            ? "border-[#14733a] bg-[#14733a] text-white"
-            : "border-[#b8b8ae] bg-white",
+          !selectable
+            ? "invisible"
+            : selected
+              ? "border-[#14733a] bg-[#14733a] text-white"
+              : "border-[#b8b8ae] bg-white",
         )}
         type="button"
         aria-label={`Select ${donation.title}`}
-        onClick={() => onSelect(donation.id)}
+        disabled={!selectable}
+        onClick={() => selectable && onSelect(donation.id)}
       >
         {selected ? <AppIcon name="check" className="h-4 w-4" /> : null}
       </button>
@@ -1222,10 +1805,17 @@ function VolunteerDonationCard({
       </div>
       <div className="grid justify-items-end gap-5">
         <span className="text-xs font-bold text-[#46534a]">{distance}</span>
-        <span className={cx(badgeBase, statusClass(donation.status))}>
+        <span
+          className={cx(
+            badgeBase,
+            donation.status === "available"
+              ? "bg-[#dbeafe] text-[#1e40af]"
+              : statusClass(donation.status),
+          )}
+        >
           {donation.status === "proposal_pending"
             ? "Proposal pending"
-            : donation.status.replace("_", " ")}
+            : donation.status.replace(/_/g, " ")}
         </span>
       </div>
     </article>
@@ -1246,49 +1836,15 @@ function VolunteerMapPanel({
           Live map
         </h2>
       </header>
-      <div className="relative mx-4 min-h-[28rem] overflow-hidden rounded-lg border border-[#e4ddcf] bg-[#eef0ea]">
-        <div className="absolute inset-0 bg-[linear-gradient(30deg,rgba(255,255,255,0.62)_12%,transparent_12%,transparent_88%,rgba(255,255,255,0.62)_88%),linear-gradient(120deg,rgba(255,255,255,0.5)_9%,transparent_9%,transparent_91%,rgba(255,255,255,0.5)_91%),linear-gradient(#d9dfd5_1px,transparent_1px),linear-gradient(90deg,#d9dfd5_1px,transparent_1px)] bg-[length:7rem_4rem,8rem_5rem,2.1rem_2.1rem,2.1rem_2.1rem] opacity-80" />
-        <div className="absolute left-[34%] top-[15%] h-[18rem] w-[9rem] rotate-[-18deg] rounded-[60%] border-r-[6px] border-dashed border-[#0b4c25]" />
-        <span className="absolute left-[34%] top-[16%] grid rounded-lg border border-[#d9d1c2] bg-[#fffdf8] p-3 shadow-[0_0.8rem_1.8rem_rgba(49,43,24,0.12)]">
-          <span className="flex items-center gap-3">
-            <span className="grid h-8 w-8 place-items-center rounded-full bg-[#2f7a46] text-white">
-              <AppIcon name="package" className="h-4 w-4" />
-            </span>
-            <span className="grid text-xs font-bold">
-              <strong className="text-sm font-black text-[#101812]">
-                {donation?.description?.split(" ")[0] ?? "Warteg"} Berkah
-              </strong>
-              Donor
-            </span>
-          </span>
-        </span>
-        <span className="absolute left-[35%] top-[43%] grid h-5 w-5 place-items-center rounded-full border-4 border-white bg-[#287bd5] shadow-md" />
-        <span className="absolute left-[55%] top-[66%] grid rounded-lg border border-[#d9d1c2] bg-[#fffdf8] p-3 shadow-[0_0.8rem_1.8rem_rgba(49,43,24,0.12)]">
-          <span className="flex items-center gap-3">
-            <span className="grid h-10 w-10 place-items-center rounded-full bg-[#ffb91f] text-white">
-              <AppIcon name="marker" className="h-5 w-5" />
-            </span>
-            <span className="grid text-xs font-bold">
-              <strong className="text-sm font-black text-[#101812]">
-                {receiver?.displayName ?? "Panti Harapan"}
-              </strong>
-              Receiver
-            </span>
-          </span>
-        </span>
-        <div className="absolute right-4 top-4 grid overflow-hidden rounded-lg border border-[#d9d1c2] bg-[#fffdf8] shadow-sm">
-          {["+", "-", "⌖"].map((item) => (
-            <button
-              className="grid h-11 w-11 place-items-center border-b border-[#d9d1c2] text-xl font-bold last:border-b-0"
-              key={item}
-              type="button"
-            >
-              {item}
-            </button>
-          ))}
-        </div>
+      <div className="relative mx-4 min-h-[28rem] overflow-hidden rounded-lg border border-[#e4ddcf]">
+        <VolunteerMapDynamic
+          donorLocation={donation?.pickupLocation}
+          receiverLocation={receiver?.location}
+          donorLabel={donation ? donorDisplayName(donation) ?? "Donor" : undefined}
+          receiverLabel={receiver?.displayName}
+        />
         {donation ? (
-          <article className="absolute inset-x-4 bottom-4 grid grid-cols-[4.8rem_1fr_auto] items-center gap-3 rounded-lg border border-[#d9d1c2] bg-[#fffdf8] p-3 shadow-[0_0.8rem_1.8rem_rgba(49,43,24,0.12)]">
+          <article className="absolute inset-x-4 bottom-4 z-[1000] grid grid-cols-[4.8rem_1fr_auto] items-center gap-3 rounded-lg border border-[#d9d1c2] bg-[#fffdf8] p-3 shadow-[0_0.8rem_1.8rem_rgba(49,43,24,0.12)]">
             <DonationThumbnail donation={donation} size="lg" />
             <div className="min-w-0">
               <strong className="block truncate text-sm font-black">
@@ -1308,9 +1864,6 @@ function VolunteerMapPanel({
                 </span>
               </div>
             </div>
-            <span className="rounded-lg bg-[#dcebd5] px-3 py-2 text-xs font-black text-[#14351f]">
-              1.2 km
-            </span>
           </article>
         ) : null}
       </div>
@@ -1576,6 +2129,7 @@ function VolunteerPickupPanel({
   runAction: (callback: () => Promise<void>, success: string) => Promise<void>;
 }) {
   const canMarkPickedUp = activePickup?.status === "assigned";
+  const canMarkDelivered = activePickup?.status === "picked_up";
 
   const steps = [
     {
@@ -1701,10 +2255,19 @@ function VolunteerPickupPanel({
         >
           Mark picked up
         </button>
-        <button className={primaryButton} type="button" disabled>
-          {activePickup?.status === "picked_up"
-            ? "Awaiting confirmation"
-            : "Mark delivered"}
+        <button
+          className={primaryButton}
+          type="button"
+          disabled={!canMarkDelivered}
+          onClick={() =>
+            activePickup
+              ? runAction(async () => {
+                  await markPickupDelivered(token, activePickup.id);
+                }, "Delivery marked.")
+              : undefined
+          }
+        >
+          {activePickup?.status === "delivered" ? "Delivered ✓" : "Mark delivered"}
         </button>
       </div>
     </section>
@@ -1830,6 +2393,8 @@ function ReceiverDashboard({
             proposal={activeProposal}
             donation={activePickup?.donation ?? activeDonation}
             pickup={activePickup}
+            allProposals={data.proposals}
+            donationsById={donationsById}
             token={token}
             runAction={runAction}
           />
@@ -1937,12 +2502,14 @@ function ReceiverProposalInbox({
   token: string;
   runAction: (callback: () => Promise<void>, success: string) => Promise<void>;
 }) {
+  const [sortNewest, setSortNewest] = useState(true);
+
   const sortedProposals = useMemo(() => {
-    return [...proposals].sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-    );
-  }, [proposals]);
+    return [...proposals].sort((a, b) => {
+      const diff = new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      return sortNewest ? diff : -diff;
+    });
+  }, [proposals, sortNewest]);
 
   return (
     <section className={cx(panel, "grid gap-4 p-5")} id="proposal-queue">
@@ -1963,8 +2530,9 @@ function ReceiverProposalInbox({
         <button
           className="inline-flex min-h-10 items-center gap-3 rounded-lg border border-[#d9d1c2] bg-[#fffdf8] px-4 text-xs font-black"
           type="button"
+          onClick={() => setSortNewest((v) => !v)}
         >
-          Sort: Newest <AppIcon name="chevron" className="h-4 w-4" />
+          Sort: {sortNewest ? "Newest" : "Oldest"} <AppIcon name="chevron" className="h-4 w-4" />
         </button>
       </header>
 
@@ -2014,11 +2582,23 @@ function ReceiverProposalCard({
   const title = donation?.title ?? readableDonationId(proposal.donationId);
   const donorName =
     proposal.donorProfile?.displayName ?? donorDisplayName(donation);
+
+  function openMaps(loc?: { latitude?: number; longitude?: number; addressLine1?: string; city?: string; region?: string }) {
+    if (!loc) return;
+    if (loc.latitude && loc.longitude) {
+      window.open(`https://www.google.com/maps?q=${loc.latitude},${loc.longitude}`, "_blank", "noopener,noreferrer");
+    } else {
+      const addr = [loc.addressLine1, loc.city, loc.region].filter(Boolean).join(", ");
+      window.open(`https://www.google.com/maps/search/${encodeURIComponent(addr)}`, "_blank", "noopener,noreferrer");
+    }
+  }
   const volunteerName =
     proposal.volunteerProfile?.displayName ??
     (index % 2 === 0 ? "Siti Nur A." : "Budi Santoso");
   const volunteerContactValue =
-    proposal.volunteerProfile?.contactValue ?? "+62 812-3456-7890";
+    proposal.volunteerContactOverride ??
+    proposal.volunteerProfile?.contactValue ??
+    "+62 812-3456-7890";
   const volunteerContactMethodLabel =
     proposal.volunteerProfile?.contactMethod === "whatsapp"
       ? "WhatsApp"
@@ -2120,21 +2700,23 @@ function ReceiverProposalCard({
               icon="marker"
               title="Pickup location"
               body={[
-                donorName,
-                "Jl. Kemang Raya No.10",
-                "Kemang, Jakarta Selatan",
+                donorName ?? "Donor",
+                donation?.pickupLocation.addressLine1 ?? "Jl. Kemang Raya No.10",
+                [donation?.pickupLocation.city, donation?.pickupLocation.region].filter(Boolean).join(", ") || "Jakarta",
               ]}
               action="Open in Maps"
+              onActionClick={() => openMaps(donation?.pickupLocation)}
             />
             <ReceiverInfoBlock
               icon="marker"
               title="Delivery to"
               body={[
-                "Panti Harapan",
-                "Jl. Damai No. 25",
-                "Cilandak, Jakarta Selatan",
+                proposal.receiverProfile?.displayName ?? "Receiver",
+                proposal.receiverProfile?.location.addressLine1 ?? "Jl. Damai No. 25",
+                [proposal.receiverProfile?.location.city, proposal.receiverProfile?.location.region].filter(Boolean).join(", ") || "Jakarta",
               ]}
               action="Open in Maps"
+              onActionClick={() => openMaps(proposal.receiverProfile?.location)}
             />
             <ReceiverEtaBlock donation={donation} />
             <div className="grid content-center gap-3">
@@ -2217,11 +2799,13 @@ function ReceiverInfoBlock({
   title,
   body,
   action,
+  onActionClick,
 }: {
   icon: IconName;
   title: string;
   body: string[];
   action: string;
+  onActionClick?: () => void;
 }) {
   return (
     <div className="grid gap-2 text-sm">
@@ -2237,6 +2821,7 @@ function ReceiverInfoBlock({
       <button
         className="mt-2 inline-flex min-h-9 w-max items-center rounded-md border border-[#9eb69f] bg-[#fffdf8] px-3 text-xs font-black text-[#064c25]"
         type="button"
+        onClick={onActionClick}
       >
         {action}
       </button>
@@ -2337,15 +2922,20 @@ function ReceiverTimelineCard({
   proposal,
   donation,
   pickup,
+  allProposals,
+  donationsById,
   token,
   runAction,
 }: {
   proposal?: DeliveryProposal;
   donation?: Donation;
   pickup?: Pickup;
+  allProposals: DeliveryProposal[];
+  donationsById: Map<string, Donation>;
   token: string;
   runAction: (callback: () => Promise<void>, success: string) => Promise<void>;
 }) {
+  const [showAllDeliveries, setShowAllDeliveries] = useState(false);
   const receiverAccepted =
     Boolean(proposal?.receiverAcceptedAt) || proposal?.status === "accepted";
 
@@ -2399,6 +2989,7 @@ function ReceiverTimelineCard({
   ];
 
   return (
+    <>
     <section className={cx(panel, "grid gap-4 p-5")}>
       <header>
         <h2 className="font-serif text-[1.35rem] leading-none tracking-[-0.045em] text-[#061e0e]">
@@ -2459,13 +3050,54 @@ function ReceiverTimelineCard({
           Confirm delivery received
         </button>
       )}
-      <a
-        className="flex min-h-11 items-center justify-center gap-3 rounded-lg border border-[#ded7c9] bg-[#fffdf8] text-sm font-black text-[#064c25]"
-        href="#proposal-queue"
+      <button
+        type="button"
+        className="flex min-h-11 items-center justify-center gap-3 rounded-lg border border-[#ded7c9] bg-[#fffdf8] text-sm font-black text-[#064c25] hover:bg-[#f4f0e8]"
+        onClick={() => setShowAllDeliveries(true)}
       >
         View all deliveries <AppIcon name="arrow" className="h-4 w-4" />
-      </a>
+      </button>
     </section>
+
+    {showAllDeliveries && (
+      <SlidePanel title="All deliveries" icon="pickup" onClose={() => setShowAllDeliveries(false)}>
+        <div className="grid gap-3 p-1">
+          {allProposals.length === 0 ? (
+            <p className="py-8 text-center text-sm font-bold text-[#46534a]">No deliveries yet.</p>
+          ) : (
+            allProposals.map((p) => {
+              const don = p.donation ?? donationsById.get(p.donationId);
+              const statusColors: Record<string, string> = {
+                pending: "bg-[#fff3cd] text-[#7a4f00]",
+                accepted: "bg-[#dbeafe] text-[#1e40af]",
+                rejected: "bg-[#fee2e2] text-[#991b1b]",
+                canceled: "bg-[#f3f4f6] text-[#6b7280]",
+              };
+              return (
+                <article
+                  key={p.id}
+                  className="grid grid-cols-[3rem_1fr_auto] items-start gap-3 rounded-xl border border-[#ded7c9] bg-[#fafaf7] p-4"
+                >
+                  <DonationThumbnail donation={don} size="sm" />
+                  <div className="min-w-0">
+                    <strong className="block truncate text-sm font-black text-[#101812]">
+                      {don?.title ?? "Donation"}
+                    </strong>
+                    <span className="mt-1 block text-xs font-bold text-[#46534a]">
+                      {don ? formatDate(don.availableFrom) : ""}
+                    </span>
+                  </div>
+                  <span className={cx("rounded-full px-2 py-1 text-[0.65rem] font-black capitalize", statusColors[p.status] ?? "bg-[#f3f4f6] text-[#6b7280]")}>
+                    {p.status}
+                  </span>
+                </article>
+              );
+            })
+          )}
+        </div>
+      </SlidePanel>
+    )}
+  </>
   );
 }
 
@@ -2478,6 +3110,7 @@ function ReceiverNeedsCard({
   token: string;
   runAction: (callback: () => Promise<void>, success: string) => Promise<void>;
 }) {
+  const [showAllNeeds, setShowAllNeeds] = useState(false);
   const needs = [
     [
       "Cooked meals for 30 children",
@@ -2515,7 +3148,8 @@ function ReceiverNeedsCard({
   }
 
   return (
-    <section className={cx(panel, "grid gap-4 p-5")}>
+    <>
+    <section className={cx(panel, "grid gap-4 p-5")} id="my-food-requests">
       <header className="flex items-center justify-between gap-3">
         <h2 className="font-serif text-[1.15rem] leading-none tracking-[-0.035em] text-[#061e0e]">
           My food requests / needs
@@ -2563,13 +3197,62 @@ function ReceiverNeedsCard({
           </article>
         ))}
       </div>
-      <a
-        className="flex min-h-10 items-center justify-center gap-3 rounded-lg border border-[#ded7c9] bg-[#fffdf8] text-xs font-black text-[#064c25]"
-        href="#proposal-queue"
+      <button
+        type="button"
+        className="flex min-h-10 items-center justify-center gap-3 rounded-lg border border-[#ded7c9] bg-[#fffdf8] text-xs font-black text-[#064c25] hover:bg-[#f4f0e8]"
+        onClick={() => setShowAllNeeds(true)}
       >
         View all needs <AppIcon name="arrow" className="h-4 w-4" />
-      </a>
+      </button>
     </section>
+
+    {showAllNeeds && (
+      <SlidePanel title="My food requests / needs" icon="bag" onClose={() => setShowAllNeeds(false)}>
+        <div className="grid gap-4 p-1">
+          <button
+            className="justify-self-end rounded-md bg-[#ffbd1a] px-3 py-2 text-xs font-black text-[#10140d] hover:bg-[#f0ac00]"
+            type="button"
+            onClick={handleUpdateNeeds}
+          >
+            Update needs
+          </button>
+          <div className="grid gap-4">
+            {needs.map(([title, description, date], index) => (
+              <article
+                className="grid grid-cols-[3rem_1fr_auto] items-start gap-3 rounded-xl border border-[#ded7c9] bg-[#fafaf7] p-4"
+                key={title}
+              >
+                <span
+                  className={cx(
+                    "grid h-10 w-10 place-items-center rounded-full",
+                    index === 1
+                      ? "bg-[#fee8ba] text-[#4d3510]"
+                      : "bg-[#dcebd5] text-[#064c25]",
+                  )}
+                >
+                  <AppIcon
+                    name={index === 2 ? "leaf" : index === 1 ? "package" : "bag"}
+                    className="h-5 w-5"
+                  />
+                </span>
+                <span className="grid">
+                  <strong className="text-sm font-black text-[#101812]">{title}</strong>
+                  <span className="mt-1 text-xs font-bold leading-5 text-[#46534a]">
+                    {index === 0 && profile.notes ? profile.notes : description}
+                  </span>
+                </span>
+                <span className="text-[0.65rem] font-bold text-[#7a817b]">
+                  Updated
+                  <br />
+                  {date}
+                </span>
+              </article>
+            ))}
+          </div>
+        </div>
+      </SlidePanel>
+    )}
+    </>
   );
 }
 
@@ -2590,8 +3273,10 @@ function ProposalQueue({
     () => new Map(donations.map((donation) => [donation.id, donation])),
     [donations],
   );
+  const [detailProposal, setDetailProposal] = useState<{ proposal: DeliveryProposal; donation?: Donation } | null>(null);
 
   return (
+    <>
     <section className={cx(panel, "min-h-full p-6")} id="proposal-queue">
       <header className="mb-4 flex items-start justify-between gap-4">
         <div className="flex items-center gap-4">
@@ -2714,6 +3399,29 @@ function ProposalQueue({
                     </span>
                   </div>
                   <div className="flex flex-wrap gap-2 justify-self-end">
+                    {viewerRole === "donor" && (() => {
+                      const rawPhone = proposal.volunteerContactOverride ?? proposal.volunteerProfile?.contactValue ?? "";
+                      if (!rawPhone) return null;
+                      const digits = rawPhone.replace(/\D/g, "");
+                      const number = digits.startsWith("0") ? `62${digits.slice(1)}` : digits;
+                      const text = encodeURIComponent(
+                        `Halo ${volunteerName}, saya donor dari FoodLink. Ingin konfirmasi proposal pengiriman untuk donasi "${donation?.title ?? ""}". Terima kasih!`,
+                      );
+                      return (
+                        <a
+                          href={`https://wa.me/${number}?text=${text}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={cx(ghostButton, "inline-flex items-center gap-1.5 !text-[#14733a]")}
+                        >
+                          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+                            <path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.118 1.528 5.845L.057 23.882l6.198-1.624A11.944 11.944 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.006-1.368l-.36-.214-3.68.964.981-3.595-.234-.37A9.818 9.818 0 012.182 12C2.182 6.58 6.58 2.182 12 2.182S21.818 6.58 21.818 12 17.42 21.818 12 21.818z"/>
+                          </svg>
+                          WhatsApp
+                        </a>
+                      );
+                    })()}
                     <button
                       className={ghostButton}
                       type="button"
@@ -2738,7 +3446,11 @@ function ProposalQueue({
                         Accept
                       </button>
                     ) : (
-                      <button className={ghostButton} type="button">
+                      <button
+                        className={ghostButton}
+                        type="button"
+                        onClick={() => setDetailProposal({ proposal, donation })}
+                      >
                         View details
                       </button>
                     )}
@@ -2754,6 +3466,64 @@ function ProposalQueue({
         )}
       </div>
     </section>
+
+    {detailProposal && (
+      <Modal title="Proposal details" onClose={() => setDetailProposal(null)}>
+
+        <div className="grid gap-5">
+          <div className="flex gap-4">
+            <DonationThumbnail donation={detailProposal.donation} size="lg" />
+            <div className="min-w-0">
+              <strong className="block text-lg font-black text-[#101812]">
+                {detailProposal.donation?.title ?? readableDonationId(detailProposal.proposal.donationId)}
+              </strong>
+              <p className="mt-1 text-sm font-bold text-[#46534a]">
+                {detailProposal.donation?.description ?? "Food donation"}
+              </p>
+              <span className={cx(badgeBase, statusClass(detailProposal.proposal.status), "mt-2 inline-block")}>
+                {detailProposal.proposal.status}
+              </span>
+            </div>
+          </div>
+
+          <div className="grid gap-3 text-sm">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-lg bg-[#f7f5f0] p-3">
+                <span className="block text-xs font-bold text-[#46534a]">Donor accepted</span>
+                <strong className={cx("mt-1 block font-black", detailProposal.proposal.donorAcceptedAt ? "text-[#14733a]" : "text-[#9d5b00]")}>
+                  {detailProposal.proposal.donorAcceptedAt ? "Yes" : "Pending"}
+                </strong>
+              </div>
+              <div className="rounded-lg bg-[#f7f5f0] p-3">
+                <span className="block text-xs font-bold text-[#46534a]">Receiver accepted</span>
+                <strong className={cx("mt-1 block font-black", detailProposal.proposal.receiverAcceptedAt ? "text-[#14733a]" : "text-[#9d5b00]")}>
+                  {detailProposal.proposal.receiverAcceptedAt ? "Yes" : "Pending"}
+                </strong>
+              </div>
+            </div>
+            {detailProposal.proposal.volunteerProfile && (
+              <div className="rounded-lg border border-[#e4ddcf] p-3">
+                <span className="block text-xs font-bold text-[#46534a]">Volunteer</span>
+                <span className="mt-1 block font-black text-[#101812]">{detailProposal.proposal.volunteerProfile.displayName}</span>
+                <span className="text-xs font-bold text-[#46534a]">{detailProposal.proposal.volunteerProfile.contactValue}</span>
+              </div>
+            )}
+            {detailProposal.proposal.receiverProfile && (
+              <div className="rounded-lg border border-[#e4ddcf] p-3">
+                <span className="block text-xs font-bold text-[#46534a]">Receiver</span>
+                <span className="mt-1 block font-black text-[#101812]">{detailProposal.proposal.receiverProfile.displayName}</span>
+                <span className="text-xs font-bold text-[#46534a]">{detailProposal.proposal.receiverProfile.location.city}</span>
+              </div>
+            )}
+            <div className="rounded-lg border border-[#e4ddcf] p-3">
+              <span className="block text-xs font-bold text-[#46534a]">Created</span>
+              <span className="mt-1 block font-black text-[#101812]">{formatDate(detailProposal.proposal.createdAt)}</span>
+            </div>
+          </div>
+        </div>
+      </Modal>
+    )}
+    </>
   );
 }
 
@@ -2768,7 +3538,15 @@ function DonationsTable({
   title: string;
   compact?: boolean;
 }) {
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [menuId, setMenuId] = useState<string | null>(null);
+  const [detailDonation, setDetailDonation] = useState<Donation | null>(null);
+
+  const statuses = [...new Set(donations.map((d) => d.status))];
+  const visible = statusFilter === "all" ? donations : donations.filter((d) => d.status === statusFilter);
+
   return (
+    <>
     <section
       className={cx(panel, "p-6", compact && "min-h-full")}
       id="my-donations"
@@ -2780,9 +3558,16 @@ function DonationsTable({
           </span>
           <h2 className={heading}>{title}</h2>
         </div>
-        <button className={ghostButton} type="button">
-          All statuses <span className="ml-3 text-lg leading-none">⌄</span>
-        </button>
+        <select
+          className={cx(ghostButton, "cursor-pointer pr-2")}
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+        >
+          <option value="all">All statuses</option>
+          {statuses.map((s) => (
+            <option key={s} value={s}>{s.replace(/_/g, " ")}</option>
+          ))}
+        </select>
       </header>
       <div className="mt-3 overflow-x-auto">
         <table className="w-full min-w-[56rem] border-collapse">
@@ -2807,8 +3592,8 @@ function DonationsTable({
             </tr>
           </thead>
           <tbody>
-            {donations.length > 0 ? (
-              donations.map((donation) => (
+            {visible.length > 0 ? (
+              visible.map((donation) => (
                 <tr key={donation.id}>
                   <td className="border-b border-[#ded7c9] px-3 py-3 font-black">
                     <div className="flex items-center gap-3">
@@ -2834,7 +3619,7 @@ function DonationsTable({
                     <span
                       className={cx(badgeBase, statusClass(donation.status))}
                     >
-                      {donation.status.replace("_", " ")}
+                      {donation.status.replace(/_/g, " ")}
                     </span>
                   </td>
                   <td className="border-b border-[#ded7c9] px-3 py-3 text-sm font-bold">
@@ -2847,14 +3632,33 @@ function DonationsTable({
                       ).length
                     }
                   </td>
-                  <td className="border-b border-[#ded7c9] px-3 py-3">
+                  <td className="relative border-b border-[#ded7c9] px-3 py-3">
                     <button
                       className="grid h-8 w-8 place-items-center rounded-md border border-[#ded7c9] bg-[#fffdf8] font-black"
                       type="button"
                       aria-label={`Donation actions for ${donation.title}`}
+                      onClick={() => setMenuId(menuId === donation.id ? null : donation.id)}
                     >
                       ⋮
                     </button>
+                    {menuId === donation.id && (
+                      <div className="absolute right-3 top-12 z-20 min-w-[9rem] rounded-lg border border-[#ded7c9] bg-[#fffdf8] py-1 shadow-lg">
+                        <button
+                          className="block w-full px-4 py-2 text-left text-xs font-bold text-[#1f2a23] hover:bg-[#f4f1eb]"
+                          type="button"
+                          onClick={() => { navigator.clipboard.writeText(donation.id); setMenuId(null); }}
+                        >
+                          Copy ID
+                        </button>
+                        <button
+                          className="block w-full px-4 py-2 text-left text-xs font-bold text-[#1f2a23] hover:bg-[#f4f1eb]"
+                          type="button"
+                          onClick={() => { setDetailDonation(donation); setMenuId(null); }}
+                        >
+                          View details
+                        </button>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))
@@ -2871,12 +3675,72 @@ function DonationsTable({
           </tbody>
         </table>
       </div>
-      {donations.length > 0 ? (
+      {visible.length > 0 ? (
         <div className="mt-5 text-center text-xs font-bold text-[#5c6860] border-t border-[#ded7c9]/40 pt-4">
-          Showing 1 to {donations.length} of {donations.length} donations
+          Showing {visible.length} of {donations.length} donations
         </div>
       ) : null}
     </section>
+
+    {detailDonation && (
+      <Modal title="Donation details" onClose={() => setDetailDonation(null)}>
+        <div className="grid gap-5">
+          <div className="flex gap-4">
+            <DonationThumbnail donation={detailDonation} size="lg" />
+            <div className="min-w-0">
+              <strong className="block text-lg font-black text-[#101812]">
+                {detailDonation.title}
+              </strong>
+              <p className="mt-1 text-sm font-bold text-[#46534a]">
+                {detailDonation.description}
+              </p>
+              <span className={cx(badgeBase, statusClass(detailDonation.status), "mt-2 inline-block")}>
+                {detailDonation.status.replace(/_/g, " ")}
+              </span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-lg bg-[#f7f5f0] p-3">
+              <span className="block text-xs font-bold text-[#46534a]">Quantity</span>
+              <strong className="mt-1 block text-base font-black text-[#101812]">{detailDonation.quantity}</strong>
+            </div>
+            <div className="rounded-lg bg-[#f7f5f0] p-3">
+              <span className="block text-xs font-bold text-[#46534a]">Proposals</span>
+              <strong className="mt-1 block text-base font-black text-[#101812]">
+                {proposals.filter((p) => p.donationId === detailDonation.id).length}
+              </strong>
+            </div>
+          </div>
+
+          <div className="grid gap-3 text-sm">
+            <div className="rounded-lg border border-[#e4ddcf] p-3">
+              <span className="block text-xs font-bold text-[#46534a]">Available window</span>
+              <span className="mt-1 block font-black text-[#101812]">
+                {formatDate(detailDonation.availableFrom)} – {formatDate(detailDonation.availableUntil)}
+              </span>
+            </div>
+            <div className="rounded-lg border border-[#e4ddcf] p-3">
+              <span className="block text-xs font-bold text-[#46534a]">Pickup location</span>
+              <span className="mt-1 block font-black text-[#101812]">
+                {detailDonation.pickupLocation.addressLine1}, {detailDonation.pickupLocation.city}
+              </span>
+            </div>
+            {detailDonation.specialInstructions && (
+              <div className="rounded-lg bg-[#f0f7eb] p-3">
+                <span className="block text-xs font-black text-[#2f7a46]">Special instructions</span>
+                <p className="mt-1 font-bold leading-5 text-[#1f2a23]">{detailDonation.specialInstructions}</p>
+              </div>
+            )}
+            <div className="rounded-lg border border-[#e4ddcf] p-3">
+              <span className="block text-xs font-bold text-[#46534a]">Last updated</span>
+              <span className="mt-1 block font-black text-[#101812]">{formatDate(detailDonation.updatedAt)}</span>
+            </div>
+          </div>
+        </div>
+      </Modal>
+    )}
+    </>
   );
 }
 
@@ -2893,15 +3757,15 @@ function NotificationsPanel({
 }) {
   const unread = notifications.filter((item) => !item.read).length;
   const receiverVariant = viewerRole === "receiver";
-  const [notificationFilter, setNotificationFilter] = useState<
-    "all" | "unread"
-  >("all");
+  const [notificationFilter, setNotificationFilter] = useState<"all" | "unread">("all");
+  const [showAllModal, setShowAllModal] = useState(false);
   const visibleNotifications =
     receiverVariant && notificationFilter === "unread"
       ? notifications.filter((item) => !item.read)
       : notifications;
 
   return (
+    <>
     <aside
       className={cx(panel, "sticky top-5 p-6")}
       id="notifications"
@@ -3029,12 +3893,86 @@ function NotificationsPanel({
                 : "No notifications yet.",
             )}
       </div>
-      <a
-        className="mt-4 flex min-h-12 items-center justify-center gap-3 rounded-md border border-[#9eb69f] bg-[#fffdf8] text-sm font-black text-[#064c25]"
-        href="#notifications"
+      <button
+        className="mt-4 flex min-h-12 w-full items-center justify-center gap-3 rounded-md border border-[#9eb69f] bg-[#fffdf8] text-sm font-black text-[#064c25] transition hover:bg-[#f0f7eb]"
+        type="button"
+        onClick={() => setShowAllModal(true)}
       >
         View all notifications <span className="text-lg">→</span>
-      </a>
+      </button>
     </aside>
+
+    {showAllModal && (
+      <SlidePanel title="All notifications" icon="bell" onClose={() => setShowAllModal(false)}>
+        <div className="grid">
+          {notifications.length > 0 ? (
+            notifications.map((notification) => (
+              <article
+                className={cx(
+                  "grid grid-cols-[3rem_1fr] gap-3 border-t border-[#e4ddcf] py-4 first:border-t-0",
+                  notification.read && "opacity-60",
+                )}
+                key={notification.id}
+              >
+                <span
+                  className={cx(
+                    "grid h-11 w-11 place-items-center rounded-full",
+                    notification.type === "proposal_accepted"
+                      ? "bg-[#ffe9c1] text-[#dd6700]"
+                      : notification.type === "pickup_assigned"
+                        ? "bg-[#deedf8] text-[#1c6796]"
+                        : notification.type === "pickup_completed"
+                          ? "bg-[#dfeedd] text-[#116b35]"
+                          : "bg-[#e5f1df] text-[#064c25]",
+                  )}
+                >
+                  <AppIcon
+                    name={
+                      notification.type === "pickup_assigned"
+                        ? "pickup"
+                        : notification.type === "pickup_completed"
+                          ? "check"
+                          : notification.type === "proposal_created"
+                            ? "package"
+                            : "team"
+                    }
+                    className="h-5 w-5"
+                  />
+                </span>
+                <div className="min-w-0">
+                  <div className="flex items-start justify-between gap-2">
+                    <strong className="block text-sm font-black text-[#101812]">
+                      {receiverNotificationTitle(notification)}
+                    </strong>
+                    {!notification.read && (
+                      <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[#ffbd1a]" />
+                    )}
+                  </div>
+                  <span className="mt-0.5 block text-xs font-bold text-[#46534a]">
+                    {formatDate(notification.createdAt)}
+                  </span>
+                  {!notification.read && (
+                    <button
+                      className="mt-2 text-xs font-black text-[#064c25] hover:text-[#116b35]"
+                      type="button"
+                      onClick={() =>
+                        runAction(async () => {
+                          await markNotificationRead(token, notification.id);
+                        }, "Notification marked read.")
+                      }
+                    >
+                      Mark read
+                    </button>
+                  )}
+                </div>
+              </article>
+            ))
+          ) : (
+            <p className="py-8 text-center text-sm font-bold text-[#46534a]">No notifications yet.</p>
+          )}
+        </div>
+      </SlidePanel>
+    )}
+  </>
   );
 }
