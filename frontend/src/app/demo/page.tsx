@@ -318,6 +318,210 @@ function DemoMotionStyles() {
           animation-delay: 300ms;
         }
       }
+
+      @media (min-width: 1280px) and (max-height: 820px) {
+        .demo-header {
+          padding-top: 1rem;
+          padding-bottom: 1rem;
+        }
+
+        .demo-brand {
+          font-size: 2.2rem;
+        }
+
+        .demo-brand-mark {
+          height: 1.7rem;
+          width: 1.7rem;
+        }
+
+        .demo-back-link {
+          min-height: 2.5rem;
+          padding-left: 1.1rem;
+          padding-right: 1.1rem;
+        }
+
+        .demo-shell {
+          min-height: calc(100vh - 4.7rem);
+          padding-bottom: 1rem;
+          row-gap: 0.7rem;
+        }
+
+        .demo-hero {
+          padding-left: 5.1rem;
+        }
+
+        .demo-eyebrow {
+          margin-bottom: 0.45rem;
+          font-size: 0.82rem;
+        }
+
+        .demo-title {
+          max-width: 16ch;
+          font-size: clamp(3rem, 4vw, 4.75rem);
+          line-height: 0.9;
+        }
+
+        .demo-lede {
+          margin-top: 0.75rem;
+          max-width: 28rem;
+          font-size: 1.05rem;
+          line-height: 1.55;
+        }
+
+        .demo-roles {
+          gap: 1rem;
+          padding-left: 5.1rem;
+        }
+
+        .demo-role-card {
+          min-height: 16.7rem;
+        }
+
+        .demo-role-image {
+          height: 78%;
+          width: 50%;
+        }
+
+        .demo-role-icon {
+          top: 1.05rem;
+          left: 1.05rem;
+          height: 3rem;
+          width: 3rem;
+        }
+
+        .demo-role-icon-inner {
+          height: 1.45rem;
+          width: 1.45rem;
+        }
+
+        .demo-selected-pill {
+          top: 1rem;
+          right: 1rem;
+          padding: 0.38rem 0.65rem;
+          font-size: 0.76rem;
+        }
+
+        .demo-role-copy {
+          margin-top: 4.7rem;
+          padding-left: 1.1rem;
+          padding-right: 1.1rem;
+        }
+
+        .demo-role-title {
+          font-size: 1.85rem;
+        }
+
+        .demo-role-divider,
+        .demo-role-description {
+          margin-top: 0.75rem;
+        }
+
+        .demo-role-description {
+          max-width: 11rem;
+          font-size: 0.95rem;
+          line-height: 1.35;
+        }
+
+        .demo-role-account {
+          padding: 0 1.1rem 1rem;
+        }
+
+        .demo-role-account-label {
+          font-size: 0.66rem;
+        }
+
+        .demo-role-account-pill {
+          margin-top: 0.38rem;
+          padding: 0.42rem 0.55rem;
+          font-size: 0.78rem;
+        }
+
+        .demo-actions {
+          gap: 0.85rem;
+        }
+
+        .demo-action-grid {
+          gap: 0.85rem;
+        }
+
+        .demo-submit,
+        .demo-status {
+          min-height: 3.3rem;
+          font-size: 1rem;
+        }
+
+        .demo-submit {
+          padding-left: 1.5rem;
+          padding-right: 1.5rem;
+        }
+
+        .demo-status {
+          padding-left: 1.2rem;
+          padding-right: 1.2rem;
+        }
+
+        .demo-note {
+          margin-top: 0.55rem;
+          padding-left: 8.5rem;
+          font-size: 0.8rem;
+        }
+
+        .demo-error {
+          margin-top: 1rem;
+          padding: 1rem;
+        }
+
+        .demo-aside {
+          margin-top: 3.2rem;
+          padding: 1.15rem;
+        }
+
+        .demo-aside-title {
+          margin-bottom: 1rem;
+          font-size: 0.78rem;
+        }
+
+        .demo-steps {
+          gap: 1rem;
+        }
+
+        .demo-step {
+          grid-template-columns: 2rem 1fr;
+          gap: 0.75rem;
+        }
+
+        .demo-step-line {
+          left: 1rem;
+          top: 2.45rem;
+          height: 2.15rem;
+        }
+
+        .demo-step-number {
+          height: 2rem;
+          width: 2rem;
+          font-size: 0.82rem;
+        }
+
+        .demo-step-title {
+          font-size: 0.95rem;
+        }
+
+        .demo-step-body {
+          font-size: 0.78rem;
+          line-height: 1.35;
+        }
+
+        .demo-secure-box {
+          margin-top: 1.2rem;
+          padding: 1rem;
+        }
+
+        .demo-secure-copy {
+          margin-top: 0.45rem;
+          font-size: 0.78rem;
+          line-height: 1.35;
+        }
+      }
     `}</style>
   );
 }
@@ -534,18 +738,21 @@ function DemoPageContent() {
       <DemoMotionStyles />
       <BackgroundOrnaments />
 
-      <header className="demo-enter-down relative z-10 mx-auto flex w-[min(94vw,1510px)] items-center justify-between px-2 py-8 md:py-10">
+      <header className="demo-header demo-enter-down relative z-10 mx-auto flex w-[min(94vw,1510px)] items-center justify-between px-2 py-8 md:py-10">
         <Link
-          className="inline-flex items-center gap-3 font-serif text-[2.15rem] leading-none text-[#071f10] md:text-[2.75rem]"
+          className="demo-brand inline-flex items-center gap-3 font-serif text-[2.15rem] leading-none text-[#071f10] md:text-[2.75rem]"
           href="/"
         >
-          <span className="h-8 w-8 text-[#ffb51b]" aria-hidden="true">
+          <span
+            className="demo-brand-mark h-8 w-8 text-[#ffb51b]"
+            aria-hidden="true"
+          >
             <LeafIcon />
           </span>
           FoodLink
         </Link>
         <Link
-          className="inline-flex min-h-11 items-center gap-3 rounded-lg border border-transparent bg-transparent px-4 font-black text-[#14351f] transition hover:-translate-y-0.5 hover:bg-[#fffdf5]/70 hover:shadow-sm md:border-[#c7c0ab] md:px-6"
+          className="demo-back-link inline-flex min-h-11 items-center gap-3 rounded-lg border border-transparent bg-transparent px-4 font-black text-[#14351f] transition hover:-translate-y-0.5 hover:bg-[#fffdf5]/70 hover:shadow-sm md:border-[#c7c0ab] md:px-6"
           href="/"
         >
           <span className="h-4 w-4" aria-hidden="true">
@@ -556,36 +763,36 @@ function DemoPageContent() {
       </header>
 
       <section
-        className="relative z-10 mx-auto grid min-h-[calc(100vh-8.5rem)] w-[min(94vw,1510px)] items-start gap-x-8 gap-y-4 px-2 pb-12 pt-0 xl:grid-cols-[minmax(0,1fr)_280px] xl:gap-x-14"
+        className="demo-shell relative z-10 mx-auto grid min-h-[calc(100vh-8.5rem)] w-[min(94vw,1510px)] items-start gap-x-8 gap-y-4 px-2 pb-12 pt-0 xl:grid-cols-[minmax(0,1fr)_280px] xl:gap-x-14"
         aria-labelledby="demo-title"
       >
         <div
-          className="demo-enter-up relative max-w-3xl xl:pl-[6.8rem]"
+          className="demo-hero demo-enter-up relative max-w-3xl xl:pl-[6.8rem]"
           style={{ animationDelay: "80ms" }}
         >
           <HeroSprig />
-          <p className="mb-3 text-sm font-black uppercase tracking-[0.16em] text-[#2f7a46] md:text-base">
+          <p className="demo-eyebrow mb-3 text-sm font-black uppercase tracking-[0.16em] text-[#2f7a46] md:text-base">
             Demo login
           </p>
           <h1
             id="demo-title"
-            className="max-w-[14ch] font-serif text-[clamp(3.55rem,5.05vw,6.15rem)] leading-[0.92] tracking-[-0.045em] text-[#041f0e]"
+            className="demo-title max-w-[14ch] font-serif text-[clamp(3.55rem,5.05vw,6.15rem)] leading-[0.92] tracking-[-0.045em] text-[#041f0e]"
           >
             Choose your role to get started
           </h1>
-          <p className="mt-5 max-w-[30rem] text-lg font-bold leading-8 text-[#34443a] md:text-xl">
+          <p className="demo-lede mt-5 max-w-[30rem] text-lg font-bold leading-8 text-[#34443a] md:text-xl">
             Jump into a seeded demo account. Explore the experience as a donor,
             volunteer, or receiver.
           </p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-3 xl:pl-[6.3rem]">
+        <div className="demo-roles grid gap-6 md:grid-cols-3 xl:pl-[6.3rem]">
           {roles.map((role, index) => {
             const isSelected = role.role === selectedRole;
 
             return (
               <button
-                className={`demo-enter-up demo-card-delay-${index + 1} group relative grid min-h-[22rem] overflow-hidden rounded-[0.7rem] border text-left shadow-[0_1.4rem_3.4rem_rgba(61,55,36,0.11)] transition duration-300 hover:-translate-y-1 md:min-h-[23rem] xl:min-h-[21.9rem] ${
+                className={`demo-role-card demo-enter-up demo-card-delay-${index + 1} group relative grid min-h-[22rem] overflow-hidden rounded-[0.7rem] border text-left shadow-[0_1.4rem_3.4rem_rgba(61,55,36,0.11)] transition duration-300 hover:-translate-y-1 md:min-h-[23rem] xl:min-h-[21.9rem] ${
                   isSelected
                     ? "border-[#f5b51e] bg-[#062f14] text-[#fffdf5] ring-1 ring-[#f5b51e]/80 shadow-[0_1.5rem_3.2rem_rgba(61,42,5,0.22)]"
                     : "border-[#d8cdb7] bg-[#fffdf7]/72 text-[#0e1b14] hover:border-[#b5ad98]"
@@ -596,7 +803,7 @@ function DemoPageContent() {
                 aria-pressed={isSelected}
               >
                 <Image
-                  className={`absolute bottom-0 right-0 h-[82%] w-[54%] object-cover object-right-bottom transition duration-300 group-hover:scale-105 ${
+                  className={`demo-role-image absolute bottom-0 right-0 h-[82%] w-[54%] object-cover object-right-bottom transition duration-300 group-hover:scale-105 ${
                     isSelected ? "opacity-58 mix-blend-screen" : "opacity-90"
                   }`}
                   src={role.image}
@@ -621,44 +828,44 @@ function DemoPageContent() {
                   aria-hidden="true"
                 />
                 <span
-                  className={`absolute left-6 top-6 grid h-14 w-14 place-items-center rounded-full border text-3xl md:h-16 md:w-16 ${
+                  className={`demo-role-icon absolute left-6 top-6 grid h-14 w-14 place-items-center rounded-full border text-3xl md:h-16 md:w-16 ${
                     isSelected
                       ? "border-[#ffca39] bg-transparent text-[#ffca39]"
                       : `${accentClasses[role.accent]} border-transparent`
                   }`}
                   aria-hidden="true"
                 >
-                  <span className="h-8 w-8">
+                  <span className="demo-role-icon-inner h-8 w-8">
                     <RoleIcon icon={role.icon} />
                   </span>
                 </span>
                 {isSelected ? (
-                  <span className="absolute right-5 top-6 inline-flex items-center gap-2 rounded-full bg-[#233f17]/72 px-3 py-2 text-xs font-black text-[#ffca39] md:text-sm">
+                  <span className="demo-selected-pill absolute right-5 top-6 inline-flex items-center gap-2 rounded-full bg-[#233f17]/72 px-3 py-2 text-xs font-black text-[#ffca39] md:text-sm">
                     Selected
                     <span className="grid h-5 w-5 place-items-center rounded-full bg-[#ffca39] text-[#17310e]">
                       <CheckIcon />
                     </span>
                   </span>
                 ) : null}
-                <span className="relative z-10 mt-24 block px-6 md:mt-28">
-                  <strong className="block font-serif text-[2rem] font-normal leading-none md:text-[2.25rem]">
+                <span className="demo-role-copy relative z-10 mt-24 block px-6 md:mt-28">
+                  <strong className="demo-role-title block font-serif text-[2rem] font-normal leading-none md:text-[2.25rem]">
                     {role.title}
                   </strong>
                   <span
-                    className={`mt-5 block h-px w-24 ${
+                    className={`demo-role-divider mt-5 block h-px w-24 ${
                       isSelected ? "bg-[#ffca39]" : "bg-[#89b476]"
                     }`}
                   />
-                  <span className="mt-5 block max-w-[11.5rem] text-base font-bold leading-7 md:text-lg">
+                  <span className="demo-role-description mt-5 block max-w-[11.5rem] text-base font-bold leading-7 md:text-lg">
                     {role.description}
                   </span>
                 </span>
-                <span className="relative z-10 self-end px-6 pb-6">
-                  <span className="block text-xs font-black uppercase tracking-[0.12em] opacity-70">
+                <span className="demo-role-account relative z-10 self-end px-6 pb-6">
+                  <span className="demo-role-account-label block text-xs font-black uppercase tracking-[0.12em] opacity-70">
                     Seeded account
                   </span>
                   <span
-                    className={`mt-2 inline-flex rounded-lg px-3 py-2 text-sm font-black ${
+                    className={`demo-role-account-pill mt-2 inline-flex rounded-lg px-3 py-2 text-sm font-black ${
                       isSelected
                         ? "bg-white/10 text-[#fffdf5]"
                         : "bg-[#e8efe1] text-[#244633]"
@@ -672,12 +879,12 @@ function DemoPageContent() {
           })}
 
           <div
-            className="demo-enter-up md:col-span-3"
+            className="demo-actions demo-enter-up md:col-span-3"
             style={{ animationDelay: "390ms" }}
           >
-            <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_17rem] md:items-center">
+            <div className="demo-action-grid grid gap-5 md:grid-cols-[minmax(0,1fr)_17rem] md:items-center">
               <button
-                className="group inline-flex min-h-16 items-center justify-center rounded-[0.55rem] bg-gradient-to-b from-[#ffc733] to-[#f5a51e] px-8 text-lg font-black text-[#171206] shadow-[0_1.4rem_2.8rem_rgba(116,72,3,0.20)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                className="demo-submit group inline-flex min-h-16 items-center justify-center rounded-[0.55rem] bg-gradient-to-b from-[#ffc733] to-[#f5a51e] px-8 text-lg font-black text-[#171206] shadow-[0_1.4rem_2.8rem_rgba(116,72,3,0.20)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
                 type="button"
                 onClick={handleLogin}
                 disabled={isLoading}
@@ -694,7 +901,7 @@ function DemoPageContent() {
                   <ArrowIcon />
                 </span>
               </button>
-              <div className="inline-flex min-h-16 items-center justify-center gap-4 rounded-[0.55rem] border border-[#bfc5ad] bg-[#fffdf5]/66 px-8 text-lg font-black text-[#153821]">
+              <div className="demo-status inline-flex min-h-16 items-center justify-center gap-4 rounded-[0.55rem] border border-[#bfc5ad] bg-[#fffdf5]/66 px-8 text-lg font-black text-[#153821]">
                 {isLoading ? (
                   <>
                     <span className="h-5 w-5 text-[#153821]" aria-hidden="true">
@@ -707,14 +914,14 @@ function DemoPageContent() {
                 )}
               </div>
             </div>
-            <p className="mt-3 inline-flex w-full items-center justify-center gap-2 text-sm font-bold text-[#5a6259] md:justify-start md:pl-[12.5rem]">
+            <p className="demo-note mt-3 inline-flex w-full items-center justify-center gap-2 text-sm font-bold text-[#5a6259] md:justify-start md:pl-[12.5rem]">
               <span className="h-4 w-4 text-[#456a4e]" aria-hidden="true">
                 <LockIcon />
               </span>
               No password needed. Demo account connects to live API.
             </p>
             {error ? (
-              <div className="mt-7 flex items-start justify-between gap-4 rounded-[0.55rem] border border-[#f0a59b] bg-[#fff0eb]/88 p-5 text-[#80251d] shadow-[0_1rem_2.2rem_rgba(94,35,24,0.06)]">
+              <div className="demo-error mt-7 flex items-start justify-between gap-4 rounded-[0.55rem] border border-[#f0a59b] bg-[#fff0eb]/88 p-5 text-[#80251d] shadow-[0_1rem_2.2rem_rgba(94,35,24,0.06)]">
                 <div className="flex items-start gap-4">
                   <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#d4453f] text-white">
                     !
@@ -740,14 +947,14 @@ function DemoPageContent() {
         </div>
 
         <aside
-          className="demo-enter-right rounded-[0.8rem] bg-[#fffdf7]/88 p-7 shadow-[0_1.8rem_4rem_rgba(61,55,36,0.12)] backdrop-blur xl:col-start-2 xl:row-span-2 xl:row-start-1 xl:mt-[4.8rem]"
+          className="demo-aside demo-enter-right rounded-[0.8rem] bg-[#fffdf7]/88 p-7 shadow-[0_1.8rem_4rem_rgba(61,55,36,0.12)] backdrop-blur xl:col-start-2 xl:row-span-2 xl:row-start-1 xl:mt-[4.8rem]"
           style={{ animationDelay: "260ms" }}
           aria-label="Demo login status"
         >
-          <p className="mb-7 text-sm font-black uppercase tracking-[0.14em] text-[#28623a]">
+          <p className="demo-aside-title mb-7 text-sm font-black uppercase tracking-[0.14em] text-[#28623a]">
             Your journey
           </p>
-          <ol className="grid gap-7">
+          <ol className="demo-steps grid gap-7">
             {[
               ["Choose role", "Select how you want to participate"],
               ["Sign in", "We'll sign you in with a demo account"],
@@ -758,17 +965,17 @@ function DemoPageContent() {
 
               return (
                 <li
-                  className="relative grid grid-cols-[2.5rem_1fr] gap-4"
+                  className="demo-step relative grid grid-cols-[2.5rem_1fr] gap-4"
                   key={title}
                 >
                   {index < 3 ? (
                     <span
-                      className="absolute left-5 top-11 h-[3.15rem] border-l-2 border-dashed border-[#c5d3bb]"
+                      className="demo-step-line absolute left-5 top-11 h-[3.15rem] border-l-2 border-dashed border-[#c5d3bb]"
                       aria-hidden="true"
                     />
                   ) : null}
                   <span
-                    className={`relative z-10 grid h-10 w-10 place-items-center rounded-full font-black ${
+                    className={`demo-step-number relative z-10 grid h-10 w-10 place-items-center rounded-full font-black ${
                       active
                         ? "bg-[#0f4f24] text-white"
                         : "bg-[#d7e7cf] text-[#14351f]"
@@ -777,10 +984,10 @@ function DemoPageContent() {
                     {index + 1}
                   </span>
                   <span>
-                    <strong className="block text-base font-black text-[#14351f] md:text-lg">
+                    <strong className="demo-step-title block text-base font-black text-[#14351f] md:text-lg">
                       {title}
                     </strong>
-                    <small className="mt-1 block text-sm font-semibold leading-6 text-[#5a6259] md:text-base">
+                    <small className="demo-step-body mt-1 block text-sm font-semibold leading-6 text-[#5a6259] md:text-base">
                       {body}
                     </small>
                   </span>
@@ -788,7 +995,7 @@ function DemoPageContent() {
               );
             })}
           </ol>
-          <div className="mt-9 grid grid-cols-[1.65rem_1fr] gap-3 rounded-[0.7rem] bg-[#eef5e9] p-5">
+          <div className="demo-secure-box mt-9 grid grid-cols-[1.65rem_1fr] gap-3 rounded-[0.7rem] bg-[#eef5e9] p-5">
             <span className="h-6 w-6 text-[#28623a]" aria-hidden="true">
               <ShieldIcon />
             </span>
@@ -796,7 +1003,7 @@ function DemoPageContent() {
               <strong className="block font-black text-[#28623a]">
                 Secure demo
               </strong>
-              <span className="mt-2 block text-sm font-semibold leading-6 text-[#5a6259]">
+              <span className="demo-secure-copy mt-2 block text-sm font-semibold leading-6 text-[#5a6259]">
                 No password needed. Connections are secure and temporary.
               </span>
             </span>
