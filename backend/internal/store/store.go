@@ -11,6 +11,7 @@ import (
 	"foodlink-be/internal/models"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 var ErrNotFound = errors.New("not found")
@@ -481,7 +482,11 @@ func (s *Store) AcceptDeliveryProposal(proposalID string, user models.User) (mod
 	var proposal models.DeliveryProposal
 	var pickup *models.Pickup
 	err := s.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.First(&proposal, "id = ?", proposalID).Error; err != nil {
+		proposalQuery := tx
+		if tx.Dialector.Name() == "postgres" {
+			proposalQuery = proposalQuery.Clauses(clause.Locking{Strength: "UPDATE"})
+		}
+		if err := proposalQuery.First(&proposal, "id = ?", proposalID).Error; err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return ErrNotFound
 			}
@@ -515,10 +520,8 @@ func (s *Store) AcceptDeliveryProposal(proposalID string, user models.User) (mod
 		if err := tx.Model(&proposal).Updates(updates).Error; err != nil {
 			return err
 		}
-		if proposal.DonorAcceptedAt == nil || proposal.ReceiverAcceptedAt == nil {
-			if err := tx.First(&proposal, "id = ?", proposalID).Error; err != nil {
-				return err
-			}
+		if err := tx.First(&proposal, "id = ?", proposalID).Error; err != nil {
+			return err
 		}
 		if proposal.DonorAcceptedAt != nil && proposal.ReceiverAcceptedAt != nil {
 			var receiverProfile models.Profile
@@ -531,6 +534,13 @@ func (s *Store) AcceptDeliveryProposal(proposalID string, user models.User) (mod
 				"status":     proposal.Status,
 				"updated_at": now,
 			}).Error; err != nil {
+				return err
+			}
+			var existingPickup models.Pickup
+			if err := tx.First(&existingPickup, "proposal_id = ?", proposal.ID).Error; err == nil {
+				pickup = &existingPickup
+				return createNotification(tx, proposal.VolunteerID, string(api.NotificationTypeProposalAccepted), "Proposal accepted", "A party accepted your delivery proposal.", &donation.ID, &proposal.ID, nil)
+			} else if !errors.Is(err, gorm.ErrRecordNotFound) {
 				return err
 			}
 			newPickup := models.Pickup{

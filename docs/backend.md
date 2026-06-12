@@ -20,6 +20,7 @@ Go core service for FoodLink.
 - `DATABASE_URL` is required.
 - `PORT` defaults to `8080`.
 - `DEMO_JWT_SECRET` defaults to `foodlink-local-demo-secret` when unset.
+- `FOODLINK_ALLOWED_ORIGINS` accepts a comma-separated CORS allowlist and defaults to local frontend origins.
 
 ## Local Operations
 
