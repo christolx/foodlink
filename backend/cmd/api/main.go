@@ -63,7 +63,7 @@ func main() {
 
 	apiServer := &http.Server{
 		Addr:    ":" + cfg.Port,
-		Handler: server.Handler(st, cfg.JWTSecret),
+		Handler: server.HandlerWithOptions(st, cfg.JWTSecret, server.Options{AllowedOrigins: cfg.AllowedOrigins}),
 	}
 
 	log.Printf("FoodLink API listening on :%s", cfg.Port)
