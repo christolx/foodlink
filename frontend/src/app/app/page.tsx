@@ -208,11 +208,14 @@ export default function AppPage() {
   }
 
   return (
-    <main className="grid min-h-screen bg-[#f8f6ef] text-[#101812] lg:grid-cols-[13.75rem_minmax(0,1fr)]">
+    <main className="grid min-h-screen overflow-x-clip bg-[#f8f6ef] text-[#101812] lg:grid-cols-[13.75rem_minmax(0,1fr)]">
       <DashboardSidebar data={data} signOut={signOut} />
 
       <section
-        className="mx-auto w-full max-w-[116rem] px-5 py-7 lg:px-8"
+        className={cx(
+          "mx-auto w-full min-w-0 max-w-[116rem] px-4 py-5 lg:px-8 lg:py-7",
+          data.user.role === "donor" && "pb-28 lg:pb-7",
+        )}
         aria-labelledby="dashboard-title"
       >
         <DashboardTopbar data={data} />
@@ -260,6 +263,7 @@ export default function AppPage() {
           </div>
         ) : null}
       </section>
+      {data.user.role === "donor" ? <DonorBottomNavigation /> : null}
     </main>
   );
 }
@@ -949,9 +953,15 @@ function DashboardSidebar({
     );
   }, [role]);
 
+  const donorSidebarClass =
+    role === "donor" ? "max-lg:hidden" : "max-lg:static max-lg:h-auto";
+
   return (
     <aside
-      className="sticky top-0 grid h-screen grid-rows-[auto_1fr_auto_auto] gap-6 bg-[radial-gradient(circle_at_70%_92%,rgba(30,112,48,0.32),transparent_12rem),linear-gradient(180deg,#063514_0%,#052b12_52%,#031b0c_100%)] px-4 py-6 text-[#f8f5ea] max-lg:static max-lg:h-auto"
+      className={cx(
+        "sticky top-0 grid h-screen grid-rows-[auto_1fr_auto_auto] gap-6 bg-[radial-gradient(circle_at_70%_92%,rgba(30,112,48,0.32),transparent_12rem),linear-gradient(180deg,#063514_0%,#052b12_52%,#031b0c_100%)] px-4 py-6 text-[#f8f5ea]",
+        donorSidebarClass,
+      )}
       aria-label="Dashboard navigation"
     >
       {topHeader}
@@ -1053,6 +1063,33 @@ function DashboardSidebar({
         Log out
       </button>
     </aside>
+  );
+}
+
+function DonorBottomNavigation() {
+  const items = [
+    { label: "Home", icon: "dashboard" as IconName, href: "#dashboard-title" },
+    { label: "Donations", icon: "bag" as IconName, href: "#my-donations" },
+    { label: "Proposals", icon: "box" as IconName, href: "#proposal-queue" },
+    { label: "Inbox", icon: "bell" as IconName, href: "#notifications" },
+  ];
+
+  return (
+    <nav
+      className="fixed inset-x-0 bottom-0 z-50 grid grid-cols-4 border-t border-[#d7d0c2] bg-[#fffdf8]/96 px-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] pt-2 shadow-[0_-0.75rem_2rem_rgba(49,43,24,0.12)] backdrop-blur lg:hidden"
+      aria-label="Donor navigation"
+    >
+      {items.map((item) => (
+        <a
+          className="grid min-h-14 place-items-center gap-1 rounded-lg px-1 text-center text-[0.68rem] font-black text-[#46534a] transition hover:bg-[#f0f7eb] hover:text-[#064c25]"
+          href={item.href}
+          key={item.label}
+        >
+          <AppIcon name={item.icon} className="text-2xl" />
+          <span>{item.label}</span>
+        </a>
+      ))}
+    </nav>
   );
 }
 
@@ -1179,17 +1216,22 @@ function DashboardTopbar({ data }: { data: DashboardData }) {
 
   return (
     <header
-      className="mb-6 grid gap-4 md:grid-cols-[1fr_auto_auto] md:items-center"
+      className="-mx-4 mb-5 grid gap-4 border-b border-[#ded7c9] bg-[#fffdf8]/70 px-4 py-4 md:mx-0 md:rounded-xl md:border md:px-5 md:grid-cols-[1fr_auto_auto] md:items-center"
       id="overview"
     >
+      <div className="min-w-0">
+        <Link
+          className="font-serif text-[1.65rem] leading-none tracking-[-0.045em] text-[#061e0e] md:text-[2.35rem] md:tracking-[-0.055em]"
+          href="/"
+        >
+          FoodLink
+        </Link>
+        <p className="mt-2 truncate text-sm font-black text-[#101812] md:hidden">
+          Good morning, {data.profile.displayName}
+        </p>
+      </div>
       <Link
-        className="font-serif text-[2.35rem] leading-none tracking-[-0.055em] text-[#061e0e]"
-        href="/"
-      >
-        FoodLink
-      </Link>
-      <Link
-        className="grid min-w-36 gap-1 justify-self-start rounded-md border border-[#d2cbbd] bg-[#fffdf8] px-3 py-1.5 text-xs font-bold shadow-sm"
+        className="grid min-w-0 gap-1 justify-self-center rounded-md border border-[#d2cbbd] bg-[#fffdf8] px-3 py-1.5 text-xs font-bold shadow-sm md:justify-self-start"
         href="/demo"
       >
         <span className="text-[#111a14]">Role</span>
@@ -1201,21 +1243,24 @@ function DashboardTopbar({ data }: { data: DashboardData }) {
           <span className="ml-auto text-lg leading-none">⌄</span>
         </span>
       </Link>
-      <div className="flex items-center gap-6 justify-self-start md:justify-self-end">
+      <div className="absolute right-4 top-4 flex items-center gap-3 justify-self-start md:static md:gap-6 md:justify-self-end">
         <a
-          className="relative text-[#101812]"
+          className="relative grid min-h-11 min-w-11 place-items-center rounded-full border border-[#d2cbbd] bg-[#fffdf8] text-[#101812] md:min-h-0 md:min-w-0 md:border-0 md:bg-transparent"
           href="#notifications"
           aria-label="Notifications"
         >
-          <AppIcon name="bell" className="h-8 w-8" />
+          <AppIcon name="bell" className="h-6 w-6 md:h-8 md:w-8" />
           {unread > 0 ? (
             <span className="absolute -right-2 -top-2 grid h-5 min-w-5 place-items-center rounded-full bg-[#ffbd1a] px-1 text-xs font-black text-[#10140d]">
               {unread}
             </span>
           ) : null}
         </a>
-        <span className="h-10 w-px bg-[#d2cbbd]" aria-hidden="true" />
-        <div className="flex items-center gap-4">
+        <span
+          className="hidden h-10 w-px bg-[#d2cbbd] md:block"
+          aria-hidden="true"
+        />
+        <div className="hidden items-center gap-4 md:flex">
           <span className="grid h-12 w-12 place-items-center rounded-full bg-[#d9d8cf] font-black">
             {initials}
           </span>
