@@ -1351,6 +1351,15 @@ function DonorDashboard({
 
   const [defaultFrom, setDefaultFrom] = useState("");
   const [defaultUntil, setDefaultUntil] = useState("");
+  const availableCount = data.donations.filter(
+    (donation) => donation.status === "available",
+  ).length;
+  const pendingCount = data.proposals.filter(
+    (proposal) => proposal.status === "pending",
+  ).length;
+  const deliveredCount = data.donations.filter(
+    (donation) => donation.status === "delivered",
+  ).length;
 
   useEffect(() => {
     const tzoffset = new Date().getTimezoneOffset() * 60000;
@@ -1414,11 +1423,14 @@ function DonorDashboard({
 
   return (
     <>
-      <div className="grid items-start gap-5 2xl:grid-cols-[minmax(0,1fr)_26rem]">
-        <div className="grid gap-5" id="work">
-          <section className="grid gap-5 lg:grid-cols-[minmax(28rem,1.08fr)_minmax(24rem,0.92fr)]">
+      <div className="grid min-w-0 items-start gap-5 2xl:grid-cols-[minmax(0,1fr)_26rem]">
+        <div className="grid min-w-0 gap-5" id="work">
+          <section className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
             <form
-              className={cx(panel, "grid content-start gap-4 p-6")}
+              className={cx(
+                panel,
+                "grid min-w-0 content-start gap-4 p-5 sm:p-6",
+              )}
               onSubmit={handleCreateDonation}
             >
               <div className="flex items-center gap-4">
@@ -1681,6 +1693,12 @@ function DonorDashboard({
                 </div>
               ) : null}
             </form>
+
+            <DonorMetricStrip
+              availableCount={availableCount}
+              pendingCount={pendingCount}
+              deliveredCount={deliveredCount}
+            />
 
             <ProposalQueue
               donations={data.donations}
@@ -3470,6 +3488,44 @@ function ReceiverTimelineCard({
         </SlidePanel>
       )}
     </>
+  );
+}
+
+function DonorMetricStrip({
+  availableCount,
+  pendingCount,
+  deliveredCount,
+}: {
+  availableCount: number;
+  pendingCount: number;
+  deliveredCount: number;
+}) {
+  const metrics = [
+    { label: "Available", value: availableCount, icon: "bag" as IconName },
+    { label: "Pending", value: pendingCount, icon: "box" as IconName },
+    { label: "Delivered", value: deliveredCount, icon: "check" as IconName },
+  ];
+
+  return (
+    <section
+      className="grid grid-cols-3 gap-2 lg:hidden"
+      aria-label="Donation summary"
+    >
+      {metrics.map((metric) => (
+        <div
+          className="min-w-0 rounded-lg border border-[#ded7c9] bg-[#fffdf8] p-3 shadow-sm"
+          key={metric.label}
+        >
+          <AppIcon name={metric.icon} className="mb-2 h-4 w-4 text-[#14733a]" />
+          <strong className="block text-lg font-black leading-none text-[#101812]">
+            {metric.value}
+          </strong>
+          <span className="mt-1 block truncate text-[0.68rem] font-bold text-[#46534a]">
+            {metric.label}
+          </span>
+        </div>
+      ))}
+    </section>
   );
 }
 
