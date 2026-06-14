@@ -3718,7 +3718,10 @@ function ProposalQueue({
 
   return (
     <>
-      <section className={cx(panel, "min-h-full p-6")} id="proposal-queue">
+      <section
+        className={cx(panel, "min-h-full min-w-0 p-5 sm:p-6")}
+        id="proposal-queue"
+      >
         <header className="mb-4 flex items-start justify-between gap-4">
           <div className="flex items-center gap-4">
             <span className="grid h-12 w-12 place-items-center rounded-full bg-[#e5f1df] text-[#064c25]">
@@ -3773,11 +3776,11 @@ function ProposalQueue({
 
               return (
                 <article
-                  className="grid gap-4 rounded-lg border border-[#ded7c9] bg-[#fffdf8] p-3 2xl:grid-cols-[6rem_1fr_auto]"
+                  className="grid min-w-0 gap-4 rounded-lg border border-[#ded7c9] bg-[#fffdf8] p-3 sm:grid-cols-[6rem_minmax(0,1fr)]"
                   key={proposal.id}
                 >
                   <DonationThumbnail donation={donation} size="lg" />
-                  <div>
+                  <div className="min-w-0">
                     <strong className="block text-sm font-black text-[#101812]">
                       {donation
                         ? donation.title
@@ -3789,28 +3792,28 @@ function ProposalQueue({
                       {donation?.quantity ?? "Open quantity"}
                     </p>
                     <div className="mt-3 grid gap-2 text-xs font-bold">
-                      <span className="flex items-center gap-2">
+                      <span className="flex min-w-0 items-center gap-2">
                         <span className="text-[#5c6860]">Volunteer</span>
                         <span className="grid h-5 w-5 place-items-center rounded-full bg-[#ead7c5] text-[0.65rem] font-bold text-[#5c3e21]">
                           {volunteerInitials}
                         </span>
-                        <span className="font-black text-[#101812]">
+                        <span className="truncate font-black text-[#101812]">
                           {volunteerName}
                         </span>
                       </span>
-                      <span className="flex items-center gap-2">
+                      <span className="flex min-w-0 items-center gap-2">
                         <span className="text-[#5c6860]">Receiver</span>
                         <span className="grid h-5 w-5 place-items-center rounded-full bg-[#fff4df] text-[#c46b00]">
                           <AppIcon name="leaf" className="h-3.5 w-3.5" />
                         </span>
-                        <span className="font-black text-[#101812]">
+                        <span className="truncate font-black text-[#101812]">
                           {receiverName}
                         </span>
                       </span>
                     </div>
                   </div>
-                  <div className="grid content-between gap-3">
-                    <div className="grid gap-2 sm:grid-cols-2 2xl:grid-cols-1">
+                  <div className="grid gap-3 sm:col-start-2">
+                    <div className="grid gap-2 sm:grid-cols-2">
                       <span
                         className={cx(
                           badgeBase,
@@ -3839,7 +3842,7 @@ function ProposalQueue({
                             : "Pending"}
                       </span>
                     </div>
-                    <div className="flex flex-wrap gap-2 justify-self-end">
+                    <div className="flex flex-wrap gap-2 justify-self-start">
                       {viewerRole === "donor" &&
                         (() => {
                           const rawPhone =
@@ -4053,11 +4056,11 @@ function DonationsTable({
   return (
     <>
       <section
-        className={cx(panel, "p-6", compact && "min-h-full")}
+        className={cx(panel, "min-w-0 p-5 sm:p-6", compact && "min-h-full")}
         id="my-donations"
       >
-        <header className="mb-4 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
+        <header className="mb-4 flex flex-wrap items-center justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-4">
             <span className="grid h-12 w-12 place-items-center rounded-full bg-[#f4ead6] text-[#064c25]">
               <AppIcon name="package" className="h-6 w-6" />
             </span>
@@ -4076,7 +4079,83 @@ function DonationsTable({
             ))}
           </select>
         </header>
-        <div className="mt-3 overflow-x-auto">
+        <div className="mt-3 grid gap-3 md:hidden">
+          {visible.length > 0 ? (
+            visible.map((donation) => {
+              const proposalCount = proposals.filter(
+                (proposal) => proposal.donationId === donation.id,
+              ).length;
+
+              return (
+                <article
+                  className="grid min-w-0 gap-3 rounded-lg border border-[#ded7c9] bg-[#fffdf8] p-3"
+                  key={donation.id}
+                >
+                  <div className="flex min-w-0 gap-3">
+                    <DonationThumbnail donation={donation} />
+                    <div className="min-w-0 flex-1">
+                      <strong className="block truncate text-sm font-black text-[#101812]">
+                        {donation.title}
+                      </strong>
+                      <p className="mt-1 line-clamp-2 text-xs font-bold leading-5 text-[#46534a]">
+                        {donation.description}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-xs font-bold text-[#46534a]">
+                    <span className="rounded-md bg-[#f7f5f0] p-2">
+                      <strong className="block text-[#101812]">
+                        {donation.quantity}
+                      </strong>
+                      Quantity
+                    </span>
+                    <span className="rounded-md bg-[#f7f5f0] p-2">
+                      <strong className="block text-[#101812]">
+                        {proposalCount}
+                      </strong>
+                      Proposals
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span
+                      className={cx(badgeBase, statusClass(donation.status))}
+                    >
+                      {donation.status.replace(/_/g, " ")}
+                    </span>
+                    <span className="text-xs font-bold text-[#46534a]">
+                      Updated {formatDate(donation.updatedAt)}
+                    </span>
+                  </div>
+                  <div className="rounded-md border border-[#e4ddcf] bg-[#faf8f2] p-2 text-xs font-bold leading-5 text-[#1f2a23]">
+                    {formatDate(donation.availableFrom)} -{" "}
+                    {formatDate(donation.availableUntil)}
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      className={cx(ghostButton, "min-h-11 flex-1")}
+                      type="button"
+                      onClick={() => setDetailDonation(donation)}
+                    >
+                      View
+                    </button>
+                    <button
+                      className={cx(ghostButton, "min-h-11 flex-1")}
+                      type="button"
+                      onClick={() => navigator.clipboard.writeText(donation.id)}
+                    >
+                      Copy ID
+                    </button>
+                  </div>
+                </article>
+              );
+            })
+          ) : (
+            <div className="rounded-lg border border-dashed border-[#d8cfba] bg-[#fffdf8] p-4 text-sm font-bold text-[#46534a]">
+              No donations visible yet.
+            </div>
+          )}
+        </div>
+        <div className="mt-3 hidden overflow-x-auto md:block">
           <table className="w-full min-w-[56rem] border-collapse">
             <thead className="text-left">
               <tr>
