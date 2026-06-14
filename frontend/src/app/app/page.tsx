@@ -4392,7 +4392,10 @@ function NotificationsPanel({
   return (
     <>
       <aside
-        className={cx(panel, "sticky top-5 p-6")}
+        className={cx(
+          panel,
+          "min-w-0 self-start p-5 sm:p-6 2xl:sticky 2xl:top-5 2xl:max-h-[calc(100vh-2.5rem)] 2xl:overflow-y-auto",
+        )}
         id="notifications"
         aria-label="Notifications"
       >
@@ -4480,7 +4483,7 @@ function NotificationsPanel({
                     />
                   </span>
                   <div className="min-w-0">
-                    <div className="flex items-start justify-between gap-3">
+                    <div className="grid gap-1 sm:flex sm:items-start sm:justify-between sm:gap-3">
                       <strong className="block text-sm font-black text-[#101812] min-w-0">
                         {receiverNotificationTitle(notification)}
                       </strong>
