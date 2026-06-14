@@ -738,13 +738,13 @@ function DemoPageContent() {
       <DemoMotionStyles />
       <BackgroundOrnaments />
 
-      <header className="demo-header demo-enter-down relative z-10 mx-auto flex w-[min(94vw,1510px)] items-center justify-between px-2 py-8 md:py-10">
+      <header className="demo-header demo-enter-down relative z-10 mx-auto flex w-[min(92vw,1510px)] items-center justify-between px-1 py-5 md:w-[min(94vw,1510px)] md:px-2 md:py-10">
         <Link
-          className="demo-brand inline-flex items-center gap-3 font-serif text-[2.15rem] leading-none text-[#071f10] md:text-[2.75rem]"
+          className="demo-brand inline-flex items-center gap-2 font-serif text-[1.9rem] leading-none text-[#071f10] md:gap-3 md:text-[2.75rem]"
           href="/"
         >
           <span
-            className="demo-brand-mark h-8 w-8 text-[#ffb51b]"
+            className="demo-brand-mark h-7 w-7 text-[#ffb51b] md:h-8 md:w-8"
             aria-hidden="true"
           >
             <LeafIcon />
@@ -752,18 +752,19 @@ function DemoPageContent() {
           FoodLink
         </Link>
         <Link
-          className="demo-back-link inline-flex min-h-11 items-center gap-3 rounded-lg border border-transparent bg-transparent px-4 font-black text-[#14351f] transition hover:-translate-y-0.5 hover:bg-[#fffdf5]/70 hover:shadow-sm md:border-[#c7c0ab] md:px-6"
+          className="demo-back-link inline-flex min-h-10 items-center gap-2 rounded-lg border border-transparent bg-transparent px-3 font-black text-[#14351f] transition hover:-translate-y-0.5 hover:bg-[#fffdf5]/70 hover:shadow-sm md:min-h-11 md:gap-3 md:border-[#c7c0ab] md:px-6"
           href="/"
         >
           <span className="h-4 w-4" aria-hidden="true">
             <BackArrowIcon />
           </span>
-          Back to home
+          <span className="md:hidden">Home</span>
+          <span className="hidden md:inline">Back to home</span>
         </Link>
       </header>
 
       <section
-        className="demo-shell relative z-10 mx-auto grid min-h-[calc(100vh-8.5rem)] w-[min(94vw,1510px)] items-start gap-x-8 gap-y-4 px-2 pb-12 pt-0 xl:grid-cols-[minmax(0,1fr)_280px] xl:gap-x-14"
+        className="demo-shell relative z-10 mx-auto grid min-h-[calc(100vh-5.5rem)] w-[min(92vw,1510px)] items-start gap-x-8 gap-y-4 px-1 pb-8 pt-0 md:min-h-[calc(100vh-8.5rem)] md:w-[min(94vw,1510px)] md:px-2 md:pb-12 xl:grid-cols-[minmax(0,1fr)_280px] xl:gap-x-14"
         aria-labelledby="demo-title"
       >
         <div
@@ -771,31 +772,30 @@ function DemoPageContent() {
           style={{ animationDelay: "80ms" }}
         >
           <HeroSprig />
-          <p className="demo-eyebrow mb-3 text-sm font-black uppercase tracking-[0.16em] text-[#2f7a46] md:text-base">
+          <p className="demo-eyebrow mb-2 text-xs font-black uppercase tracking-[0.16em] text-[#2f7a46] md:mb-3 md:text-base">
             Demo login
           </p>
           <h1
             id="demo-title"
-            className="demo-title max-w-[14ch] font-serif text-[clamp(3.55rem,5.05vw,6.15rem)] leading-[0.92] tracking-[-0.045em] text-[#041f0e]"
+            className="demo-title max-w-[10ch] font-serif text-[clamp(3rem,13vw,3.55rem)] leading-[0.9] tracking-[-0.045em] text-[#041f0e] md:max-w-[14ch] md:text-[clamp(3.55rem,5.05vw,6.15rem)] md:leading-[0.92]"
           >
-            Choose your role to get started
+            Choose your role
           </h1>
-          <p className="demo-lede mt-5 max-w-[30rem] text-lg font-bold leading-8 text-[#34443a] md:text-xl">
-            Jump into a seeded demo account. Explore the experience as a donor,
-            volunteer, or receiver.
+          <p className="demo-lede mt-3 max-w-[22rem] text-base font-bold leading-7 text-[#34443a] md:mt-5 md:max-w-[30rem] md:text-xl md:leading-8">
+            Try a seeded account. No password needed.
           </p>
         </div>
 
-        <div className="demo-roles grid gap-6 md:grid-cols-3 xl:pl-[6.3rem]">
+        <div className="demo-roles grid gap-3 md:grid-cols-3 md:gap-6 xl:pl-[6.3rem]">
           {roles.map((role, index) => {
             const isSelected = role.role === selectedRole;
 
             return (
               <button
-                className={`demo-role-card demo-enter-up demo-card-delay-${index + 1} group relative grid min-h-[22rem] overflow-hidden rounded-[0.7rem] border text-left shadow-[0_1.4rem_3.4rem_rgba(61,55,36,0.11)] transition duration-300 hover:-translate-y-1 md:min-h-[23rem] xl:min-h-[21.9rem] ${
+                className={`demo-role-card demo-enter-up demo-card-delay-${index + 1} group relative grid overflow-hidden rounded-[0.85rem] border text-left shadow-[0_1rem_2.2rem_rgba(61,55,36,0.08)] transition duration-300 hover:-translate-y-1 md:min-h-[23rem] md:rounded-[0.7rem] md:shadow-[0_1.4rem_3.4rem_rgba(61,55,36,0.11)] xl:min-h-[21.9rem] ${
                   isSelected
-                    ? "border-[#f5b51e] bg-[#062f14] text-[#fffdf5] ring-1 ring-[#f5b51e]/80 shadow-[0_1.5rem_3.2rem_rgba(61,42,5,0.22)]"
-                    : "border-[#d8cdb7] bg-[#fffdf7]/72 text-[#0e1b14] hover:border-[#b5ad98]"
+                    ? "min-h-[17.25rem] border-[#f5b51e] bg-[#062f14] text-[#fffdf5] ring-1 ring-[#f5b51e]/80 shadow-[0_1.3rem_2.8rem_rgba(61,42,5,0.18)] md:min-h-[23rem] md:shadow-[0_1.5rem_3.2rem_rgba(61,42,5,0.22)] xl:min-h-[21.9rem]"
+                    : "min-h-[5.4rem] border-[#d8cdb7] bg-[#fffdf7]/76 text-[#0e1b14] hover:border-[#b5ad98] md:min-h-[23rem] xl:min-h-[21.9rem]"
                 }`}
                 type="button"
                 key={role.role}
@@ -803,8 +803,10 @@ function DemoPageContent() {
                 aria-pressed={isSelected}
               >
                 <Image
-                  className={`demo-role-image absolute bottom-0 right-0 h-[82%] w-[54%] object-cover object-right-bottom transition duration-300 group-hover:scale-105 ${
-                    isSelected ? "opacity-58 mix-blend-screen" : "opacity-90"
+                  className={`demo-role-image absolute bottom-0 right-0 object-cover object-right-bottom transition duration-300 group-hover:scale-105 md:h-[82%] md:w-[54%] ${
+                    isSelected
+                      ? "h-[78%] w-[54%] opacity-58 mix-blend-screen"
+                      : "h-full w-[34%] opacity-35 md:opacity-90"
                   }`}
                   src={role.image}
                   alt=""
@@ -823,49 +825,65 @@ function DemoPageContent() {
                   className={`pointer-events-none absolute inset-0 ${
                     isSelected
                       ? "bg-gradient-to-br from-[#062f14] via-[#062f14]/88 to-[#062f14]/22"
-                      : "bg-gradient-to-r from-[#fffdf7] via-[#fffdf7]/92 to-[#fffdf7]/16"
+                      : "bg-gradient-to-r from-[#fffdf7] via-[#fffdf7]/94 to-[#fffdf7]/34 md:to-[#fffdf7]/16"
                   }`}
                   aria-hidden="true"
                 />
                 <span
-                  className={`demo-role-icon absolute left-6 top-6 grid h-14 w-14 place-items-center rounded-full border text-3xl md:h-16 md:w-16 ${
+                  className={`demo-role-icon absolute grid place-items-center rounded-full border text-3xl md:left-6 md:top-6 md:h-16 md:w-16 ${
                     isSelected
-                      ? "border-[#ffca39] bg-transparent text-[#ffca39]"
-                      : `${accentClasses[role.accent]} border-transparent`
+                      ? "left-5 top-5 h-12 w-12 border-[#ffca39] bg-transparent text-[#ffca39] md:h-16 md:w-16"
+                      : `left-4 top-1/2 h-11 w-11 -translate-y-1/2 ${accentClasses[role.accent]} border-transparent md:translate-y-0`
                   }`}
                   aria-hidden="true"
                 >
-                  <span className="demo-role-icon-inner h-8 w-8">
+                  <span className="demo-role-icon-inner h-6 w-6 md:h-8 md:w-8">
                     <RoleIcon icon={role.icon} />
                   </span>
                 </span>
                 {isSelected ? (
-                  <span className="demo-selected-pill absolute right-5 top-6 inline-flex items-center gap-2 rounded-full bg-[#233f17]/72 px-3 py-2 text-xs font-black text-[#ffca39] md:text-sm">
+                  <span className="demo-selected-pill absolute right-4 top-5 inline-flex items-center gap-2 rounded-full bg-[#233f17]/72 px-3 py-2 text-xs font-black text-[#ffca39] md:right-5 md:top-6 md:text-sm">
                     Selected
                     <span className="grid h-5 w-5 place-items-center rounded-full bg-[#ffca39] text-[#17310e]">
                       <CheckIcon />
                     </span>
                   </span>
                 ) : null}
-                <span className="demo-role-copy relative z-10 mt-24 block px-6 md:mt-28">
-                  <strong className="demo-role-title block font-serif text-[2rem] font-normal leading-none md:text-[2.25rem]">
+                <span
+                  className={`demo-role-copy relative z-10 block md:mt-28 md:px-6 ${
+                    isSelected
+                      ? "mt-20 px-5"
+                      : "ml-16 flex h-full flex-col justify-center px-4 pr-24 md:ml-0 md:block md:h-auto md:pr-6"
+                  }`}
+                >
+                  <strong className="demo-role-title block font-serif text-[1.55rem] font-normal leading-none md:text-[2.25rem]">
                     {role.title}
                   </strong>
                   <span
-                    className={`demo-role-divider mt-5 block h-px w-24 ${
+                    className={`demo-role-divider mt-4 h-px w-20 md:mt-5 md:block md:w-24 ${
                       isSelected ? "bg-[#ffca39]" : "bg-[#89b476]"
-                    }`}
+                    } ${isSelected ? "block" : "hidden"}`}
                   />
-                  <span className="demo-role-description mt-5 block max-w-[11.5rem] text-base font-bold leading-7 md:text-lg">
+                  <span
+                    className={`demo-role-description block font-bold md:mt-5 md:max-w-[11.5rem] md:text-lg md:leading-7 ${
+                      isSelected
+                        ? "mt-4 max-w-[11.5rem] text-base leading-7"
+                        : "mt-1 max-w-[11rem] text-sm leading-5 text-[#34443a] md:text-[#0e1b14]"
+                    }`}
+                  >
                     {role.description}
                   </span>
                 </span>
-                <span className="demo-role-account relative z-10 self-end px-6 pb-6">
-                  <span className="demo-role-account-label block text-xs font-black uppercase tracking-[0.12em] opacity-70">
+                <span
+                  className={`demo-role-account relative z-10 self-end px-5 pb-5 md:block md:px-6 md:pb-6 ${
+                    isSelected ? "block" : "hidden"
+                  }`}
+                >
+                  <span className="demo-role-account-label block text-[0.68rem] font-black uppercase tracking-[0.12em] opacity-70 md:text-xs">
                     Seeded account
                   </span>
                   <span
-                    className={`demo-role-account-pill mt-2 inline-flex rounded-lg px-3 py-2 text-sm font-black ${
+                    className={`demo-role-account-pill mt-2 inline-flex rounded-lg px-3 py-2 text-xs font-black md:text-sm ${
                       isSelected
                         ? "bg-white/10 text-[#fffdf5]"
                         : "bg-[#e8efe1] text-[#244633]"
@@ -879,12 +897,12 @@ function DemoPageContent() {
           })}
 
           <div
-            className="demo-actions demo-enter-up md:col-span-3"
+            className="demo-actions demo-enter-up mt-2 md:col-span-3 md:mt-0"
             style={{ animationDelay: "390ms" }}
           >
-            <div className="demo-action-grid grid gap-5 md:grid-cols-[minmax(0,1fr)_17rem] md:items-center">
+            <div className="demo-action-grid grid gap-3 md:grid-cols-[minmax(0,1fr)_17rem] md:items-center md:gap-5">
               <button
-                className="demo-submit group inline-flex min-h-16 items-center justify-center rounded-[0.55rem] bg-gradient-to-b from-[#ffc733] to-[#f5a51e] px-8 text-lg font-black text-[#171206] shadow-[0_1.4rem_2.8rem_rgba(116,72,3,0.20)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                className="demo-submit group inline-flex min-h-14 items-center justify-center rounded-[0.7rem] bg-gradient-to-b from-[#ffc733] to-[#f5a51e] px-6 text-base font-black text-[#171206] shadow-[0_1rem_2rem_rgba(116,72,3,0.18)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 md:min-h-16 md:rounded-[0.55rem] md:px-8 md:text-lg md:shadow-[0_1.4rem_2.8rem_rgba(116,72,3,0.20)]"
                 type="button"
                 onClick={handleLogin}
                 disabled={isLoading}
@@ -901,7 +919,7 @@ function DemoPageContent() {
                   <ArrowIcon />
                 </span>
               </button>
-              <div className="demo-status inline-flex min-h-16 items-center justify-center gap-4 rounded-[0.55rem] border border-[#bfc5ad] bg-[#fffdf5]/66 px-8 text-lg font-black text-[#153821]">
+              <div className="demo-status hidden min-h-16 items-center justify-center gap-4 rounded-[0.55rem] border border-[#bfc5ad] bg-[#fffdf5]/66 px-8 text-lg font-black text-[#153821] md:inline-flex">
                 {isLoading ? (
                   <>
                     <span className="h-5 w-5 text-[#153821]" aria-hidden="true">
@@ -914,12 +932,39 @@ function DemoPageContent() {
                 )}
               </div>
             </div>
-            <p className="demo-note mt-3 inline-flex w-full items-center justify-center gap-2 text-sm font-bold text-[#5a6259] md:justify-start md:pl-[12.5rem]">
+            <p className="demo-note mt-3 inline-flex w-full items-center justify-center gap-2 text-xs font-bold text-[#5a6259] md:justify-start md:pl-[12.5rem] md:text-sm">
               <span className="h-4 w-4 text-[#456a4e]" aria-hidden="true">
                 <LockIcon />
               </span>
-              No password needed. Demo account connects to live API.
+              Secure demo • connects to live API
             </p>
+            <ol className="mt-5 grid grid-cols-3 items-start rounded-[0.8rem] border border-[#d9d2be] bg-[#fffdf7]/70 p-3 md:hidden">
+              {["Role", "Sign in", "Dashboard"].map((step, index) => (
+                <li
+                  className="relative grid justify-items-center gap-2 text-center"
+                  key={step}
+                >
+                  {index < 2 ? (
+                    <span
+                      className="absolute left-[calc(50%+1rem)] top-3 h-px w-[calc(100%-2rem)] bg-[#c7d4bd]"
+                      aria-hidden="true"
+                    />
+                  ) : null}
+                  <span
+                    className={`relative z-10 grid h-6 w-6 place-items-center rounded-full text-xs font-black ${
+                      index === 0 || (isLoading && index === 1)
+                        ? "bg-[#0f4f24] text-white"
+                        : "bg-[#d7e7cf] text-[#14351f]"
+                    }`}
+                  >
+                    {index + 1}
+                  </span>
+                  <span className="text-xs font-black text-[#274433]">
+                    {step}
+                  </span>
+                </li>
+              ))}
+            </ol>
             {error ? (
               <div className="demo-error mt-7 flex items-start justify-between gap-4 rounded-[0.55rem] border border-[#f0a59b] bg-[#fff0eb]/88 p-5 text-[#80251d] shadow-[0_1rem_2.2rem_rgba(94,35,24,0.06)]">
                 <div className="flex items-start gap-4">
@@ -947,7 +992,7 @@ function DemoPageContent() {
         </div>
 
         <aside
-          className="demo-aside demo-enter-right rounded-[0.8rem] bg-[#fffdf7]/88 p-7 shadow-[0_1.8rem_4rem_rgba(61,55,36,0.12)] backdrop-blur xl:col-start-2 xl:row-span-2 xl:row-start-1 xl:mt-[4.8rem]"
+          className="demo-aside demo-enter-right hidden rounded-[0.8rem] bg-[#fffdf7]/88 p-7 shadow-[0_1.8rem_4rem_rgba(61,55,36,0.12)] backdrop-blur xl:col-start-2 xl:row-span-2 xl:row-start-1 xl:mt-[4.8rem] xl:block"
           style={{ animationDelay: "260ms" }}
           aria-label="Demo login status"
         >
