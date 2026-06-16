@@ -2122,7 +2122,7 @@ function VolunteerDonationsPanel({
   });
 
   return (
-    <section className="grid content-start gap-4 border-[#ded7c9] p-5 2xl:border-r">
+    <section className="grid content-start gap-4 border-[#ded7c9] p-5 2xl:border-r" id="available-donations">
       <header className="flex items-center justify-between gap-3">
         <h2 className="font-serif text-[1.35rem] leading-none tracking-[-0.045em] text-[#061e0e]">
           Available donations
@@ -2175,7 +2175,7 @@ function VolunteerDonationsPanel({
       </div>
       <a
         className="mt-2 flex min-h-11 items-center justify-center gap-3 rounded-lg border border-[#ded7c9] bg-[#fffdf8] text-sm font-black"
-        href="#my-donations"
+        href="#available-donations"
       >
         View all donations <AppIcon name="arrow" className="h-4 w-4" />
       </a>
@@ -2338,7 +2338,7 @@ function VolunteerReceiversPanel({
   onSelect: (id: string) => void;
 }) {
   return (
-    <section className="grid content-start gap-4 p-5">
+    <section className="grid content-start gap-4 p-5" id="receiver-directory">
       <header className="flex items-center justify-between gap-3">
         <h2 className="font-serif text-[1.35rem] leading-none tracking-[-0.045em] text-[#061e0e]">
           Receiver directory
@@ -2460,6 +2460,7 @@ function VolunteerProposalPanel({
         panel,
         "grid gap-4 p-5 lg:grid-cols-[minmax(0,1fr)_2.5rem_minmax(0,1fr)]",
       )}
+      id="my-proposals"
     >
       <header className="lg:col-span-3">
         <h2 className="font-serif text-[1.35rem] leading-none tracking-[-0.045em] text-[#061e0e]">
@@ -2626,7 +2627,7 @@ function VolunteerPickupPanel({
   const badge = getStatusBadge();
 
   return (
-    <section className={cx(panel, "grid gap-4 p-5")}>
+    <section className={cx(panel, "grid gap-4 p-5")} id="active-pickup">
       <header className="flex items-center justify-between gap-3">
         <h2 className="font-serif text-[1.35rem] leading-none tracking-[-0.045em] text-[#061e0e]">
           Active pickup
@@ -2806,7 +2807,7 @@ function VolunteerGlancePanel({
   pickupCount: number;
 }) {
   return (
-    <section className={cx(panel, "grid gap-3 p-5")}>
+    <section className={cx(panel, "grid gap-3 p-5")} id="today-at-a-glance">
       <h2 className="font-serif text-[1.35rem] leading-none tracking-[-0.045em] text-[#061e0e]">
         Today at a glance
       </h2>
