@@ -127,6 +127,8 @@ export default function AppPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [action, setAction] = useState<ActionState>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [volunteerSearch, setVolunteerSearch] = useState("");
+  const [volunteerStatusFilter, setVolunteerStatusFilter] = useState<"All" | "Available" | "Proposal pending">("All");
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: bootstrap runs once; action refresh reuses latest token.
   useEffect(() => {
@@ -216,7 +218,18 @@ export default function AppPage() {
         className="mx-auto w-full max-w-[116rem] px-4 py-5 lg:px-8 lg:py-7"
         aria-labelledby="dashboard-title"
       >
-        <DashboardTopbar data={data} onToggleSidebar={() => setSidebarOpen(v => !v)} />
+        <DashboardTopbar
+          data={data}
+          onToggleSidebar={() => setSidebarOpen(v => !v)}
+          volunteerSearch={volunteerSearch}
+          onVolunteerSearch={setVolunteerSearch}
+          volunteerStatusFilter={volunteerStatusFilter}
+          onVolunteerFilter={() =>
+            setVolunteerStatusFilter(f =>
+              f === "All" ? "Available" : f === "Available" ? "Proposal pending" : "All"
+            )
+          }
+        />
 
         {action ? (
           <p
@@ -241,6 +254,8 @@ export default function AppPage() {
                 data={data}
                 token={token}
                 runAction={runAction}
+                search={volunteerSearch}
+                statusFilter={volunteerStatusFilter}
               />
             ) : null}
             {data.user.role === "receiver" ? (
@@ -1194,7 +1209,21 @@ function DashboardSidebar({
   );
 }
 
-function DashboardTopbar({ data, onToggleSidebar }: { data: DashboardData; onToggleSidebar: () => void }) {
+function DashboardTopbar({
+  data,
+  onToggleSidebar,
+  volunteerSearch = "",
+  onVolunteerSearch,
+  volunteerStatusFilter = "All",
+  onVolunteerFilter,
+}: {
+  data: DashboardData;
+  onToggleSidebar: () => void;
+  volunteerSearch?: string;
+  onVolunteerSearch?: (v: string) => void;
+  volunteerStatusFilter?: "All" | "Available" | "Proposal pending";
+  onVolunteerFilter?: () => void;
+}) {
   const unread = data.notifications.filter((item) => !item.read).length;
   const initials = data.profile.displayName
     .split(" ")
@@ -1204,9 +1233,10 @@ function DashboardTopbar({ data, onToggleSidebar }: { data: DashboardData; onTog
     .toUpperCase();
 
   if (data.user.role === "volunteer") {
+    const filterActive = volunteerStatusFilter !== "All";
     return (
       <header
-        className="mb-4 grid gap-4 border-b border-[#ded7c9] pb-4 xl:grid-cols-[max-content_1fr_auto] xl:items-center"
+        className="mb-4 grid gap-4 border-b border-[#ded7c9] pb-4 xl:grid-cols-[max-content_1fr] xl:items-center"
         id="overview"
       >
         <div className="flex items-center gap-3">
@@ -1246,32 +1276,30 @@ function DashboardTopbar({ data, onToggleSidebar }: { data: DashboardData; onTog
               <input
                 className="h-full bg-transparent pr-3 text-sm font-bold text-[#111a14] outline-none placeholder:text-[#7b837c]"
                 placeholder="Search donations, receivers, or locations..."
+                value={volunteerSearch}
+                onChange={(e) => onVolunteerSearch?.(e.target.value)}
               />
             </span>
           </label>
           <button
-            className="relative inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-[#d7d0c2] bg-[#fffdf8] px-4 text-sm font-black text-[#111a14] shadow-sm"
+            className={cx(
+              "relative inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border px-4 text-sm font-black shadow-sm",
+              filterActive
+                ? "border-[#2f7a46] bg-[#3f7d48] text-white"
+                : "border-[#d7d0c2] bg-[#fffdf8] text-[#111a14]",
+            )}
             type="button"
+            onClick={onVolunteerFilter}
           >
             <AppIcon name="filter" className="h-5 w-5" />
-            Filters
-            <span className="absolute -right-2 -top-2 grid h-5 min-w-5 place-items-center rounded-full bg-[#ffbd1a] px-1 text-[0.65rem] font-black">
-              2
-            </span>
+            {filterActive ? volunteerStatusFilter : "Filters"}
+            {filterActive && (
+              <span className="absolute -right-2 -top-2 grid h-5 min-w-5 place-items-center rounded-full bg-[#ffbd1a] px-1 text-[0.65rem] font-black text-[#101812]">
+                1
+              </span>
+            )}
           </button>
         </div>
-        <a
-          className="relative justify-self-start border-l border-[#ded7c9] pl-6 text-[#101812] xl:justify-self-end"
-          href="#notifications"
-          aria-label="Notifications"
-        >
-          <AppIcon name="bell" className="h-8 w-8" />
-          {unread > 0 ? (
-            <span className="absolute -right-2 -top-2 grid h-5 min-w-5 place-items-center rounded-full bg-[#ffbd1a] px-1 text-xs font-black text-[#10140d]">
-              {unread}
-            </span>
-          ) : null}
-        </a>
       </header>
     );
   }
@@ -1306,19 +1334,6 @@ function DashboardTopbar({ data, onToggleSidebar }: { data: DashboardData; onTog
             value={roleLabels[data.user.role]}
             href="/demo"
           />
-          <a
-            className="relative border-l border-[#ded7c9] pl-5 text-[#101812]"
-            href="#notifications"
-            aria-label="Notifications"
-          >
-            <AppIcon name="bell" className="h-8 w-8" />
-            {unread > 0 ? (
-              <span className="absolute -right-2 -top-2 grid h-5 min-w-5 place-items-center rounded-full bg-[#ffbd1a] px-1 text-xs font-black text-[#10140d]">
-                {unread}
-              </span>
-            ) : null}
-          </a>
-          <span className="h-10 w-px bg-[#ded7c9]" aria-hidden="true" />
           <div className="flex items-center gap-3">
             <span className="grid h-12 w-12 place-items-center rounded-full bg-[#064c25] text-sm font-black text-white">
               {initials}
@@ -1326,7 +1341,6 @@ function DashboardTopbar({ data, onToggleSidebar }: { data: DashboardData; onTog
             <strong className="font-black text-[#101812]">
               {data.profile.displayName}
             </strong>
-            <AppIcon name="chevron" className="h-4 w-4" />
           </div>
         </div>
       </header>
@@ -1368,19 +1382,6 @@ function DashboardTopbar({ data, onToggleSidebar }: { data: DashboardData; onTog
         </span>
       </Link>
       <div className="flex items-center gap-6 justify-self-start md:justify-self-end">
-        <a
-          className="relative text-[#101812]"
-          href="#notifications"
-          aria-label="Notifications"
-        >
-          <AppIcon name="bell" className="h-8 w-8" />
-          {unread > 0 ? (
-            <span className="absolute -right-2 -top-2 grid h-5 min-w-5 place-items-center rounded-full bg-[#ffbd1a] px-1 text-xs font-black text-[#10140d]">
-              {unread}
-            </span>
-          ) : null}
-        </a>
-        <span className="h-10 w-px bg-[#d2cbbd]" aria-hidden="true" />
         <div className="flex min-w-0 items-center gap-4">
           <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-[#d9d8cf] font-black">
             {initials}
@@ -1393,7 +1394,6 @@ function DashboardTopbar({ data, onToggleSidebar }: { data: DashboardData; onTog
               {roleLabels[data.user.role]}
             </span>
           </span>
-          <span className="text-xl leading-none">⌄</span>
         </div>
       </div>
     </header>
@@ -1828,10 +1828,14 @@ function VolunteerDashboard({
   data,
   token,
   runAction,
+  search = "",
+  statusFilter = "All",
 }: {
   data: DashboardData;
   token: string;
   runAction: (callback: () => Promise<void>, success: string) => Promise<void>;
+  search?: string;
+  statusFilter?: "All" | "Available" | "Proposal pending";
 }) {
   const [selectedDonationId, setSelectedDonationId] = useState<string | null>(null);
   const [selectedReceiverId, setSelectedReceiverId] = useState<string | null>(null);
@@ -1890,12 +1894,15 @@ function VolunteerDashboard({
           donations={data.donations}
           selectedDonation={availableDonation}
           onSelect={setSelectedDonationId}
+          searchQuery={search}
+          externalStatusFilter={statusFilter}
         />
         <VolunteerMapPanel donation={availableDonation} receiver={receiver} />
         <VolunteerReceiversPanel
           receivers={data.receivers}
           selectedReceiver={receiver}
           onSelect={setSelectedReceiverId}
+          searchQuery={search}
         />
       </section>
 
@@ -2037,12 +2044,15 @@ function VolunteerDonationsPanel({
   donations,
   selectedDonation,
   onSelect,
+  searchQuery = "",
+  externalStatusFilter = "All",
 }: {
   donations: Donation[];
   selectedDonation?: Donation;
   onSelect: (id: string) => void;
+  searchQuery?: string;
+  externalStatusFilter?: "All" | "Available" | "Proposal pending";
 }) {
-  const [filter, setFilter] = useState<"All" | "Available" | "Proposal pending">("All");
   const [sortNewest, setSortNewest] = useState(false);
   const [showAll, setShowAll] = useState(false);
   const [myCoords, setMyCoords] = useState<{ lat: number; lng: number } | null>(null);
@@ -2068,9 +2078,16 @@ function VolunteerDonationsPanel({
     return haversineKm(myCoords.lat, myCoords.lng, lat, lng);
   }
 
+  const q = searchQuery.toLowerCase();
   const filtered = donations.filter((d) => {
-    if (filter === "Available") return d.status === "available";
-    if (filter === "Proposal pending") return d.status === "proposal_pending";
+    if (externalStatusFilter === "Available" && d.status !== "available") return false;
+    if (externalStatusFilter === "Proposal pending" && d.status !== "proposal_pending") return false;
+    if (q) {
+      const inTitle = d.title.toLowerCase().includes(q);
+      const inCity = (d.pickupLocation.city ?? "").toLowerCase().includes(q);
+      const inAddress = (d.pickupLocation.addressLine1 ?? "").toLowerCase().includes(q);
+      if (!inTitle && !inCity && !inAddress) return false;
+    }
     return true;
   });
 
@@ -2095,26 +2112,14 @@ function VolunteerDonationsPanel({
           {filtered.length}
         </span>
       </header>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap gap-2">
-          {(["All", "Available", "Proposal pending"] as const).map((item) => (
-            <button
-              className={cx(
-                "min-h-9 rounded-full border px-4 text-xs font-black",
-                filter === item
-                  ? "border-[#2f7a46] bg-[#3f7d48] text-white"
-                  : "border-[#d9d1c2] bg-[#fffdf8] text-[#1f2a23]",
-              )}
-              key={item}
-              type="button"
-              onClick={() => setFilter(item)}
-            >
-              {item}
-            </button>
-          ))}
-        </div>
+      <div className="flex items-center justify-between gap-3">
+        {externalStatusFilter !== "All" && (
+          <span className="rounded-full bg-[#e5f1df] px-3 py-1 text-xs font-black text-[#14351f]">
+            {externalStatusFilter}
+          </span>
+        )}
         <button
-          className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-[#d9d1c2] bg-[#fffdf8] px-3 text-xs font-black"
+          className="ml-auto inline-flex min-h-9 items-center gap-2 rounded-lg border border-[#d9d1c2] bg-[#fffdf8] px-3 text-xs font-black"
           type="button"
           onClick={() => setSortNewest((v) => !v)}
         >
@@ -2345,11 +2350,22 @@ function VolunteerReceiversPanel({
   receivers,
   selectedReceiver,
   onSelect,
+  searchQuery = "",
 }: {
   receivers: Profile[];
   selectedReceiver?: Profile;
   onSelect: (id: string) => void;
+  searchQuery?: string;
 }) {
+  const q = searchQuery.toLowerCase();
+  const filtered = q
+    ? receivers.filter(
+        (r) =>
+          r.displayName.toLowerCase().includes(q) ||
+          (r.location?.city ?? "").toLowerCase().includes(q),
+      )
+    : receivers;
+
   return (
     <section className="grid content-start gap-4 p-5">
       <header className="flex items-center justify-between gap-3">
@@ -2357,7 +2373,7 @@ function VolunteerReceiversPanel({
           Receiver directory
         </h2>
         <span className="rounded-full bg-[#dcebd5] px-3 py-1 text-xs font-black text-[#14351f]">
-          {receivers.length}
+          {filtered.length}
         </span>
       </header>
       <label className="grid min-h-11 grid-cols-[2.5rem_1fr] items-center rounded-lg border border-[#d7d0c2] bg-[#fffdf8] shadow-sm">
@@ -2367,11 +2383,13 @@ function VolunteerReceiversPanel({
         <input
           className="h-full bg-transparent pr-3 text-sm font-bold outline-none placeholder:text-[#7b837c]"
           placeholder="Search receivers..."
+          readOnly
+          value={searchQuery}
         />
       </label>
       <div className="grid gap-2">
-        {receivers.length > 0
-          ? receivers
+        {filtered.length > 0
+          ? filtered
               .slice(0, 4)
               .map((receiver, index) => (
                 <VolunteerReceiverCard
@@ -2382,7 +2400,7 @@ function VolunteerReceiversPanel({
                   onSelect={onSelect}
                 />
               ))
-          : emptyCopy("No receiver profiles available.")}
+          : emptyCopy(q ? "No receivers match your search." : "No receiver profiles available.")}
       </div>
       <a
         className="mt-1 flex min-h-11 items-center justify-center gap-3 rounded-lg border border-[#ded7c9] bg-[#fffdf8] text-sm font-black"
