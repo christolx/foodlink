@@ -66,10 +66,12 @@ export function DonorDashboard({
   data,
   token,
   runAction,
+  openChat,
 }: {
   data: DashboardData;
   token: string;
   runAction: (callback: () => Promise<void>, success: string) => Promise<void>;
+  openChat: (userId: string) => void;
 }) {
   const [uploadedImageUrl, setUploadedImageUrl] = useState("");
   const [uploadError, setUploadError] = useState("");
@@ -445,6 +447,7 @@ export function DonorDashboard({
               viewerRole="donor"
               token={token}
               runAction={runAction}
+              openChat={openChat}
             />
           </section>
 

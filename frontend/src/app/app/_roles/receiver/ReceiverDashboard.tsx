@@ -39,10 +39,12 @@ export function ReceiverDashboard({
   data,
   token,
   runAction,
+  openChat,
 }: {
   data: DashboardData;
   token: string;
   runAction: (callback: () => Promise<void>, success: string) => Promise<void>;
+  openChat: (userId: string) => void;
 }) {
   const donationsById = useMemo(
     () => new Map(data.donations.map((donation) => [donation.id, donation])),
@@ -104,6 +106,7 @@ export function ReceiverDashboard({
             onSelectProposalId={setSelectedProposalId}
             token={token}
             runAction={runAction}
+            openChat={openChat}
           />
           <div className="grid gap-4">
             <ReceiverTimelineCard
@@ -212,6 +215,7 @@ function ReceiverProposalInbox({
   onSelectProposalId,
   token,
   runAction,
+  openChat,
 }: {
   proposals: DeliveryProposal[];
   donationsById: Map<string, Donation>;
@@ -219,6 +223,7 @@ function ReceiverProposalInbox({
   onSelectProposalId: (id: string) => void;
   token: string;
   runAction: (callback: () => Promise<void>, success: string) => Promise<void>;
+  openChat: (userId: string) => void;
 }) {
   const [sortNewest, setSortNewest] = useState(true);
 
@@ -272,6 +277,7 @@ function ReceiverProposalInbox({
                   proposal={proposal}
                   token={token}
                   runAction={runAction}
+                  openChat={openChat}
                   onSelect={() => onSelectProposalId(proposal.id)}
                 />
               );
@@ -289,6 +295,7 @@ function ReceiverProposalCard({
   index,
   token,
   runAction,
+  openChat,
   onSelect,
 }: {
   proposal: DeliveryProposal;
@@ -297,6 +304,7 @@ function ReceiverProposalCard({
   index: number;
   token: string;
   runAction: (callback: () => Promise<void>, success: string) => Promise<void>;
+  openChat: (userId: string) => void;
   onSelect: () => void;
 }) {
   const title = donation?.title ?? readableDonationId(proposal.donationId);
@@ -506,7 +514,7 @@ function ReceiverProposalCard({
             </div>
           </div>
 
-          <div className="grid gap-4 border-t border-[#d6e5cf] pt-4 lg:grid-cols-3 lg:divide-x lg:divide-[#d6e5cf]">
+          <div className="grid gap-4 border-t border-[#d6e5cf] pt-4 lg:grid-cols-4 lg:divide-x lg:divide-[#d6e5cf]">
             <ReceiverDetailNote
               icon="check"
               title="Safe handling notes"
@@ -530,6 +538,16 @@ function ReceiverProposalCard({
                   );
                 }
               }}
+            />
+            <ReceiverDetailNote
+              icon="message"
+              title="In-app chat"
+              body={[
+                "Conversation stays with this delivery context.",
+                volunteerName,
+              ]}
+              action="Chat in-app"
+              onActionClick={() => openChat(proposal.volunteerId)}
             />
             <ReceiverRouteSummary from={donorName} />
           </div>

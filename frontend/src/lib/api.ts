@@ -145,6 +145,25 @@ export type Notification = {
   readAt?: string;
 };
 
+export type Conversation = {
+  id: string;
+  otherUser: {
+    id: string;
+    displayName: string;
+    role: UserRole | "unknown";
+  };
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ChatMessage = {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  body: string;
+  createdAt: string;
+};
+
 export type CreateDonationRequest = {
   title: string;
   description: string;
@@ -315,6 +334,46 @@ export function updateMyProfile(token: string, json: UpdateProfileRequest) {
     json,
     token,
   });
+}
+
+export function getOrCreateConversation(token: string, otherUserId: string) {
+  return apiFetch<Conversation>("/chat/conversations", {
+    method: "POST",
+    json: { otherUserId },
+    token,
+  });
+}
+
+export function listConversations(token: string) {
+  return apiFetch<Conversation[]>("/chat/conversations", { token });
+}
+
+export function listChatMessages(token: string, conversationId: string) {
+  return apiFetch<ChatMessage[]>(
+    `/chat/conversations/${conversationId}/messages`,
+    { token },
+  );
+}
+
+export function sendChatMessage(
+  token: string,
+  conversationId: string,
+  body: string,
+) {
+  return apiFetch<ChatMessage>(
+    `/chat/conversations/${conversationId}/messages`,
+    {
+      method: "POST",
+      json: { body },
+      token,
+    },
+  );
+}
+
+export function chatEventsUrl(conversationId: string, token: string) {
+  return apiUrl(
+    `/chat/conversations/${conversationId}/events?token=${encodeURIComponent(token)}`,
+  );
 }
 
 function apiUrl(path: string) {

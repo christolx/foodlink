@@ -37,6 +37,7 @@ export default function AppPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [action, setAction] = useState<ActionState>(null);
   const [activePanel, setActivePanel] = useState<SidePanelType | null>(null);
+  const [chatTargetUserId, setChatTargetUserId] = useState<string | null>(null);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: bootstrap runs once; action refresh reuses latest token.
   useEffect(() => {
@@ -109,6 +110,11 @@ export default function AppPage() {
     }
   }
 
+  function openChat(userId: string) {
+    setChatTargetUserId(userId);
+    setActivePanel("messages");
+  }
+
   if (isLoading || !data || !token) {
     return (
       <main className="grid min-h-screen place-items-center content-center gap-4 bg-[#f7f4e9] text-[#073515]">
@@ -123,6 +129,8 @@ export default function AppPage() {
       <main className="grid min-h-screen overflow-x-clip bg-[#f8f6ef] text-[#101812] lg:grid-cols-[13.75rem_minmax(0,1fr)]">
         <DashboardSidebar
           data={data}
+          token={token}
+          chatTargetUserId={chatTargetUserId}
           signOut={signOut}
           activePanel={activePanel}
           setActivePanel={setActivePanel}
@@ -152,7 +160,12 @@ export default function AppPage() {
           ) : null}
 
           {data.user.role === "donor" ? (
-            <DonorDashboard data={data} token={token} runAction={runAction} />
+            <DonorDashboard
+              data={data}
+              token={token}
+              runAction={runAction}
+              openChat={openChat}
+            />
           ) : null}
           {data.user.role !== "donor" ? (
             <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
@@ -162,6 +175,7 @@ export default function AppPage() {
                     data={data}
                     token={token}
                     runAction={runAction}
+                    openChat={openChat}
                   />
                 ) : null}
                 {data.user.role === "receiver" ? (
@@ -169,6 +183,7 @@ export default function AppPage() {
                     data={data}
                     token={token}
                     runAction={runAction}
+                    openChat={openChat}
                   />
                 ) : null}
               </div>

@@ -27,4 +27,9 @@ export type RunAction = (
   success: string,
 ) => Promise<void>;
 
-export type SidePanelType = "profile" | "settings" | "reports" | "help";
+export type SidePanelType =
+  | "profile"
+  | "settings"
+  | "reports"
+  | "help"
+  | "messages";

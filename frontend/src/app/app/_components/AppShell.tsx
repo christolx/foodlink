@@ -4,6 +4,7 @@ import Link from "next/link";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import type { DashboardData, SidePanelType } from "../_types/dashboard";
+import { ChatPanel } from "./ChatPanel";
 import {
   HelpPanelContent,
   ProfilePanelContent,
@@ -111,11 +112,15 @@ export function SlidePanel({
 
 export function DashboardSidebar({
   data,
+  token,
+  chatTargetUserId,
   signOut,
   activePanel,
   setActivePanel,
 }: {
   data: DashboardData;
+  token: string;
+  chatTargetUserId?: string | null;
   signOut: () => void;
   activePanel: SidePanelType | null;
   setActivePanel: (panel: SidePanelType | null) => void;
@@ -152,8 +157,7 @@ export function DashboardSidebar({
         {
           label: "Messages",
           icon: "message" as IconName,
-          href: "#notifications",
-          badge: 2,
+          panel: "messages" as SidePanelType,
         },
       ];
     }
@@ -196,7 +200,7 @@ export function DashboardSidebar({
         {
           label: "Messages",
           icon: "message" as IconName,
-          href: "#notifications",
+          panel: "messages" as SidePanelType,
         },
         {
           label: "Reports",
@@ -231,9 +235,9 @@ export function DashboardSidebar({
       { label: "Proposals", icon: "box" as IconName, href: "#proposal-queue" },
       { label: "Pickups", icon: "pickup" as IconName, href: "#work" },
       {
-        label: "Notifications",
-        icon: "bell" as IconName,
-        href: "#notifications",
+        label: "Messages",
+        icon: "message" as IconName,
+        panel: "messages" as SidePanelType,
       },
     ];
   }, [role, data]);
@@ -436,20 +440,24 @@ export function DashboardSidebar({
           title={
             activePanel === "profile"
               ? "My profile"
-              : activePanel === "settings"
-                ? "Settings"
-                : activePanel === "reports"
-                  ? "Reports"
-                  : "Help & support"
+              : activePanel === "messages"
+                ? "Messages"
+                : activePanel === "settings"
+                  ? "Settings"
+                  : activePanel === "reports"
+                    ? "Reports"
+                    : "Help & support"
           }
           icon={
             activePanel === "profile"
               ? "profile"
-              : activePanel === "settings"
-                ? "settings"
-                : activePanel === "reports"
-                  ? "chart"
-                  : "message"
+              : activePanel === "messages"
+                ? "message"
+                : activePanel === "settings"
+                  ? "settings"
+                  : activePanel === "reports"
+                    ? "chart"
+                    : "message"
           }
           onClose={() => setActivePanel(null)}
         >
@@ -459,6 +467,13 @@ export function DashboardSidebar({
           {activePanel === "settings" && <SettingsPanelContent />}
           {activePanel === "reports" && <ReportsPanelContent data={data} />}
           {activePanel === "help" && <HelpPanelContent />}
+          {activePanel === "messages" && (
+            <ChatPanel
+              token={token}
+              currentUserId={data.user.id}
+              initialOtherUserId={chatTargetUserId}
+            />
+          )}
         </SlidePanel>
       )}
       {bottomCard}

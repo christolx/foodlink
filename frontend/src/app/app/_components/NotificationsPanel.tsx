@@ -33,12 +33,14 @@ export function ProposalQueue({
   viewerRole,
   token,
   runAction,
+  openChat,
 }: {
   donations: Donation[];
   proposals: DeliveryProposal[];
   viewerRole: "donor" | "receiver";
   token: string;
   runAction: (callback: () => Promise<void>, success: string) => Promise<void>;
+  openChat?: (userId: string) => void;
 }) {
   const donationsById = useMemo(
     () => new Map(donations.map((donation) => [donation.id, donation])),
@@ -179,7 +181,7 @@ export function ProposalQueue({
                       className={cx(
                         "gap-2 justify-self-start",
                         viewerRole === "donor"
-                          ? "grid w-full grid-cols-3"
+                          ? "grid w-full grid-cols-4"
                           : "flex flex-wrap",
                       )}
                     >
@@ -224,6 +226,18 @@ export function ProposalQueue({
                             </a>
                           );
                         })()}
+                      {viewerRole === "donor" && openChat ? (
+                        <button
+                          className={cx(
+                            ghostButton,
+                            "min-h-11 px-2 text-xs !text-[#14733a]",
+                          )}
+                          type="button"
+                          onClick={() => openChat(proposal.volunteerId)}
+                        >
+                          Chat in-app
+                        </button>
+                      ) : null}
                       <button
                         className={cx(
                           ghostButton,

@@ -41,10 +41,12 @@ export function VolunteerDashboard({
   data,
   token,
   runAction,
+  openChat,
 }: {
   data: DashboardData;
   token: string;
   runAction: (callback: () => Promise<void>, success: string) => Promise<void>;
+  openChat: (userId: string) => void;
 }) {
   const [selectedDonationId, setSelectedDonationId] = useState<string | null>(
     null,
@@ -134,12 +136,14 @@ export function VolunteerDashboard({
             donation={availableDonation}
             receiver={receiver}
             onCreate={() => setShowProposalModal(true)}
+            onChat={() => receiver && openChat(receiver.userId)}
             disabled={!availableDonation || !receiver}
           />
           <VolunteerPickupPanel
             activePickup={activePickup}
             token={token}
             runAction={runAction}
+            openChat={openChat}
           />
         </section>
 
@@ -647,11 +651,13 @@ function VolunteerProposalPanel({
   receiver,
   disabled,
   onCreate,
+  onChat,
 }: {
   donation?: Donation;
   receiver?: Profile;
   disabled: boolean;
   onCreate: () => void;
+  onChat: () => void;
 }) {
   return (
     <section
@@ -671,7 +677,7 @@ function VolunteerProposalPanel({
         <AppIcon name="arrow" className="h-7 w-7" />
       </div>
       <SelectedReceiverSummary receiver={receiver} />
-      <footer className="grid gap-3 rounded-lg border border-[#e4ddcf] bg-[#fbfaf3] p-3 lg:col-span-3 xl:grid-cols-[repeat(4,1fr)_max-content] xl:items-center">
+      <footer className="grid gap-3 rounded-lg border border-[#e4ddcf] bg-[#fbfaf3] p-3 lg:col-span-3 xl:grid-cols-[repeat(4,1fr)_max-content_max-content] xl:items-center">
         <MiniMetric icon="navigation" label="Est. distance" value="4.1 km" />
         <MiniMetric icon="clock" label="Est. time" value="18 min" />
         <MiniMetric icon="profile" label="Volunteer" value="Budi Relawan" />
@@ -683,6 +689,14 @@ function VolunteerProposalPanel({
           disabled={disabled}
         >
           Create proposal <AppIcon name="arrow" className="h-5 w-5" />
+        </button>
+        <button
+          className={ghostButton}
+          type="button"
+          onClick={onChat}
+          disabled={!receiver}
+        >
+          Chat in-app
         </button>
       </footer>
     </section>
@@ -765,10 +779,12 @@ function VolunteerPickupPanel({
   activePickup,
   token,
   runAction,
+  openChat,
 }: {
   activePickup?: Pickup;
   token: string;
   runAction: (callback: () => Promise<void>, success: string) => Promise<void>;
+  openChat: (userId: string) => void;
 }) {
   const canMarkPickedUp = activePickup?.status === "assigned";
   const canMarkDelivered = activePickup?.status === "picked_up";
@@ -882,7 +898,15 @@ function VolunteerPickupPanel({
           </li>
         ))}
       </ol>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-3 gap-2">
+        <button
+          className={ghostButton}
+          type="button"
+          disabled={!activePickup}
+          onClick={() => activePickup && openChat(activePickup.receiverId)}
+        >
+          Chat in-app
+        </button>
         <button
           className={ghostButton}
           type="button"
