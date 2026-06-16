@@ -126,6 +126,7 @@ export default function AppPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [action, setAction] = useState<ActionState>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: bootstrap runs once; action refresh reuses latest token.
   useEffect(() => {
@@ -209,13 +210,13 @@ export default function AppPage() {
 
   return (
     <main className="grid min-h-screen bg-[#f8f6ef] text-[#101812] lg:grid-cols-[13.75rem_minmax(0,1fr)]">
-      <DashboardSidebar data={data} token={token} signOut={signOut} />
+      <DashboardSidebar data={data} token={token} signOut={signOut} sidebarOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       <section
-        className="mx-auto w-full max-w-[116rem] px-5 py-7 lg:px-8"
+        className="mx-auto w-full max-w-[116rem] px-4 py-5 lg:px-8 lg:py-7"
         aria-labelledby="dashboard-title"
       >
-        <DashboardTopbar data={data} />
+        <DashboardTopbar data={data} onToggleSidebar={() => setSidebarOpen(v => !v)} />
 
         {action ? (
           <p
@@ -289,7 +290,7 @@ function Modal({
         className="fixed inset-0 z-[1100] bg-black/40 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="fixed left-1/2 top-1/2 z-[1101] max-h-[88vh] w-full max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl bg-[#fffdf8] shadow-2xl">
+      <div className="fixed inset-x-4 top-1/2 z-[1101] max-h-[88vh] -translate-y-1/2 overflow-y-auto rounded-2xl bg-[#fffdf8] shadow-2xl sm:left-1/2 sm:right-auto sm:w-full sm:max-w-lg sm:-translate-x-1/2">
         <header className="sticky top-0 flex items-center gap-3 border-b border-[#e4ddcf] bg-[#fffdf8] px-6 py-5">
           <h2 className="flex-1 font-serif text-lg font-black tracking-tight text-[#061e0e]">
             {title}
@@ -767,10 +768,14 @@ function DashboardSidebar({
   data,
   token,
   signOut,
+  sidebarOpen,
+  onClose,
 }: {
   data: DashboardData;
   token: string;
   signOut: () => void;
+  sidebarOpen: boolean;
+  onClose: () => void;
 }) {
   const role = data.user.role;
   const initials = data.profile.displayName
@@ -958,8 +963,21 @@ function DashboardSidebar({
   }, [role]);
 
   return (
+    <>
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-[1198] bg-black/50 lg:hidden"
+          onClick={onClose}
+          aria-hidden="true"
+        />
+      )}
     <aside
-      className="sticky top-0 grid h-screen grid-rows-[auto_1fr_auto_auto] gap-6 bg-[radial-gradient(circle_at_70%_92%,rgba(30,112,48,0.32),transparent_12rem),linear-gradient(180deg,#063514_0%,#052b12_52%,#031b0c_100%)] px-4 py-6 text-[#f8f5ea] max-lg:static max-lg:h-auto"
+      className={cx(
+        "grid grid-rows-[auto_1fr_auto_auto] gap-6 bg-[radial-gradient(circle_at_70%_92%,rgba(30,112,48,0.32),transparent_12rem),linear-gradient(180deg,#063514_0%,#052b12_52%,#031b0c_100%)] px-4 py-6 text-[#f8f5ea]",
+        "fixed inset-y-0 left-0 z-[1199] w-64 -translate-x-full overflow-y-auto transition-transform duration-300 ease-in-out",
+        "lg:sticky lg:top-0 lg:h-screen lg:w-auto lg:translate-x-0 lg:overflow-visible",
+        sidebarOpen && "translate-x-0",
+      )}
       aria-label="Dashboard navigation"
     >
       {topHeader}
@@ -1000,7 +1018,7 @@ function DashboardSidebar({
               key={item.label}
               className={sharedClass}
               href={item.href}
-              onClick={() => { setActiveHref(item.href ?? ""); setActivePanel(null); }}
+              onClick={() => { setActiveHref(item.href ?? ""); setActivePanel(null); onClose(); }}
             >
               <AppIcon name={item.icon} className="h-5 w-5 shrink-0" />
               {item.label}
@@ -1043,16 +1061,17 @@ function DashboardSidebar({
       <button
         className="flex min-h-10 items-center gap-3.5 rounded-lg px-4 text-sm font-black transition hover:bg-white/10 shrink-0"
         type="button"
-        onClick={signOut}
+        onClick={() => { onClose(); signOut(); }}
       >
         <AppIcon name="pickup" className="h-5 w-5 rotate-180" />
         Log out
       </button>
     </aside>
+    </>
   );
 }
 
-function DashboardTopbar({ data }: { data: DashboardData }) {
+function DashboardTopbar({ data, onToggleSidebar }: { data: DashboardData; onToggleSidebar: () => void }) {
   const unread = data.notifications.filter((item) => !item.read).length;
   const initials = data.profile.displayName
     .split(" ")
@@ -1067,12 +1086,22 @@ function DashboardTopbar({ data }: { data: DashboardData }) {
         className="mb-4 grid gap-4 border-b border-[#ded7c9] pb-4 xl:grid-cols-[max-content_1fr_auto] xl:items-center"
         id="overview"
       >
-        <Link
-          className="font-serif text-[2.35rem] leading-none tracking-[-0.055em] text-[#061e0e]"
-          href="/"
-        >
-          FoodLink
-        </Link>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            className="grid h-10 w-10 place-items-center rounded-lg border border-[#ded7c9] bg-[#fffdf8] text-[#101812] lg:hidden"
+            aria-label="Open navigation"
+            onClick={onToggleSidebar}
+          >
+            <AppIcon name="menu" className="h-5 w-5" />
+          </button>
+          <Link
+            className="font-serif text-[2.35rem] leading-none tracking-[-0.055em] text-[#061e0e]"
+            href="/"
+          >
+            FoodLink
+          </Link>
+        </div>
         <div className="grid gap-3 md:grid-cols-[10.5rem_13rem_minmax(16rem,1fr)_auto] md:items-end xl:justify-self-end">
           <TopbarSelect
             icon="team"
@@ -1127,11 +1156,19 @@ function DashboardTopbar({ data }: { data: DashboardData }) {
   if (data.user.role === "receiver") {
     return (
       <header
-        className="-mx-5 mb-6 grid gap-4 border-b border-[#ded7c9] bg-[#fffdf8]/58 px-5 py-5 lg:-mx-8 lg:px-8 xl:grid-cols-[1fr_auto] xl:items-center"
+        className="-mx-4 mb-6 grid gap-4 border-b border-[#ded7c9] bg-[#fffdf8]/58 px-4 py-5 lg:-mx-8 lg:px-8 xl:grid-cols-[1fr_auto] xl:items-center"
         id="overview"
       >
         <div>
           <h1 className="flex items-center gap-3 text-[1.45rem] font-black leading-tight text-[#101812]">
+            <button
+              type="button"
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-[#ded7c9] bg-[#fffdf8] text-[#101812] lg:hidden"
+              aria-label="Open navigation"
+              onClick={onToggleSidebar}
+            >
+              <AppIcon name="menu" className="h-5 w-5" />
+            </button>
             Good morning, {data.profile.displayName}
             <AppIcon name="leaf" className="h-7 w-7 text-[#31583c]" />
           </h1>
@@ -1178,12 +1215,22 @@ function DashboardTopbar({ data }: { data: DashboardData }) {
       className="mb-6 grid gap-4 md:grid-cols-[1fr_auto_auto] md:items-center"
       id="overview"
     >
-      <Link
-        className="font-serif text-[2.35rem] leading-none tracking-[-0.055em] text-[#061e0e]"
-        href="/"
-      >
-        FoodLink
-      </Link>
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-[#ded7c9] bg-[#fffdf8] text-[#101812] lg:hidden"
+          aria-label="Open navigation"
+          onClick={onToggleSidebar}
+        >
+          <AppIcon name="menu" className="h-5 w-5" />
+        </button>
+        <Link
+          className="font-serif text-[2.35rem] leading-none tracking-[-0.055em] text-[#061e0e]"
+          href="/"
+        >
+          FoodLink
+        </Link>
+      </div>
       <Link
         className="grid min-w-36 gap-1 justify-self-start rounded-md border border-[#d2cbbd] bg-[#fffdf8] px-3 py-1.5 text-xs font-bold shadow-sm"
         href="/demo"
@@ -1352,7 +1399,7 @@ function DonorDashboard({
 
   return (
     <>
-    <div className="grid items-start gap-5 2xl:grid-cols-[minmax(0,1fr)_26rem]">
+    <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_26rem]">
       <div className="grid gap-5" id="work">
         <section className="grid gap-5 lg:grid-cols-[minmax(28rem,1.08fr)_minmax(24rem,0.92fr)]">
           <form
@@ -1724,7 +1771,7 @@ function VolunteerDashboard({
   return (
     <>
     <div className="grid gap-3">
-      <section className="grid min-h-[41rem] gap-0 overflow-hidden rounded-xl border border-[#ded7c9] bg-[#fffdf8]/78 shadow-[0_1rem_2.8rem_rgba(49,43,24,0.08)] 2xl:grid-cols-[minmax(23rem,1.04fr)_minmax(21rem,0.96fr)_minmax(19rem,0.78fr)]">
+      <section className="grid gap-0 overflow-hidden rounded-xl border border-[#ded7c9] bg-[#fffdf8]/78 shadow-[0_1rem_2.8rem_rgba(49,43,24,0.08)] xl:min-h-[41rem] xl:grid-cols-[minmax(23rem,1.04fr)_minmax(21rem,0.96fr)_minmax(19rem,0.78fr)]">
         <VolunteerDonationsPanel
           donations={data.donations}
           selectedDonation={availableDonation}
@@ -1764,7 +1811,7 @@ function VolunteerDashboard({
     {showProposalModal && createPortal(
       <>
         <div className="fixed inset-0 z-[1100] bg-black/40 backdrop-blur-sm" onClick={() => setShowProposalModal(false)} />
-        <div className="fixed left-1/2 top-1/2 z-[1101] w-full max-w-md -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl bg-[#fffdf8] shadow-2xl">
+        <div className="fixed inset-x-4 top-1/2 z-[1101] -translate-y-1/2 overflow-hidden rounded-2xl bg-[#fffdf8] shadow-2xl sm:left-1/2 sm:right-auto sm:w-full sm:max-w-md sm:-translate-x-1/2">
           <header className="flex items-center gap-3 border-b border-[#e4ddcf] px-6 py-5">
             <span className="grid h-9 w-9 place-items-center rounded-full bg-[#e5f1df] text-[#14733a]">
               <AppIcon name="message" className="h-5 w-5" />
@@ -1925,7 +1972,7 @@ function VolunteerDonationsPanel({
 
   return (
     <>
-    <section className="grid content-start gap-4 border-[#ded7c9] p-5 2xl:border-r">
+    <section className="grid content-start gap-4 border-[#ded7c9] p-5 border-b xl:border-b-0 xl:border-r">
       <header className="flex items-center justify-between gap-3">
         <h2 className="font-serif text-[1.35rem] leading-none tracking-[-0.045em] text-[#061e0e]">
           Available donations
@@ -2122,13 +2169,13 @@ function VolunteerMapPanel({
   receiver?: Profile;
 }) {
   return (
-    <section className="grid min-h-[41rem] grid-rows-[auto_1fr_auto] border-[#ded7c9] 2xl:border-r">
+    <section className="grid min-h-[22rem] grid-rows-[auto_1fr_auto] border-[#ded7c9] border-b xl:min-h-[41rem] xl:border-b-0 xl:border-r">
       <header className="flex items-center justify-between p-5 pb-3">
         <h2 className="font-serif text-[1.35rem] leading-none tracking-[-0.045em] text-[#061e0e]">
           Live map
         </h2>
       </header>
-      <div className="relative mx-4 min-h-[28rem] overflow-hidden rounded-lg border border-[#e4ddcf]">
+      <div className="relative mx-4 min-h-[16rem] overflow-hidden rounded-lg border border-[#e4ddcf] xl:min-h-[28rem]">
         <VolunteerMapDynamic
           donorLocation={donation?.pickupLocation}
           receiverLocation={receiver?.location}
@@ -2713,7 +2760,7 @@ function ReceiverDashboard({
         deliveredMeals={deliveredMeals}
       />
 
-      <section className="grid items-start gap-4 2xl:grid-cols-[minmax(0,1fr)_22rem]">
+      <section className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
         <ReceiverProposalInbox
           proposals={data.proposals}
           donationsById={donationsById}
@@ -3701,7 +3748,7 @@ function ProposalQueue({
 
             return (
               <article
-                className="grid gap-4 rounded-lg border border-[#ded7c9] bg-[#fffdf8] p-3 2xl:grid-cols-[6rem_1fr_auto]"
+                className="grid gap-4 rounded-lg border border-[#ded7c9] bg-[#fffdf8] p-3 md:grid-cols-[6rem_1fr_auto]"
                 key={proposal.id}
               >
                 <DonationThumbnail donation={donation} size="lg" />
@@ -4157,7 +4204,7 @@ function NotificationsPanel({
   return (
     <>
     <aside
-      className={cx(panel, "sticky top-5 p-6")}
+      className={cx(panel, "lg:sticky lg:top-5 p-6")}
       id="notifications"
       aria-label="Notifications"
     >

@@ -16,6 +16,7 @@ import {
   type LucideIcon,
   MapIcon,
   MapPin,
+  Menu,
   MessageSquare,
   Navigation,
   Package,
@@ -108,6 +109,7 @@ export type IconName =
   | "leaf"
   | "map"
   | "marker"
+  | "menu"
   | "message"
   | "navigation"
   | "package"
@@ -133,6 +135,7 @@ const icons: Record<IconName, LucideIcon> = {
   leaf: Leaf,
   map: MapIcon,
   marker: MapPin,
+  menu: Menu,
   message: MessageSquare,
   navigation: Navigation,
   package: Package,
