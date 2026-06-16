@@ -39,11 +39,15 @@ func AutoMigrate(conn *gorm.DB) error {
 		&models.DeliveryProposal{},
 		&models.Pickup{},
 		&models.Notification{},
+		&models.Conversation{},
+		&models.Message{},
 	)
 }
 
 func DropTables(conn *gorm.DB) error {
 	return conn.Migrator().DropTable(
+		&models.Message{},
+		&models.Conversation{},
 		&models.Notification{},
 		&models.Pickup{},
 		&models.DeliveryProposal{},

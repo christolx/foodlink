@@ -145,6 +145,21 @@ export type Notification = {
   readAt?: string;
 };
 
+export type Conversation = {
+  id: string;
+  otherUser: { id: string; displayName: string; role: string };
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ChatMessage = {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  body: string;
+  createdAt: string;
+};
+
 export type CreateDonationRequest = {
   title: string;
   description: string;
@@ -305,6 +320,30 @@ export function listNotifications(token: string) {
 export function markNotificationRead(token: string, id: string) {
   return apiFetch<Notification>(`/notifications/${id}/read`, {
     method: "POST",
+    token,
+  });
+}
+
+export function getOrCreateConversation(token: string, otherUserId: string) {
+  return apiFetch<Conversation>("/chat/conversations", {
+    method: "POST",
+    json: { otherUserId },
+    token,
+  });
+}
+
+export function listConversations(token: string) {
+  return apiFetch<Conversation[]>("/chat/conversations", { token });
+}
+
+export function listChatMessages(token: string, convId: string) {
+  return apiFetch<ChatMessage[]>(`/chat/conversations/${convId}/messages`, { token });
+}
+
+export function sendChatMessage(token: string, convId: string, body: string) {
+  return apiFetch<ChatMessage>(`/chat/conversations/${convId}/messages`, {
+    method: "POST",
+    json: { body },
     token,
   });
 }

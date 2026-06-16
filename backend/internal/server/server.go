@@ -39,6 +39,13 @@ func Handler(st *store.Store, jwtSecret string) http.Handler {
 		_, _ = w.Write([]byte("ok"))
 	})
 
+	chat := &chatHandler{st: st, hub: newMessageHub(), jwtSecret: []byte(jwtSecret)}
+	mux.HandleFunc("POST /api/v1/chat/conversations", chat.handleGetOrCreate)
+	mux.HandleFunc("GET /api/v1/chat/conversations", chat.handleList)
+	mux.HandleFunc("GET /api/v1/chat/conversations/{id}/messages", chat.handleMessages)
+	mux.HandleFunc("POST /api/v1/chat/conversations/{id}/messages", chat.handleSend)
+	mux.HandleFunc("GET /api/v1/chat/conversations/{id}/events", chat.handleStream)
+
 	strict := api.NewStrictHandlerWithOptions(
 		New(st, jwtSecret),
 		[]api.StrictMiddlewareFunc{authMiddleware(jwtSecret)},

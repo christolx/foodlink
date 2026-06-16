@@ -81,6 +81,22 @@ type Pickup struct {
 	UpdatedAt        time.Time
 }
 
+type Conversation struct {
+	ID        string `gorm:"primaryKey"`
+	User1ID   string `gorm:"index"`
+	User2ID   string `gorm:"index"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+type Message struct {
+	ID             string `gorm:"primaryKey"`
+	ConversationID string `gorm:"index"`
+	SenderID       string
+	Body           string
+	CreatedAt      time.Time
+}
+
 type Notification struct {
 	ID         string `gorm:"primaryKey"`
 	UserID     string `gorm:"index"`

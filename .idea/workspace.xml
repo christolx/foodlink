@@ -6,10 +6,9 @@
   <component name="ChangeListManager">
     <list default="true" id="40d301eb-cff4-4459-863b-412137ce3437" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/internal/api/openapi.gen.go" beforeDir="false" afterPath="$PROJECT_DIR$/backend/internal/api/openapi.gen.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/internal/db/db.go" beforeDir="false" afterPath="$PROJECT_DIR$/backend/internal/db/db.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/internal/models/models.go" beforeDir="false" afterPath="$PROJECT_DIR$/backend/internal/models/models.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/internal/server/server.go" beforeDir="false" afterPath="$PROJECT_DIR$/backend/internal/server/server.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/internal/store/store.go" beforeDir="false" afterPath="$PROJECT_DIR$/backend/internal/store/store.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/app/app/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/app/app/page.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/lib/api.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/lib/api.ts" afterDir="false" />
     </list>
@@ -74,7 +73,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1780982942889</updated>
-      <workItem from="1780982943953" duration="13868000" />
+      <workItem from="1780982943953" duration="21334000" />
     </task>
     <servers />
   </component>
