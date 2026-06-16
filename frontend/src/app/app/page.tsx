@@ -40,6 +40,7 @@ import {
 } from "@/lib/api";
 import { clearToken, getToken } from "@/lib/auth";
 import { getMe, getMyProfile } from "@/lib/session";
+import { DashboardErrorBoundary } from "./dashboard-error-boundary";
 import {
   AppIcon,
   badgeBase,
@@ -68,6 +69,11 @@ import {
 
 const LocationPickerMapDynamic = dynamic(() => import("./LocationPickerMap"), {
   ssr: false,
+  loading: () => (
+    <div className="flex h-full items-center justify-center text-sm text-[#46534a]">
+      Loading map…
+    </div>
+  ),
 });
 
 const VolunteerMapDynamic = dynamic(() => import("./VolunteerMap"), {
@@ -126,6 +132,7 @@ export default function AppPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [action, setAction] = useState<ActionState>(null);
+  const [activePanel, setActivePanel] = useState<SidePanelType | null>(null);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: bootstrap runs once; action refresh reuses latest token.
   useEffect(() => {
@@ -208,65 +215,73 @@ export default function AppPage() {
   }
 
   return (
-    <main className="grid min-h-screen overflow-x-clip bg-[#f8f6ef] text-[#101812] lg:grid-cols-[13.75rem_minmax(0,1fr)]">
-      <DashboardSidebar data={data} signOut={signOut} />
+    <DashboardErrorBoundary>
+      <main className="grid min-h-screen overflow-x-clip bg-[#f8f6ef] text-[#101812] lg:grid-cols-[13.75rem_minmax(0,1fr)]">
+        <DashboardSidebar
+          data={data}
+          signOut={signOut}
+          activePanel={activePanel}
+          setActivePanel={setActivePanel}
+        />
 
-      <section
-        className={cx(
-          "mx-auto w-full min-w-0 max-w-[116rem] px-4 py-5 lg:px-8 lg:py-7",
-          (data.user.role === "donor" || data.user.role === "receiver") &&
-            "pb-28 lg:pb-7",
-        )}
-        aria-labelledby="dashboard-title"
-      >
-        <DashboardTopbar data={data} />
+        <section
+          className={cx(
+            "mx-auto w-full min-w-0 max-w-[116rem] px-4 py-5 lg:px-8 lg:py-7",
+            (data.user.role === "donor" || data.user.role === "receiver") &&
+              "pb-28 lg:pb-7",
+          )}
+          aria-labelledby="dashboard-title"
+        >
+          <DashboardTopbar data={data} />
 
-        {action ? (
-          <p
-            className={cx(
-              "mb-4 rounded-md border px-4 py-3 text-sm font-black",
-              action.tone === "success"
-                ? "border-[#93c7a2] bg-[#e8f1e6] text-[#14351f]"
-                : "border-[#f0a59b] bg-[#fff0eb] text-[#80251d]",
-            )}
-          >
-            {action.message}
-          </p>
-        ) : null}
+          {action ? (
+            <p
+              className={cx(
+                "mb-4 rounded-md border px-4 py-3 text-sm font-black",
+                action.tone === "success"
+                  ? "border-[#93c7a2] bg-[#e8f1e6] text-[#14351f]"
+                  : "border-[#f0a59b] bg-[#fff0eb] text-[#80251d]",
+              )}
+            >
+              {action.message}
+            </p>
+          ) : null}
 
-        {data.user.role === "donor" ? (
-          <DonorDashboard data={data} token={token} runAction={runAction} />
-        ) : null}
-        {data.user.role !== "donor" ? (
-          <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
-            <div className="grid gap-4" id="work">
-              {data.user.role === "volunteer" ? (
-                <VolunteerDashboard
-                  data={data}
-                  token={token}
-                  runAction={runAction}
-                />
-              ) : null}
-              {data.user.role === "receiver" ? (
-                <ReceiverDashboard
-                  data={data}
-                  token={token}
-                  runAction={runAction}
-                />
-              ) : null}
+          {data.user.role === "donor" ? (
+            <DonorDashboard data={data} token={token} runAction={runAction} />
+          ) : null}
+          {data.user.role !== "donor" ? (
+            <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
+              <div className="grid gap-4" id="work">
+                {data.user.role === "volunteer" ? (
+                  <VolunteerDashboard
+                    data={data}
+                    token={token}
+                    runAction={runAction}
+                  />
+                ) : null}
+                {data.user.role === "receiver" ? (
+                  <ReceiverDashboard
+                    data={data}
+                    token={token}
+                    runAction={runAction}
+                  />
+                ) : null}
+              </div>
+              <NotificationsPanel
+                notifications={data.notifications}
+                viewerRole={data.user.role}
+                token={token}
+                runAction={runAction}
+                onSettingsClick={() => setActivePanel("settings")}
+              />
             </div>
-            <NotificationsPanel
-              notifications={data.notifications}
-              viewerRole={data.user.role}
-              token={token}
-              runAction={runAction}
-            />
-          </div>
-        ) : null}
-      </section>
-      {data.user.role === "donor" ? <DonorBottomNavigation /> : null}
-      {data.user.role === "receiver" ? <ReceiverBottomNavigation /> : null}
-    </main>
+          ) : null}
+        </section>
+        {data.user.role === "donor" ? <DonorBottomNavigation /> : null}
+        {data.user.role === "receiver" ? <ReceiverBottomNavigation /> : null}
+      </main>
+    </DashboardErrorBoundary>
   );
 }
 
@@ -708,9 +723,13 @@ function HelpPanelContent() {
 function DashboardSidebar({
   data,
   signOut,
+  activePanel,
+  setActivePanel,
 }: {
   data: DashboardData;
   signOut: () => void;
+  activePanel: SidePanelType | null;
+  setActivePanel: (panel: SidePanelType | null) => void;
 }) {
   const role = data.user.role;
   const initials = data.profile.displayName
@@ -720,7 +739,6 @@ function DashboardSidebar({
     .slice(0, 2)
     .toUpperCase();
 
-  const [activePanel, setActivePanel] = useState<SidePanelType | null>(null);
   const [activeHref, setActiveHref] = useState<string>("#dashboard-title");
 
   const navItems = useMemo(() => {
@@ -1123,6 +1141,7 @@ function ReceiverBottomNavigation() {
 }
 
 function DashboardTopbar({ data }: { data: DashboardData }) {
+  const [searchValue, setSearchValue] = useState("");
   const unread = data.notifications.filter((item) => !item.read).length;
   const initials = data.profile.displayName
     .split(" ")
@@ -1164,6 +1183,8 @@ function DashboardTopbar({ data }: { data: DashboardData }) {
               <input
                 className="h-full bg-transparent pr-3 text-sm font-bold text-[#111a14] outline-none placeholder:text-[#7b837c]"
                 placeholder="Search donations, receivers, or locations..."
+                value={searchValue}
+                onChange={(e) => setSearchValue(e.target.value)}
               />
             </span>
           </label>
@@ -2122,7 +2143,10 @@ function VolunteerDonationsPanel({
   });
 
   return (
-    <section className="grid content-start gap-4 border-[#ded7c9] p-5 2xl:border-r" id="available-donations">
+    <section
+      className="grid content-start gap-4 border-[#ded7c9] p-5 2xl:border-r"
+      id="available-donations"
+    >
       <header className="flex items-center justify-between gap-3">
         <h2 className="font-serif text-[1.35rem] leading-none tracking-[-0.045em] text-[#061e0e]">
           Available donations
@@ -2337,6 +2361,10 @@ function VolunteerReceiversPanel({
   selectedReceiver?: Profile;
   onSelect: (id: string) => void;
 }) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const filteredReceivers = receivers.filter((r) =>
+    r.displayName.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
   return (
     <section className="grid content-start gap-4 p-5" id="receiver-directory">
       <header className="flex items-center justify-between gap-3">
@@ -2344,7 +2372,7 @@ function VolunteerReceiversPanel({
           Receiver directory
         </h2>
         <span className="rounded-full bg-[#dcebd5] px-3 py-1 text-xs font-black text-[#14351f]">
-          {receivers.length}
+          {filteredReceivers.length}
         </span>
       </header>
       <label className="grid min-h-11 grid-cols-[2.5rem_1fr] items-center rounded-lg border border-[#d7d0c2] bg-[#fffdf8] shadow-sm">
@@ -2354,11 +2382,13 @@ function VolunteerReceiversPanel({
         <input
           className="h-full bg-transparent pr-3 text-sm font-bold outline-none placeholder:text-[#7b837c]"
           placeholder="Search receivers..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
         />
       </label>
       <div className="grid gap-2">
-        {receivers.length > 0
-          ? receivers
+        {filteredReceivers.length > 0
+          ? filteredReceivers
               .slice(0, 4)
               .map((receiver, index) => (
                 <VolunteerReceiverCard
@@ -5171,11 +5201,15 @@ function NotificationsPanel({
   viewerRole,
   token,
   runAction,
+  onClose,
+  onSettingsClick,
 }: {
   notifications: Notification[];
   viewerRole: User["role"];
   token: string;
   runAction: (callback: () => Promise<void>, success: string) => Promise<void>;
+  onClose?: () => void;
+  onSettingsClick?: () => void;
 }) {
   const unread = notifications.filter((item) => !item.read).length;
   const receiverVariant = viewerRole === "receiver";
@@ -5209,10 +5243,16 @@ function NotificationsPanel({
             className="ml-auto text-[#101812]"
             type="button"
             aria-label="Notification settings"
+            onClick={onSettingsClick}
           >
             <AppIcon name="settings" className="h-5 w-5" />
           </button>
-          <button className="text-[#101812]" type="button" aria-label="Close">
+          <button
+            className="text-[#101812]"
+            type="button"
+            aria-label="Close"
+            onClick={onClose}
+          >
             <AppIcon name="close" className="h-5 w-5" />
           </button>
         </header>
