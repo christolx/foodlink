@@ -268,18 +268,31 @@ export default function AppPage() {
                   />
                 ) : null}
               </div>
-              <NotificationsPanel
-                notifications={data.notifications}
-                viewerRole={data.user.role}
-                token={token}
-                runAction={runAction}
-                onSettingsClick={() => setActivePanel("settings")}
-              />
+              {data.user.role === "volunteer" ? (
+                <div className="hidden xl:block">
+                  <NotificationsPanel
+                    notifications={data.notifications}
+                    viewerRole={data.user.role}
+                    token={token}
+                    runAction={runAction}
+                    onSettingsClick={() => setActivePanel("settings")}
+                  />
+                </div>
+              ) : (
+                <NotificationsPanel
+                  notifications={data.notifications}
+                  viewerRole={data.user.role}
+                  token={token}
+                  runAction={runAction}
+                  onSettingsClick={() => setActivePanel("settings")}
+                />
+              )}
             </div>
           ) : null}
         </section>
         {data.user.role === "donor" ? <DonorBottomNavigation /> : null}
         {data.user.role === "receiver" ? <ReceiverBottomNavigation /> : null}
+        {data.user.role === "volunteer" ? <VolunteerBottomNavigation /> : null}
       </main>
     </DashboardErrorBoundary>
   );
@@ -973,8 +986,7 @@ function DashboardSidebar({
     );
   }, [role]);
 
-  const mobileSidebarClass =
-    role === "volunteer" ? "max-lg:static max-lg:h-auto" : "max-lg:hidden";
+  const mobileSidebarClass = "max-lg:hidden";
 
   return (
     <aside
@@ -1140,6 +1152,49 @@ function ReceiverBottomNavigation() {
   );
 }
 
+function VolunteerBottomNavigation() {
+  const items = [
+    {
+      label: "Home",
+      icon: "dashboard" as IconName,
+      href: "#volunteer-mobile-top",
+    },
+    {
+      label: "Donations",
+      icon: "bag" as IconName,
+      href: "#volunteer-mobile-donations",
+    },
+    {
+      label: "Route",
+      icon: "navigation" as IconName,
+      href: "#volunteer-mobile-route",
+    },
+    {
+      label: "Messages",
+      icon: "bell" as IconName,
+      href: "#volunteer-mobile-messages",
+    },
+  ];
+
+  return (
+    <nav
+      className="fixed inset-x-4 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] z-50 grid grid-cols-4 rounded-[1.35rem] border border-[#ded7c9] bg-[#fffdf8]/96 p-2 shadow-[0_-0.75rem_2rem_rgba(49,43,24,0.12)] backdrop-blur lg:hidden"
+      aria-label="Volunteer navigation"
+    >
+      {items.map((item) => (
+        <a
+          className="grid min-h-14 place-items-center gap-1 rounded-lg px-1 text-center text-[0.68rem] font-black text-[#46534a] transition hover:bg-[#f0f7eb] hover:text-[#064c25]"
+          href={item.href}
+          key={item.label}
+        >
+          <AppIcon name={item.icon} className="text-2xl" />
+          <span>{item.label}</span>
+        </a>
+      ))}
+    </nav>
+  );
+}
+
 function DashboardTopbar({ data }: { data: DashboardData }) {
   const [searchValue, setSearchValue] = useState("");
   const unread = data.notifications.filter((item) => !item.read).length;
@@ -1153,8 +1208,8 @@ function DashboardTopbar({ data }: { data: DashboardData }) {
   if (data.user.role === "volunteer") {
     return (
       <header
-        className="mb-4 grid gap-4 border-b border-[#ded7c9] pb-4 xl:grid-cols-[max-content_1fr_auto] xl:items-center"
-        id="dashboard-title"
+        className="mb-4 hidden gap-4 border-b border-[#ded7c9] pb-4 lg:grid xl:grid-cols-[max-content_1fr_auto] xl:items-center"
+        id="volunteer-desktop-title"
       >
         <Link
           className="font-serif text-[2.35rem] leading-none tracking-[-0.055em] text-[#061e0e]"
