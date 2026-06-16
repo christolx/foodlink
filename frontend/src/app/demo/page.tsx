@@ -98,7 +98,7 @@ function DemoPageContent() {
       </header>
 
       <section
-        className="demo-shell relative z-10 mx-auto grid min-h-[calc(100vh-5.5rem)] w-[min(92vw,1510px)] items-start gap-x-8 gap-y-4 px-1 pb-8 pt-0 md:min-h-[calc(100vh-8.5rem)] md:w-[min(94vw,1510px)] md:px-2 md:pb-12 xl:grid-cols-[minmax(0,1fr)_280px] xl:gap-x-14"
+        className="demo-shell relative z-10 mx-auto grid min-h-[calc(100dvh-5.5rem)] w-[min(92vw,1510px)] items-start gap-x-8 gap-y-4 px-1 pb-8 pt-0 md:min-h-[calc(100dvh-8.5rem)] md:w-[min(94vw,1510px)] md:px-2 md:pb-12 xl:grid-cols-[minmax(0,1fr)_280px] xl:gap-x-14"
         aria-labelledby="demo-title"
       >
         <div
@@ -128,8 +128,8 @@ function DemoPageContent() {
               <button
                 className={`demo-role-card demo-enter-up demo-card-delay-${index + 1} group relative grid overflow-hidden rounded-[0.85rem] border text-left shadow-[0_1rem_2.2rem_rgba(61,55,36,0.08)] transition duration-300 hover:-translate-y-1 md:min-h-[23rem] md:rounded-[0.7rem] md:shadow-[0_1.4rem_3.4rem_rgba(61,55,36,0.11)] xl:min-h-[21.9rem] ${
                   isSelected
-                    ? "min-h-[17.25rem] border-[#f5b51e] bg-[#062f14] text-[#fffdf5] ring-1 ring-[#f5b51e]/80 shadow-[0_1.3rem_2.8rem_rgba(61,42,5,0.18)] md:min-h-[23rem] md:shadow-[0_1.5rem_3.2rem_rgba(61,42,5,0.22)] xl:min-h-[21.9rem]"
-                    : "min-h-[5.4rem] border-[#d8cdb7] bg-[#fffdf7]/76 text-[#0e1b14] hover:border-[#b5ad98] md:min-h-[23rem] xl:min-h-[21.9rem]"
+                    ? "min-h-[16.6rem] border-[#f5b51e] bg-[#062f14] text-[#fffdf5] ring-1 ring-[#f5b51e]/80 shadow-[0_1.3rem_2.8rem_rgba(61,42,5,0.18)] md:min-h-[23rem] md:shadow-[0_1.5rem_3.2rem_rgba(61,42,5,0.22)] xl:min-h-[21.9rem]"
+                    : "min-h-[6rem] border-[#d8cdb7] bg-[#fffdf7]/76 text-[#0e1b14] hover:border-[#b5ad98] md:min-h-[23rem] xl:min-h-[21.9rem]"
                 }`}
                 type="button"
                 key={role.role}
@@ -139,8 +139,8 @@ function DemoPageContent() {
                 <Image
                   className={`demo-role-image absolute bottom-0 right-0 object-cover object-right-bottom transition duration-300 group-hover:scale-105 md:h-[82%] md:w-[54%] ${
                     isSelected
-                      ? "h-[78%] w-[54%] opacity-58 mix-blend-screen"
-                      : "h-full w-[34%] opacity-35 md:opacity-90"
+                      ? "h-[76%] w-[50%] opacity-50 mix-blend-screen"
+                      : "h-full w-[27%] opacity-26 md:opacity-90"
                   }`}
                   src={role.image}
                   alt=""
@@ -164,14 +164,14 @@ function DemoPageContent() {
                   aria-hidden="true"
                 />
                 <span
-                  className={`demo-role-icon absolute grid place-items-center rounded-full border text-3xl md:left-6 md:top-6 md:h-16 md:w-16 ${
+                  className={`demo-role-icon absolute grid place-items-center rounded-full border leading-none text-3xl md:left-6 md:top-6 md:h-16 md:w-16 ${
                     isSelected
                       ? "left-5 top-5 h-12 w-12 border-[#ffca39] bg-transparent text-[#ffca39] md:h-16 md:w-16"
-                      : `left-4 top-1/2 h-11 w-11 -translate-y-1/2 ${accentClasses[role.accent]} border-transparent md:translate-y-0`
+                      : `left-4 top-1/2 h-12 w-12 -translate-y-1/2 ${accentClasses[role.accent]} border-transparent md:translate-y-0`
                   }`}
                   aria-hidden="true"
                 >
-                  <span className="demo-role-icon-inner h-6 w-6 md:h-8 md:w-8">
+                  <span className="demo-role-icon-inner block h-6 w-6 md:h-8 md:w-8 [&_svg]:block [&_svg]:h-full [&_svg]:w-full">
                     <RoleIcon icon={role.icon} />
                   </span>
                 </span>
@@ -186,30 +186,30 @@ function DemoPageContent() {
                 <span
                   className={`demo-role-copy relative z-10 block md:mt-28 md:px-6 ${
                     isSelected
-                      ? "mt-20 px-5"
-                      : "ml-16 flex h-full flex-col justify-center px-4 pr-24 md:ml-0 md:block md:h-auto md:pr-6"
+                      ? "mt-[4.85rem] px-5"
+                      : "ml-[4.65rem] flex h-full flex-col justify-center px-0 pr-[6.35rem] md:ml-0 md:block md:h-auto md:px-6 md:pr-6"
                   }`}
                 >
                   <strong className="demo-role-title block font-serif text-[1.55rem] font-normal leading-none md:text-[2.25rem]">
                     {role.title}
                   </strong>
                   <span
-                    className={`demo-role-divider mt-4 h-px w-20 md:mt-5 md:block md:w-24 ${
+                    className={`demo-role-divider mt-3 h-px w-20 md:mt-5 md:block md:w-24 ${
                       isSelected ? "bg-[#ffca39]" : "bg-[#89b476]"
                     } ${isSelected ? "block" : "hidden"}`}
                   />
                   <span
                     className={`demo-role-description block font-bold md:mt-5 md:max-w-[11.5rem] md:text-lg md:leading-7 ${
                       isSelected
-                        ? "mt-4 max-w-[11.5rem] text-base leading-7"
-                        : "mt-1 max-w-[11rem] text-sm leading-5 text-[#34443a] md:text-[#0e1b14]"
+                        ? "mt-3 max-w-[14.25rem] text-base leading-6"
+                        : "mt-1 max-w-[14.5rem] text-sm leading-5 text-[#34443a] md:text-[#0e1b14]"
                     }`}
                   >
                     {role.description}
                   </span>
                 </span>
                 <span
-                  className={`demo-role-account relative z-10 self-end px-5 pb-5 md:block md:px-6 md:pb-6 ${
+                  className={`demo-role-account relative z-10 self-end px-5 pb-4 md:block md:px-6 md:pb-6 ${
                     isSelected ? "block" : "hidden"
                   }`}
                 >
@@ -217,7 +217,7 @@ function DemoPageContent() {
                     Seeded account
                   </span>
                   <span
-                    className={`demo-role-account-pill mt-2 inline-flex rounded-lg px-3 py-2 text-xs font-black md:text-sm ${
+                    className={`demo-role-account-pill mt-2 inline-flex rounded-lg px-3 py-2 text-xs font-black leading-none md:text-sm ${
                       isSelected
                         ? "bg-white/10 text-[#fffdf5]"
                         : "bg-[#e8efe1] text-[#244633]"
