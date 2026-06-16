@@ -20,7 +20,7 @@ import {
   ReceiverBottomNavigation,
   VolunteerBottomNavigation,
 } from "./dashboard-layout";
-import { NotificationsPanel } from "./dashboard-shared";
+import { NotificationsPanel, NotificationsSlidePanel } from "./dashboard-shared";
 import type {
   ActionState,
   DashboardData,
@@ -213,6 +213,14 @@ export default function AppPage() {
           <ChatPanel
             token={token}
             myUserId={data.user.id}
+            onClose={() => setActivePanel(null)}
+          />
+        )}
+        {activePanel === "notifications" && (
+          <NotificationsSlidePanel
+            notifications={data.notifications}
+            token={token}
+            runAction={runAction}
             onClose={() => setActivePanel(null)}
           />
         )}

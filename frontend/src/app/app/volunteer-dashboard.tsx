@@ -692,12 +692,14 @@ function VolunteerProposalPanel({
         <AppIcon name="arrow" className="h-7 w-7" />
       </div>
       <SelectedReceiverSummary receiver={receiver} />
-      <footer className="grid gap-3 rounded-lg border border-[#e4ddcf] bg-[#fbfaf3] p-3 lg:col-span-3 xl:grid-cols-[repeat(4,1fr)_max-content] xl:items-center">
-        <MiniMetric icon="navigation" label="Est. distance" value="4.1 km" />
-        <MiniMetric icon="clock" label="Est. time" value="18 min" />
-        <MiniMetric icon="profile" label="Volunteer" value="Budi Relawan" />
-        <MiniMetric icon="message" label="Contact" value="WhatsApp" />
-        <div className="flex flex-wrap gap-2">
+      <footer className="grid gap-3 rounded-lg border border-[#e4ddcf] bg-[#fbfaf3] p-3 lg:col-span-3">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+          <MiniMetric icon="navigation" label="Est. distance" value="4.1 km" />
+          <MiniMetric icon="clock" label="Est. time" value="18 min" />
+          <MiniMetric icon="profile" label="Volunteer" value="Budi Relawan" />
+          <MiniMetric icon="message" label="Contact" value="WhatsApp" />
+        </div>
+        <div className="flex flex-wrap items-center gap-2 border-t border-[#e4ddcf] pt-3">
           {donation?.donorId && (
             <button
               type="button"

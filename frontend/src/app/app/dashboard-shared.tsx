@@ -220,16 +220,6 @@ export function ProposalQueue({
                                 "!text-[#14733a]",
                               )}
                             >
-                              <svg
-                                aria-hidden="true"
-                                className="h-3.5 w-3.5"
-                                focusable="false"
-                                viewBox="0 0 24 24"
-                                fill="currentColor"
-                              >
-                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
-                                <path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.118 1.528 5.845L.057 23.882l6.198-1.624A11.944 11.944 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.006-1.368l-.36-.214-3.68.964.981-3.595-.234-.37A9.818 9.818 0 012.182 12C2.182 6.58 6.58 2.182 12 2.182S21.818 6.58 21.818 12 17.42 21.818 12 21.818z" />
-                              </svg>
                               WhatsApp
                             </a>
                           );
@@ -240,7 +230,6 @@ export function ProposalQueue({
                           type="button"
                           onClick={() => void openChatWithVolunteer(proposal.volunteerId)}
                         >
-                          <AppIcon name="message" className="h-3.5 w-3.5" />
                           Chat
                         </button>
                       ) : null}
@@ -999,5 +988,94 @@ export function NotificationsPanel({
         </SlidePanel>
       )}
     </>
+  );
+}
+
+export function NotificationsSlidePanel({
+  notifications,
+  token,
+  runAction,
+  onClose,
+}: {
+  notifications: Notification[];
+  token: string;
+  runAction: (callback: () => Promise<void>, success: string) => Promise<void>;
+  onClose: () => void;
+}) {
+  return (
+    <SlidePanel title="All notifications" icon="bell" onClose={onClose}>
+      <div className="grid">
+        {notifications.length > 0 ? (
+          notifications.map((notification) => (
+            <article
+              className={cx(
+                "grid grid-cols-[3rem_1fr] gap-3 border-t border-[#e4ddcf] py-4 first:border-t-0",
+                notification.read && "opacity-60",
+              )}
+              key={notification.id}
+            >
+              <span
+                className={cx(
+                  "grid h-11 w-11 place-items-center rounded-full",
+                  notification.type === "proposal_accepted"
+                    ? "bg-[#ffe9c1] text-[#dd6700]"
+                    : notification.type === "pickup_assigned"
+                      ? "bg-[#deedf8] text-[#1c6796]"
+                      : notification.type === "pickup_completed"
+                        ? "bg-[#dfeedd] text-[#116b35]"
+                        : "bg-[#e5f1df] text-[#064c25]",
+                )}
+              >
+                <AppIcon
+                  name={
+                    notification.type === "pickup_assigned"
+                      ? "pickup"
+                      : notification.type === "pickup_completed"
+                        ? "check"
+                        : notification.type === "proposal_created"
+                          ? "package"
+                          : "team"
+                  }
+                  className="h-5 w-5"
+                />
+              </span>
+              <div className="min-w-0">
+                <div className="flex items-start justify-between gap-2">
+                  <strong className="block text-sm font-black text-[#101812]">
+                    {receiverNotificationTitle(notification)}
+                  </strong>
+                  {!notification.read && (
+                    <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[#ffbd1a]" />
+                  )}
+                </div>
+                <span className="mt-0.5 block text-xs font-bold text-[#46534a]">
+                  {formatDate(notification.createdAt)}
+                </span>
+                <p className="mt-1 text-sm font-bold leading-6 text-[#1f2a23]">
+                  {notification.body}
+                </p>
+                {!notification.read && (
+                  <button
+                    className="mt-2 text-xs font-black text-[#064c25] hover:text-[#116b35]"
+                    type="button"
+                    onClick={() =>
+                      runAction(async () => {
+                        await markNotificationRead(token, notification.id);
+                      }, "Notification marked read.")
+                    }
+                  >
+                    Mark read
+                  </button>
+                )}
+              </div>
+            </article>
+          ))
+        ) : (
+          <p className="py-8 text-center text-sm font-bold text-[#46534a]">
+            No notifications yet.
+          </p>
+        )}
+      </div>
+    </SlidePanel>
   );
 }

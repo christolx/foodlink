@@ -143,7 +143,6 @@ export function DashboardSidebar({
           badge: pendingCount,
         },
         { label: "Deliveries", icon: "pickup" as IconName, href: "#work" },
-        { label: "Needs", icon: "bag" as IconName, href: "#my-food-requests" },
         {
           label: "Messages",
           icon: "message" as IconName,
@@ -171,6 +170,11 @@ export function DashboardSidebar({
           label: "Receivers",
           icon: "team" as IconName,
           href: "#receiver-directory",
+        },
+        {
+          label: "Deliveries",
+          icon: "pickup" as IconName,
+          href: "#active-pickup",
         },
         {
           label: "Messages",
@@ -213,7 +217,6 @@ export function DashboardSidebar({
       },
       { label: "My donations", icon: "bag" as IconName, href: "#my-donations" },
       { label: "Proposals", icon: "box" as IconName, href: "#proposal-queue" },
-      { label: "Pickups", icon: "pickup" as IconName, href: "#work" },
       {
         label: "Notifications",
         icon: "bell" as IconName,
@@ -415,7 +418,7 @@ export function DashboardSidebar({
         })}
       </nav>
 
-      {activePanel && (
+      {activePanel && ["profile", "settings", "reports", "help"].includes(activePanel) && (
         <SlidePanel
           title={
             activePanel === "profile"
