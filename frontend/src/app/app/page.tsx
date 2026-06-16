@@ -214,7 +214,8 @@ export default function AppPage() {
       <section
         className={cx(
           "mx-auto w-full min-w-0 max-w-[116rem] px-4 py-5 lg:px-8 lg:py-7",
-          data.user.role === "donor" && "pb-28 lg:pb-7",
+          (data.user.role === "donor" || data.user.role === "receiver") &&
+            "pb-28 lg:pb-7",
         )}
         aria-labelledby="dashboard-title"
       >
@@ -264,6 +265,7 @@ export default function AppPage() {
         ) : null}
       </section>
       {data.user.role === "donor" ? <DonorBottomNavigation /> : null}
+      {data.user.role === "receiver" ? <ReceiverBottomNavigation /> : null}
     </main>
   );
 }
@@ -953,14 +955,14 @@ function DashboardSidebar({
     );
   }, [role]);
 
-  const donorSidebarClass =
-    role === "donor" ? "max-lg:hidden" : "max-lg:static max-lg:h-auto";
+  const mobileSidebarClass =
+    role === "volunteer" ? "max-lg:static max-lg:h-auto" : "max-lg:hidden";
 
   return (
     <aside
       className={cx(
         "sticky top-0 grid h-screen grid-rows-[auto_1fr_auto_auto] gap-6 bg-[radial-gradient(circle_at_70%_92%,rgba(30,112,48,0.32),transparent_12rem),linear-gradient(180deg,#063514_0%,#052b12_52%,#031b0c_100%)] px-4 py-6 text-[#f8f5ea]",
-        donorSidebarClass,
+        mobileSidebarClass,
       )}
       aria-label="Dashboard navigation"
     >
@@ -1076,8 +1078,35 @@ function DonorBottomNavigation() {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-50 grid grid-cols-4 border-t border-[#d7d0c2] bg-[#fffdf8]/96 px-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] pt-2 shadow-[0_-0.75rem_2rem_rgba(49,43,24,0.12)] backdrop-blur lg:hidden"
+      className="fixed inset-x-4 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] z-50 grid grid-cols-4 rounded-[1.35rem] border border-[#ded7c9] bg-[#fffdf8]/96 p-2 shadow-[0_-0.75rem_2rem_rgba(49,43,24,0.12)] backdrop-blur lg:hidden"
       aria-label="Donor navigation"
+    >
+      {items.map((item) => (
+        <a
+          className="grid min-h-14 place-items-center gap-1 rounded-lg px-1 text-center text-[0.68rem] font-black text-[#46534a] transition hover:bg-[#f0f7eb] hover:text-[#064c25]"
+          href={item.href}
+          key={item.label}
+        >
+          <AppIcon name={item.icon} className="text-2xl" />
+          <span>{item.label}</span>
+        </a>
+      ))}
+    </nav>
+  );
+}
+
+function ReceiverBottomNavigation() {
+  const items = [
+    { label: "Home", icon: "dashboard" as IconName, href: "#dashboard-title" },
+    { label: "Proposals", icon: "box" as IconName, href: "#receiver-priority" },
+    { label: "Deliveries", icon: "pickup" as IconName, href: "#deliveries" },
+    { label: "Inbox", icon: "bell" as IconName, href: "#notifications" },
+  ];
+
+  return (
+    <nav
+      className="fixed inset-x-4 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] z-50 grid grid-cols-4 rounded-[1.35rem] border border-[#ded7c9] bg-[#fffdf8]/96 p-2 shadow-[0_-0.75rem_2rem_rgba(49,43,24,0.12)] backdrop-blur lg:hidden"
+      aria-label="Receiver navigation"
     >
       {items.map((item) => (
         <a
@@ -1168,39 +1197,77 @@ function DashboardTopbar({ data }: { data: DashboardData }) {
   if (data.user.role === "receiver") {
     return (
       <header
-        className="-mx-5 mb-6 grid gap-4 border-b border-[#ded7c9] bg-[#fffdf8]/58 px-5 py-5 lg:-mx-8 lg:px-8 xl:grid-cols-[1fr_auto] xl:items-center"
+        className="mb-4 grid gap-4 bg-transparent pt-1 lg:-mx-8 lg:border-b lg:border-[#ded7c9] lg:bg-[#fffdf8]/70 lg:px-8 lg:py-5 xl:grid-cols-[1fr_auto] xl:items-center"
         id="dashboard-title"
       >
-        <div>
-          <h1 className="flex items-center gap-3 text-[1.45rem] font-black leading-tight text-[#101812]">
-            Good morning, {data.profile.displayName}
-            <AppIcon name="leaf" className="h-7 w-7 text-[#31583c]" />
-          </h1>
-          <p className="mt-1 text-sm font-bold text-[#46534a]">
-            Here's what's coming your way today.
-          </p>
+        <div className="grid gap-3">
+          <div className="flex items-center justify-between lg:hidden">
+            <Link
+              className="inline-flex items-center gap-3 text-[#063514]"
+              href="/"
+            >
+              <span className="grid h-10 w-10 place-items-center rounded-full bg-[#e5f1df] text-[#31583c]">
+                <AppIcon name="leaf" className="h-6 w-6" />
+              </span>
+              <span className="text-xl font-black tracking-[-0.035em]">
+                FoodLink
+              </span>
+            </Link>
+            <a
+              className="relative grid min-h-11 min-w-11 place-items-center rounded-full text-[#101812]"
+              href="#notifications"
+              aria-label="Notifications"
+            >
+              <AppIcon name="bell" className="h-7 w-7" />
+              {unread > 0 ? (
+                <span className="absolute right-1 top-1 grid h-4 min-w-4 place-items-center rounded-full bg-[#ffbd1a] px-1 text-[0.58rem] font-black text-[#10140d]" />
+              ) : null}
+            </a>
+          </div>
+          <div>
+            <h1 className="font-serif text-[1.75rem] leading-none tracking-[-0.05em] text-[#063514] lg:flex lg:items-center lg:gap-2 lg:text-[1.45rem] lg:font-black lg:font-sans lg:tracking-[-0.02em] lg:text-[#101812]">
+              Morning, {data.profile.displayName}
+              <AppIcon
+                name="leaf"
+                className="hidden h-7 w-7 text-[#31583c] lg:block"
+              />
+            </h1>
+            <p className="mt-2 text-sm font-bold text-[#46534a] lg:mt-1">
+              Food arrivals, decisions, and needs for today.
+            </p>
+          </div>
+          <Link
+            className="inline-flex min-h-10 w-max items-center gap-2 rounded-full bg-[#e9efe1] px-4 text-sm font-black text-[#23452b] lg:hidden"
+            href="/demo"
+          >
+            <AppIcon name="marker" className="h-5 w-5 text-[#2f7a46]" />
+            Receiver · {data.profile.location.city || "Jakarta Selatan"}
+          </Link>
         </div>
-        <div className="flex flex-wrap items-center gap-5 xl:justify-end">
+        <div className="hidden flex-wrap items-center gap-3 xl:flex xl:justify-end">
           <TopbarSelect
             icon="profile"
-            label=""
-            value={roleLabels[data.user.role]}
+            label="Role"
+            value={`${roleLabels[data.user.role]} · ${data.profile.location.city || "Jakarta Selatan"}`}
             href="/demo"
           />
           <a
-            className="relative border-l border-[#ded7c9] pl-5 text-[#101812]"
+            className="relative grid min-h-11 min-w-11 place-items-center rounded-full border border-[#d2cbbd] bg-[#fffdf8] text-[#101812] shadow-sm lg:border-l lg:border-y-0 lg:border-r-0 lg:bg-transparent lg:pl-5 lg:shadow-none"
             href="#notifications"
             aria-label="Notifications"
           >
-            <AppIcon name="bell" className="h-8 w-8" />
+            <AppIcon name="bell" className="h-6 w-6 lg:h-8 lg:w-8" />
             {unread > 0 ? (
               <span className="absolute -right-2 -top-2 grid h-5 min-w-5 place-items-center rounded-full bg-[#ffbd1a] px-1 text-xs font-black text-[#10140d]">
                 {unread}
               </span>
             ) : null}
           </a>
-          <span className="h-10 w-px bg-[#ded7c9]" aria-hidden="true" />
-          <div className="flex items-center gap-3">
+          <span
+            className="hidden h-10 w-px bg-[#ded7c9] lg:block"
+            aria-hidden="true"
+          />
+          <div className="hidden items-center gap-3 lg:flex">
             <span className="grid h-12 w-12 place-items-center rounded-full bg-[#064c25] text-sm font-black text-white">
               {initials}
             </span>
@@ -1216,30 +1283,60 @@ function DashboardTopbar({ data }: { data: DashboardData }) {
 
   return (
     <header
-      className="-mx-4 mb-5 grid gap-4 border-b border-[#ded7c9] bg-[#fffdf8]/70 px-4 py-4 md:mx-0 md:rounded-xl md:border md:px-5 md:grid-cols-[1fr_auto_auto] md:items-center"
+      className="mb-4 grid gap-4 bg-transparent pt-1 md:mx-0 md:rounded-xl md:border md:border-[#ded7c9] md:bg-[#fffdf8]/70 md:px-5 md:py-4 md:grid-cols-[1fr_auto_auto] md:items-center"
       id="dashboard-title"
     >
-      <div className="min-w-0">
-        <Link
-          className="font-serif text-[1.65rem] leading-none tracking-[-0.045em] text-[#061e0e] md:text-[2.35rem] md:tracking-[-0.055em]"
-          href="/"
-        >
-          FoodLink
-        </Link>
-        <p className="mt-2 truncate text-sm font-black text-[#101812] md:hidden">
+      <div className="grid min-w-0 gap-3">
+        <div className="flex items-center justify-between md:block">
+          <Link
+            className="inline-flex items-center gap-3 text-[#063514] md:block"
+            href="/"
+          >
+            <span className="grid h-10 w-10 place-items-center rounded-full bg-[#e5f1df] text-[#31583c] md:hidden">
+              <AppIcon name="leaf" className="h-6 w-6" />
+            </span>
+            <span className="text-xl font-black tracking-[-0.035em] md:font-serif md:text-[2.35rem] md:font-normal md:leading-none md:tracking-[-0.055em]">
+              FoodLink
+            </span>
+          </Link>
+          <a
+            className="relative grid min-h-11 min-w-11 place-items-center rounded-full text-[#101812] md:hidden"
+            href="#notifications"
+            aria-label="Notifications"
+          >
+            <AppIcon name="bell" className="h-7 w-7" />
+            {unread > 0 ? (
+              <span className="absolute right-1 top-1 grid h-4 min-w-4 place-items-center rounded-full bg-[#ffbd1a] px-1 text-[0.58rem] font-black text-[#10140d]" />
+            ) : null}
+          </a>
+        </div>
+        <div className="md:hidden">
+          <h1 className="font-serif text-[1.75rem] leading-none tracking-[-0.05em] text-[#063514]">
+            Morning, {data.profile.displayName}
+          </h1>
+          <p className="mt-2 text-sm font-bold text-[#46534a]">
+            Surplus posts, proposals, and pickups for today.
+          </p>
+        </div>
+        <p className="hidden truncate text-sm font-black text-[#101812]">
           Good morning, {data.profile.displayName}
         </p>
       </div>
       <Link
-        className="grid min-w-0 gap-1 justify-self-center rounded-md border border-[#d2cbbd] bg-[#fffdf8] px-3 py-1.5 text-xs font-bold shadow-sm md:justify-self-start"
+        className="inline-flex min-h-10 w-max items-center gap-2 rounded-full bg-[#e9efe1] px-4 text-sm font-black text-[#23452b] md:grid md:min-w-0 md:gap-1 md:justify-self-start md:rounded-md md:border md:border-[#d2cbbd] md:bg-[#fffdf8] md:px-3 md:py-1.5 md:text-xs md:shadow-sm"
         href="/demo"
       >
-        <span className="text-[#111a14]">Role</span>
+        <span className="hidden text-[#111a14] md:block">Role</span>
         <span className="flex items-center gap-2 text-sm font-black">
+          <AppIcon name="marker" className="h-5 w-5 text-[#2f7a46] md:hidden" />
           <span className="grid h-5 w-5 place-items-center rounded-full border border-[#0c7438] bg-[#e7f1e5]">
             <span className="h-2.5 w-2.5 rounded-full bg-[#0c7438]" />
           </span>
-          {roleLabels[data.user.role]}
+          <span className="md:hidden">
+            {roleLabels[data.user.role]} ·{" "}
+            {data.profile.location.city || "Jakarta Selatan"}
+          </span>
+          <span className="hidden md:inline">{roleLabels[data.user.role]}</span>
           <span className="ml-auto text-lg leading-none">⌄</span>
         </span>
       </Link>
