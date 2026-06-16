@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+:root {
+  --ink: oklch(18% 0.025 153);
+  --ink-soft: oklch(34% 0.035 151);
+  --leaf: oklch(35% 0.12 154);
+  --leaf-deep: oklch(22% 0.09 156);
+  --leaf-pale: oklch(91% 0.05 145);
+  --sun: oklch(82% 0.16 78);
+  --sun-deep: oklch(72% 0.16 66);
+  --paper: oklch(96% 0.018 91);
+  --paper-warm: oklch(91% 0.03 88);
+  --line: oklch(72% 0.025 92 / 0.65);
+  --white-tint: oklch(99% 0.006 96);
+}
+
+@theme inline {
+  --color-background: var(--paper);
+  --color-foreground: var(--ink);
+  --font-sans: var(--font-nunito);
+  --font-serif: var(--font-young-serif);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-width: 320px;
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-nunito), sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+svg {
+  display: block;
+  width: 1em;
+  height: 1em;
+}
