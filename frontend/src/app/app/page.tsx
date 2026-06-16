@@ -1106,7 +1106,7 @@ function DashboardTopbar({ data }: { data: DashboardData }) {
     return (
       <header
         className="mb-4 grid gap-4 border-b border-[#ded7c9] pb-4 xl:grid-cols-[max-content_1fr_auto] xl:items-center"
-        id="overview"
+        id="dashboard-title"
       >
         <Link
           className="font-serif text-[2.35rem] leading-none tracking-[-0.055em] text-[#061e0e]"
@@ -1169,7 +1169,7 @@ function DashboardTopbar({ data }: { data: DashboardData }) {
     return (
       <header
         className="-mx-5 mb-6 grid gap-4 border-b border-[#ded7c9] bg-[#fffdf8]/58 px-5 py-5 lg:-mx-8 lg:px-8 xl:grid-cols-[1fr_auto] xl:items-center"
-        id="overview"
+        id="dashboard-title"
       >
         <div>
           <h1 className="flex items-center gap-3 text-[1.45rem] font-black leading-tight text-[#101812]">
@@ -1217,7 +1217,7 @@ function DashboardTopbar({ data }: { data: DashboardData }) {
   return (
     <header
       className="-mx-4 mb-5 grid gap-4 border-b border-[#ded7c9] bg-[#fffdf8]/70 px-4 py-4 md:mx-0 md:rounded-xl md:border md:px-5 md:grid-cols-[1fr_auto_auto] md:items-center"
-      id="overview"
+      id="dashboard-title"
     >
       <div className="min-w-0">
         <Link
