@@ -10,7 +10,7 @@ import {
   rejectDeliveryProposal,
   type User,
 } from "@/lib/api";
-import { Modal, SlidePanel } from "./dashboard-layout";
+import { Modal, SlidePanel } from "./AppShell";
 import {
   AppIcon,
   badgeBase,
@@ -25,7 +25,7 @@ import {
   readableDonationId,
   receiverNotificationTitle,
   statusClass,
-} from "./dashboard-ui";
+} from "./ui";
 
 export function ProposalQueue({
   donations,

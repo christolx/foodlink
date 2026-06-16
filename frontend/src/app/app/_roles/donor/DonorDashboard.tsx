@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import {
   CldUploadWidget,
   type CloudinaryUploadWidgetInfo,
@@ -8,13 +9,11 @@ import {
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { createDonation } from "@/lib/api";
-import { LocationPickerMapDynamic } from "./dashboard-maps";
 import {
   DonationsTable,
   NotificationsPanel,
   ProposalQueue,
-} from "./dashboard-shared";
-import type { DashboardData } from "./dashboard-types";
+} from "../../_components/NotificationsPanel";
 import {
   AppIcon,
   cx,
@@ -25,7 +24,17 @@ import {
   input,
   panel,
   primaryButton,
-} from "./dashboard-ui";
+} from "../../_components/ui";
+import type { DashboardData } from "../../_types/dashboard";
+
+const LocationPickerMapDynamic = dynamic(() => import("./LocationPickerMap"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-full items-center justify-center text-sm text-[#46534a]">
+      Loading map…
+    </div>
+  ),
+});
 
 const cloudinaryCloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
 const cloudinaryUploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;

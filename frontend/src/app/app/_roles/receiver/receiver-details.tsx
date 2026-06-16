@@ -1,7 +1,7 @@
 "use client";
 
 import type { Donation } from "@/lib/api";
-import { AppIcon, formatTime, type IconName } from "./dashboard-ui";
+import { AppIcon, formatTime, type IconName } from "../../_components/ui";
 
 export function ReceiverInfoBlock({
   icon,

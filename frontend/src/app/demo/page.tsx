@@ -6,7 +6,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import type { UserRole } from "@/lib/api";
 import { demoLogin, getMyProfile } from "@/lib/session";
-import { accentClasses, parseDemoRole, roles } from "./demo-data";
 import {
   ArrowIcon,
   BackArrowIcon,
@@ -19,7 +18,8 @@ import {
   RoleIcon,
   ShieldIcon,
   SpinnerIcon,
-} from "./demo-ui";
+} from "./_components/DemoIcons";
+import { accentClasses, parseDemoRole, roles } from "./_data/roles";
 
 export default function DemoPage() {
   return (

@@ -11,24 +11,24 @@ import {
 } from "@/lib/api";
 import { clearToken, getToken } from "@/lib/auth";
 import { getMe, getMyProfile } from "@/lib/session";
-import { DashboardErrorBoundary } from "./dashboard-error-boundary";
+import { DashboardErrorBoundary } from "./_components/ErrorBoundary";
 import {
   DashboardSidebar,
   DashboardTopbar,
   DonorBottomNavigation,
   ReceiverBottomNavigation,
   VolunteerBottomNavigation,
-} from "./dashboard-layout";
-import { NotificationsPanel } from "./dashboard-shared";
+} from "./_components/Navigation";
+import { NotificationsPanel } from "./_components/NotificationsPanel";
+import { cx, leafMark } from "./_components/ui";
+import { DonorDashboard } from "./_roles/donor/DonorDashboard";
+import { ReceiverDashboard } from "./_roles/receiver/ReceiverDashboard";
+import { VolunteerDashboard } from "./_roles/volunteer/VolunteerDashboard";
 import type {
   ActionState,
   DashboardData,
   SidePanelType,
-} from "./dashboard-types";
-import { cx, leafMark } from "./dashboard-ui";
-import { DonorDashboard } from "./donor-dashboard";
-import { ReceiverDashboard } from "./receiver-dashboard";
-import { VolunteerDashboard } from "./volunteer-dashboard";
+} from "./_types/dashboard";
 
 export default function AppPage() {
   const router = useRouter();

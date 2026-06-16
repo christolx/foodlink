@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import type { DemoRole } from "./demo-data";
+import type { DemoRole } from "../_data/roles";
 
 export function LeafIcon() {
   return (

@@ -9,6 +9,7 @@ import (
 
 	"foodlink-be/internal/api"
 	"foodlink-be/internal/models"
+	"foodlink-be/internal/store"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -66,4 +67,35 @@ func parseBearer(header string, secret []byte) (string, error) {
 		return "", errors.New("invalid bearer token")
 	}
 	return claims.Subject, nil
+}
+
+func (s *Server) DemoLogin(ctx context.Context, request api.DemoLoginRequestObject) (api.DemoLoginResponseObject, error) {
+	if request.Body == nil || (request.Body.UserId == nil && request.Body.Role == nil) {
+		return api.DemoLogin400JSONResponse{BadRequestJSONResponse: badRequest("missing userId or role")}, nil
+	}
+
+	var user models.User
+	var err error
+	if request.Body.UserId != nil {
+		user, err = s.store.UserByID(*request.Body.UserId)
+	} else {
+		user, err = s.store.UserByRole(*request.Body.Role)
+	}
+	if errors.Is(err, store.ErrNotFound) {
+		return api.DemoLogin400JSONResponse{BadRequestJSONResponse: badRequest("demo user not found")}, nil
+	}
+	if err != nil {
+		return api.DemoLogin500JSONResponse{InternalServerErrorJSONResponse: internalError()}, nil
+	}
+
+	token, err := s.signToken(user.ID)
+	if err != nil {
+		return api.DemoLogin500JSONResponse{InternalServerErrorJSONResponse: internalError()}, nil
+	}
+	tokenType := api.Bearer
+	return api.DemoLogin200JSONResponse{
+		AccessToken: token,
+		TokenType:   &tokenType,
+		User:        userDTO(user),
+	}, nil
 }

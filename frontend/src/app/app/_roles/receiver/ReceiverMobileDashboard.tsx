@@ -10,7 +10,7 @@ import {
   type Profile,
   rejectDeliveryProposal,
 } from "@/lib/api";
-import { SlidePanel } from "./dashboard-layout";
+import { SlidePanel } from "../../_components/AppShell";
 import {
   AppIcon,
   badgeBase,
@@ -25,13 +25,13 @@ import {
   primaryButton,
   readableDonationId,
   statusClass,
-} from "./dashboard-ui";
+} from "../../_components/ui";
+import { ReceiverNeedsCard } from "./ReceiverNeedsCard";
 import {
   ReceiverDetailNote,
   ReceiverEtaBlock,
   ReceiverInfoBlock,
-} from "./receiver-common";
-import { ReceiverNeedsCard } from "./receiver-needs";
+} from "./receiver-details";
 
 export function ReceiverMobileDashboard({
   acceptedCount,

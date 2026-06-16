@@ -9,8 +9,7 @@ import {
   type Pickup,
   rejectDeliveryProposal,
 } from "@/lib/api";
-import { SlidePanel } from "./dashboard-layout";
-import type { DashboardData } from "./dashboard-types";
+import { SlidePanel } from "../../_components/AppShell";
 import {
   AppIcon,
   compactFoodDescription,
@@ -25,15 +24,16 @@ import {
   primaryButton,
   quantityNumber,
   readableDonationId,
-} from "./dashboard-ui";
+} from "../../_components/ui";
+import type { DashboardData } from "../../_types/dashboard";
+import { ReceiverMobileDashboard } from "./ReceiverMobileDashboard";
+import { ReceiverNeedsCard } from "./ReceiverNeedsCard";
 import {
   ReceiverDetailNote,
   ReceiverEtaBlock,
   ReceiverInfoBlock,
   ReceiverRouteSummary,
-} from "./receiver-common";
-import { ReceiverMobileDashboard } from "./receiver-mobile";
-import { ReceiverNeedsCard } from "./receiver-needs";
+} from "./receiver-details";
 
 export function ReceiverDashboard({
   data,

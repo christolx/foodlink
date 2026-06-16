@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { type Profile, updateMyProfile } from "@/lib/api";
-import { SlidePanel } from "./dashboard-layout";
-import { AppIcon, cx, panel } from "./dashboard-ui";
+import { SlidePanel } from "../../_components/AppShell";
+import { AppIcon, cx, panel } from "../../_components/ui";
 
 export function ReceiverNeedsCard({
   profile,

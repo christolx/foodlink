@@ -3,14 +3,14 @@
 import Link from "next/link";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import type { DashboardData, SidePanelType } from "../_types/dashboard";
 import {
   HelpPanelContent,
   ProfilePanelContent,
   ReportsPanelContent,
   SettingsPanelContent,
-} from "./dashboard-panels";
-import type { DashboardData, SidePanelType } from "./dashboard-types";
-import { AppIcon, cx, type IconName, roleLabels } from "./dashboard-ui";
+} from "./SidePanels";
+import { AppIcon, cx, type IconName, roleLabels } from "./ui";
 
 export function Modal({
   title,

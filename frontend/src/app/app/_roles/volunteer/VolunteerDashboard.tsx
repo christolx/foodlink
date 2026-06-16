@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import {
@@ -10,8 +11,6 @@ import {
   type Pickup,
   type Profile,
 } from "@/lib/api";
-import { VolunteerMapDynamic } from "./dashboard-maps";
-import type { DashboardData } from "./dashboard-types";
 import {
   AppIcon,
   badgeBase,
@@ -25,8 +24,18 @@ import {
   panel,
   primaryButton,
   statusClass,
-} from "./dashboard-ui";
-import { VolunteerMobileDashboard } from "./volunteer-mobile";
+} from "../../_components/ui";
+import type { DashboardData } from "../../_types/dashboard";
+import { VolunteerMobileDashboard } from "./VolunteerMobileDashboard";
+
+const VolunteerMapDynamic = dynamic(() => import("./VolunteerMap"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-full items-center justify-center text-sm text-[#46534a]">
+      Loading map…
+    </div>
+  ),
+});
 
 export function VolunteerDashboard({
   data,

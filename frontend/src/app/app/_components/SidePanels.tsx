@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import type { DashboardData } from "./dashboard-types";
-import { AppIcon, badgeBase, cx } from "./dashboard-ui";
+import type { DashboardData } from "../_types/dashboard";
+import { AppIcon, badgeBase, cx } from "./ui";
 
 export function ProfilePanelContent({
   data,

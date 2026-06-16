@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import type { Donation, Pickup, Profile } from "@/lib/api";
-import type { DashboardData } from "./dashboard-types";
 import {
   AppIcon,
   compactFoodDescription,
@@ -13,7 +12,8 @@ import {
   quantityNumber,
   receiverNotificationTitle,
   roleLabels,
-} from "./dashboard-ui";
+} from "../../_components/ui";
+import type { DashboardData } from "../../_types/dashboard";
 
 export function VolunteerMobileDashboard({
   data,
