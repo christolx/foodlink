@@ -210,7 +210,7 @@ export default function AppPage() {
 
   return (
     <main className="grid min-h-screen bg-[#f8f6ef] text-[#101812] lg:grid-cols-[13.75rem_minmax(0,1fr)]">
-      <DashboardSidebar data={data} token={token} signOut={signOut} sidebarOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <DashboardSidebar data={data} token={token} signOut={signOut} sidebarOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} runAction={runAction} />
 
       <section
         className="mx-auto w-full max-w-[116rem] px-4 py-5 lg:px-8 lg:py-7"
@@ -235,29 +235,21 @@ export default function AppPage() {
           <DonorDashboard data={data} token={token} runAction={runAction} />
         ) : null}
         {data.user.role !== "donor" ? (
-          <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
-            <div className="grid gap-4" id="work">
-              {data.user.role === "volunteer" ? (
-                <VolunteerDashboard
-                  data={data}
-                  token={token}
-                  runAction={runAction}
-                />
-              ) : null}
-              {data.user.role === "receiver" ? (
-                <ReceiverDashboard
-                  data={data}
-                  token={token}
-                  runAction={runAction}
-                />
-              ) : null}
-            </div>
-            <NotificationsPanel
-              notifications={data.notifications}
-              viewerRole={data.user.role}
-              token={token}
-              runAction={runAction}
-            />
+          <div className="grid gap-4" id="work">
+            {data.user.role === "volunteer" ? (
+              <VolunteerDashboard
+                data={data}
+                token={token}
+                runAction={runAction}
+              />
+            ) : null}
+            {data.user.role === "receiver" ? (
+              <ReceiverDashboard
+                data={data}
+                token={token}
+                runAction={runAction}
+              />
+            ) : null}
           </div>
         ) : null}
       </section>
@@ -265,7 +257,7 @@ export default function AppPage() {
   );
 }
 
-type SidePanelType = "profile" | "settings" | "reports" | "help" | "messages";
+type SidePanelType = "profile" | "settings" | "reports" | "help" | "messages" | "notifications" | "available-donations" | "receivers";
 
 function Modal({
   title,
@@ -276,6 +268,8 @@ function Modal({
   onClose: () => void;
   children: ReactNode;
 }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -284,6 +278,7 @@ function Modal({
     return () => document.removeEventListener("keydown", handler);
   }, [onClose]);
 
+  if (!mounted) return null;
   return createPortal(
     <>
       <div
@@ -322,6 +317,8 @@ function SlidePanel({
   onClose: () => void;
   children: ReactNode;
 }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -330,6 +327,7 @@ function SlidePanel({
     return () => document.removeEventListener("keydown", handler);
   }, [onClose]);
 
+  if (!mounted) return null;
   return createPortal(
     <>
       <div
@@ -585,6 +583,8 @@ function ChatPanel({
   initialConvId?: string;
   onClose: () => void;
 }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
   const [view, setView] = useState<"list" | "thread">("list");
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConv, setActiveConv] = useState<Conversation | null>(null);
@@ -642,6 +642,7 @@ function ChatPanel({
     }
   }
 
+  if (!mounted) return null;
   return createPortal(
     <>
       <div className="fixed inset-0 z-[1100] bg-black/40 backdrop-blur-sm" onClick={onClose} />
@@ -764,18 +765,129 @@ function ChatPanel({
   );
 }
 
+function SidebarDonationsPanel({ donations }: { donations: Donation[] }) {
+  const [filter, setFilter] = useState<"all" | "available">("available");
+  const [search, setSearch] = useState("");
+  const filtered = donations.filter((d) => {
+    if (filter === "available" && d.status !== "available") return false;
+    if (search && !d.title.toLowerCase().includes(search.toLowerCase())) return false;
+    return true;
+  });
+  return (
+    <div className="grid gap-4">
+      <div className="grid grid-cols-2 gap-1 rounded-lg border border-[#e4ddcf] bg-[#f4f0e8] p-1">
+        <button
+          type="button"
+          className={cx("rounded-md py-1.5 text-xs font-black transition-colors", filter === "available" ? "bg-white text-[#064c25] shadow-sm" : "text-[#46534a]")}
+          onClick={() => setFilter("available")}
+        >
+          Available
+        </button>
+        <button
+          type="button"
+          className={cx("rounded-md py-1.5 text-xs font-black transition-colors", filter === "all" ? "bg-white text-[#064c25] shadow-sm" : "text-[#46534a]")}
+          onClick={() => setFilter("all")}
+        >
+          All
+        </button>
+      </div>
+      <label className="grid grid-cols-[2rem_1fr] items-center overflow-hidden rounded-lg border border-[#d7d0c2] bg-[#fffdf8]">
+        <span className="grid place-items-center text-[#526158]">
+          <AppIcon name="search" className="h-4 w-4" />
+        </span>
+        <input
+          className="h-10 bg-transparent pr-3 text-sm font-bold outline-none placeholder:text-[#7b837c]"
+          placeholder="Search donations…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </label>
+      <div className="grid gap-2">
+        {filtered.length === 0 ? (
+          <p className="py-6 text-center text-sm font-bold text-[#46534a]">No donations found.</p>
+        ) : (
+          filtered.map((donation) => (
+            <article key={donation.id} className="grid grid-cols-[3.5rem_1fr] gap-3 rounded-lg border border-[#e4ddcf] bg-[#fffdf8] p-3">
+              <DonationThumbnail donation={donation} size="md" />
+              <div className="min-w-0">
+                <strong className="block truncate text-sm font-black text-[#101812]">{donation.title}</strong>
+                <span className="mt-0.5 block truncate text-xs font-bold text-[#46534a]">{donation.quantity}</span>
+                <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                  <span className={cx(badgeBase, donation.status === "available" ? "bg-[#dbeafe] text-[#1e40af]" : statusClass(donation.status))}>
+                    {donation.status === "proposal_pending" ? "Pending" : donation.status.replace(/_/g, " ")}
+                  </span>
+                  <span className="text-xs font-bold text-[#7a817b]">Until {formatTime(donation.availableUntil)}</span>
+                </div>
+              </div>
+            </article>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+function SidebarReceiversPanel({ receivers }: { receivers: Profile[] }) {
+  const [search, setSearch] = useState("");
+  const filtered = receivers.filter((r) =>
+    !search || r.displayName.toLowerCase().includes(search.toLowerCase())
+  );
+  return (
+    <div className="grid gap-4">
+      <label className="grid grid-cols-[2rem_1fr] items-center overflow-hidden rounded-lg border border-[#d7d0c2] bg-[#fffdf8]">
+        <span className="grid place-items-center text-[#526158]">
+          <AppIcon name="search" className="h-4 w-4" />
+        </span>
+        <input
+          className="h-10 bg-transparent pr-3 text-sm font-bold outline-none placeholder:text-[#7b837c]"
+          placeholder="Search receivers…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </label>
+      <div className="grid gap-2">
+        {filtered.length === 0 ? (
+          <p className="py-6 text-center text-sm font-bold text-[#46534a]">No receivers found.</p>
+        ) : (
+          filtered.map((receiver) => (
+            <article key={receiver.userId} className="grid grid-cols-[2.75rem_1fr] gap-3 rounded-lg border border-[#e4ddcf] bg-[#fffdf8] p-3">
+              <span className="grid h-11 w-11 place-items-center rounded-full bg-[#e5f1df] text-sm font-black text-[#14733a]">
+                {receiver.displayName.slice(0, 2).toUpperCase()}
+              </span>
+              <div className="min-w-0">
+                <strong className="block truncate text-sm font-black text-[#101812]">{receiver.displayName}</strong>
+                {receiver.location?.city ? (
+                  <span className="mt-0.5 flex items-center gap-1 text-xs font-bold text-[#46534a]">
+                    <AppIcon name="marker" className="h-3.5 w-3.5 shrink-0" />
+                    <span className="truncate">{receiver.location.city}</span>
+                  </span>
+                ) : null}
+                {receiver.contactValue ? (
+                  <span className="mt-1 block truncate text-xs font-bold text-[#7a817b]">{receiver.contactValue}</span>
+                ) : null}
+              </div>
+            </article>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
 function DashboardSidebar({
   data,
   token,
   signOut,
   sidebarOpen,
   onClose,
+  runAction,
 }: {
   data: DashboardData;
   token: string;
   signOut: () => void;
   sidebarOpen: boolean;
   onClose: () => void;
+  runAction: (callback: () => Promise<void>, success: string) => Promise<void>;
 }) {
   const role = data.user.role;
   const initials = data.profile.displayName
@@ -795,11 +907,6 @@ function DashboardSidebar({
       ).length;
       return [
         {
-          label: "Dashboard",
-          icon: "dashboard" as IconName,
-          href: "#dashboard-title",
-        },
-        {
           label: "Proposals",
           icon: "box" as IconName,
           href: "#proposal-queue",
@@ -808,6 +915,7 @@ function DashboardSidebar({
         { label: "Deliveries", icon: "pickup" as IconName, href: "#work" },
         { label: "Needs", icon: "bag" as IconName, href: "#my-food-requests" },
         { label: "Messages", icon: "message" as IconName, panel: "messages" as SidePanelType },
+        { label: "Notifications", icon: "bell" as IconName, panel: "notifications" as SidePanelType },
       ];
     }
     if (role === "volunteer") {
@@ -815,13 +923,10 @@ function DashboardSidebar({
         (d) => d.status === "available",
       ).length;
       return [
-        { label: "Dashboard", icon: "dashboard" as IconName, href: "#dashboard-title" },
-        { label: "Available donations", icon: "bag" as IconName, href: "#available-donations", badge: availableCount },
-        { label: "Receivers", icon: "team" as IconName, href: "#receiver-directory" },
-        { label: "My proposals", icon: "box" as IconName, href: "#my-proposals" },
-        { label: "Pickups", icon: "pickup" as IconName, href: "#active-pickup" },
-        { label: "History", icon: "clock" as IconName, href: "#today-at-a-glance" },
+        { label: "Available donations", icon: "bag" as IconName, panel: "available-donations" as SidePanelType, badge: availableCount },
+        { label: "Receivers", icon: "team" as IconName, panel: "receivers" as SidePanelType },
         { label: "Messages", icon: "message" as IconName, panel: "messages" as SidePanelType },
+        { label: "Notifications", icon: "bell" as IconName, panel: "notifications" as SidePanelType },
         { label: "Reports", icon: "chart" as IconName, panel: "reports" as SidePanelType },
         { label: "Profile", icon: "profile" as IconName, panel: "profile" as SidePanelType },
         { label: "Settings", icon: "settings" as IconName, panel: "settings" as SidePanelType },
@@ -830,11 +935,9 @@ function DashboardSidebar({
     }
     // Donor
     return [
-      { label: "Dashboard", icon: "dashboard" as IconName, href: "#dashboard-title" },
       { label: "My donations", icon: "bag" as IconName, href: "#my-donations" },
       { label: "Proposals", icon: "box" as IconName, href: "#proposal-queue" },
-      { label: "Pickups", icon: "pickup" as IconName, href: "#work" },
-      { label: "Notifications", icon: "bell" as IconName, href: "#notifications" },
+      { label: "Notifications", icon: "bell" as IconName, panel: "notifications" as SidePanelType },
     ];
   }, [role, data]);
 
@@ -1004,7 +1107,7 @@ function DashboardSidebar({
                 key={item.label}
                 type="button"
                 className={sharedClass}
-                onClick={() => setActivePanel(activePanel === item.panel ? null : item.panel as SidePanelType)}
+                onClick={() => { setActiveHref(""); setActivePanel(activePanel === item.panel ? null : item.panel as SidePanelType); }}
               >
                 <AppIcon name={item.icon} className="h-5 w-5 shrink-0" />
                 {item.label}
@@ -1035,7 +1138,27 @@ function DashboardSidebar({
           onClose={() => setActivePanel(null)}
         />
       )}
-      {activePanel && activePanel !== "messages" && (
+      {activePanel === "notifications" && (
+        <SlidePanel title="Notifications" icon="bell" onClose={() => setActivePanel(null)}>
+          <NotificationsPanel
+            notifications={data.notifications}
+            viewerRole={data.user.role}
+            token={token}
+            runAction={runAction}
+          />
+        </SlidePanel>
+      )}
+      {activePanel === "available-donations" && (
+        <SlidePanel title="Available donations" icon="bag" onClose={() => setActivePanel(null)}>
+          <SidebarDonationsPanel donations={data.donations} />
+        </SlidePanel>
+      )}
+      {activePanel === "receivers" && (
+        <SlidePanel title="Receivers" icon="team" onClose={() => setActivePanel(null)}>
+          <SidebarReceiversPanel receivers={data.receivers} />
+        </SlidePanel>
+      )}
+      {activePanel && !["messages","notifications","available-donations","receivers"].includes(activePanel) && (
         <SlidePanel
           title={
             activePanel === "profile" ? "My profile"
@@ -1258,12 +1381,12 @@ function DashboardTopbar({ data, onToggleSidebar }: { data: DashboardData; onTog
           ) : null}
         </a>
         <span className="h-10 w-px bg-[#d2cbbd]" aria-hidden="true" />
-        <div className="flex items-center gap-4">
-          <span className="grid h-12 w-12 place-items-center rounded-full bg-[#d9d8cf] font-black">
+        <div className="flex min-w-0 items-center gap-4">
+          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-[#d9d8cf] font-black">
             {initials}
           </span>
-          <span className="grid">
-            <strong className="font-black leading-5">
+          <span className="grid min-w-0">
+            <strong className="truncate font-black leading-5">
               {data.profile.displayName}
             </strong>
             <span className="text-sm font-bold text-[#46534a]">
@@ -1399,9 +1522,8 @@ function DonorDashboard({
 
   return (
     <>
-    <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_26rem]">
-      <div className="grid gap-5" id="work">
-        <section className="grid gap-5 lg:grid-cols-[minmax(28rem,1.08fr)_minmax(24rem,0.92fr)]">
+    <div className="grid min-w-0 gap-5" id="work">
+        <section className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
           <form
             className={cx(panel, "grid content-start gap-4 p-6")}
             onSubmit={handleCreateDonation}
@@ -1445,7 +1567,7 @@ function DonorDashboard({
             </label>
 
             <div className="grid gap-2">
-              <span className="flex items-center justify-between text-xs font-bold text-[#46534a]">
+              <span className="flex flex-wrap items-center justify-between gap-2 text-xs font-bold text-[#46534a]">
                 Pickup location
                 <span className="flex gap-1 rounded-lg border border-[#cfc8ba] bg-[#f4f0e8] p-0.5">
                   <button
@@ -1549,7 +1671,7 @@ function DonorDashboard({
               )}
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4 md:grid-cols-2">
               <label className="grid gap-2 text-xs font-bold text-[#46534a]">
                 Available from
                 <span className="relative block">
@@ -1666,14 +1788,6 @@ function DonorDashboard({
           proposals={data.proposals}
           title="My donations"
         />
-      </div>
-
-      <NotificationsPanel
-        notifications={data.notifications}
-        viewerRole={data.user.role}
-        token={token}
-        runAction={runAction}
-      />
     </div>
 
     {showMapPicker && createPortal(
@@ -2099,7 +2213,7 @@ function VolunteerDonationCard({
   return (
     <article
       className={cx(
-        "grid grid-cols-[1.75rem_5.4rem_1fr_auto] items-center gap-3 rounded-lg border p-3 transition",
+        "grid grid-cols-[auto_1fr] items-start gap-3 rounded-lg border p-3 transition",
         selectable
           ? selected
             ? "cursor-pointer border-[#2f7a46] bg-[#f8fbf3] shadow-[0_0.7rem_1.7rem_rgba(47,122,70,0.09)]"
@@ -2107,28 +2221,44 @@ function VolunteerDonationCard({
           : "cursor-default border-[#e4ddcf] bg-[#f7f5f0] opacity-60",
       )}
     >
-      <button
-        className={cx(
-          "grid h-6 w-6 place-items-center rounded-full border",
-          !selectable
-            ? "invisible"
-            : selected
-              ? "border-[#14733a] bg-[#14733a] text-white"
-              : "border-[#b8b8ae] bg-white",
-        )}
-        type="button"
-        aria-label={`Select ${donation.title}`}
-        disabled={!selectable}
-        onClick={() => selectable && onSelect(donation.id)}
-      >
-        {selected ? <AppIcon name="check" className="h-4 w-4" /> : null}
-      </button>
-      <DonationThumbnail donation={donation} size="lg" />
+      <div className="flex items-center gap-2">
+        <button
+          className={cx(
+            "grid h-6 w-6 shrink-0 place-items-center rounded-full border",
+            !selectable
+              ? "invisible"
+              : selected
+                ? "border-[#14733a] bg-[#14733a] text-white"
+                : "border-[#b8b8ae] bg-white",
+          )}
+          type="button"
+          aria-label={`Select ${donation.title}`}
+          disabled={!selectable}
+          onClick={() => selectable && onSelect(donation.id)}
+        >
+          {selected ? <AppIcon name="check" className="h-4 w-4" /> : null}
+        </button>
+        <DonationThumbnail donation={donation} size="lg" />
+      </div>
       <div className="min-w-0">
-        <strong className="block truncate text-sm font-black text-[#101812]">
-          {donation.title}
-        </strong>
-        <span className="mt-1 block truncate text-xs font-bold text-[#46534a]">
+        <div className="flex flex-wrap items-start justify-between gap-x-2 gap-y-1">
+          <strong className="block truncate text-sm font-black text-[#101812]">
+            {donation.title}
+          </strong>
+          <span
+            className={cx(
+              badgeBase, "shrink-0",
+              donation.status === "available"
+                ? "bg-[#dbeafe] text-[#1e40af]"
+                : statusClass(donation.status),
+            )}
+          >
+            {donation.status === "proposal_pending"
+              ? "Pending"
+              : donation.status.replace(/_/g, " ")}
+          </span>
+        </div>
+        <span className="mt-0.5 block truncate text-xs font-bold text-[#46534a]">
           {donation.description || "Food ready for pickup"}
         </span>
         <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs font-bold text-[#46534a]">
@@ -2140,22 +2270,8 @@ function VolunteerDonationCard({
             <AppIcon name="clock" className="h-3.5 w-3.5" />
             {formatTime(donation.availableUntil)}
           </span>
+          <span className="font-bold text-[#46534a]">{distance}</span>
         </div>
-      </div>
-      <div className="grid justify-items-end gap-5">
-        <span className="text-xs font-bold text-[#46534a]">{distance}</span>
-        <span
-          className={cx(
-            badgeBase,
-            donation.status === "available"
-              ? "bg-[#dbeafe] text-[#1e40af]"
-              : statusClass(donation.status),
-          )}
-        >
-          {donation.status === "proposal_pending"
-            ? "Proposal pending"
-            : donation.status.replace(/_/g, " ")}
-        </span>
       </div>
     </article>
   );
@@ -3693,7 +3809,7 @@ function ProposalQueue({
 
   return (
     <>
-    <section className={cx(panel, "min-h-full p-6")} id="proposal-queue">
+    <section className={cx(panel, "min-h-full min-w-0 p-6")} id="proposal-queue">
       <header className="mb-4 flex items-start justify-between gap-4">
         <div className="flex items-center gap-4">
           <span className="grid h-12 w-12 place-items-center rounded-full bg-[#e5f1df] text-[#064c25]">
@@ -3748,73 +3864,73 @@ function ProposalQueue({
 
             return (
               <article
-                className="grid gap-4 rounded-lg border border-[#ded7c9] bg-[#fffdf8] p-3 md:grid-cols-[6rem_1fr_auto]"
+                className="grid gap-3 rounded-lg border border-[#ded7c9] bg-[#fffdf8] p-3 sm:grid-cols-[5rem_1fr]"
                 key={proposal.id}
               >
                 <DonationThumbnail donation={donation} size="lg" />
-                <div>
-                  <strong className="block text-sm font-black text-[#101812]">
-                    {donation
-                      ? donation.title
-                      : `Donation ${proposal.donationId}`}
-                  </strong>
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
+                    <strong className="block truncate text-sm font-black text-[#101812]">
+                      {donation
+                        ? donation.title
+                        : `Donation ${proposal.donationId}`}
+                    </strong>
+                    <div className="flex shrink-0 flex-wrap gap-1.5">
+                      <span
+                        className={cx(
+                          badgeBase,
+                          donorAccepted
+                            ? "bg-[#e4f1e0] text-[#116b35]"
+                            : "bg-[#fff3df] text-[#c46b00]",
+                        )}
+                      >
+                        Donor {donorAccepted ? "✓" : "Pending"}
+                      </span>
+                      <span
+                        className={cx(
+                          badgeBase,
+                          receiverAccepted
+                            ? "bg-[#e4f1e0] text-[#116b35]"
+                            : proposal.status === "rejected"
+                              ? "bg-[#fde9e4] text-[#9b2118]"
+                              : "bg-[#fff3df] text-[#c46b00]",
+                        )}
+                      >
+                        Receiver{" "}
+                        {proposal.status === "rejected"
+                          ? "✗"
+                          : receiverAccepted
+                            ? "✓"
+                            : "Pending"}
+                      </span>
+                    </div>
+                  </div>
                   <p className="mt-1 text-xs font-bold text-[#111a14]">
                     {donation ? formatDate(donation.availableFrom) : "Today"}{" "}
-                    <span className="px-2">•</span>
+                    <span className="px-1">•</span>
                     {donation?.quantity ?? "Open quantity"}
                   </p>
-                  <div className="mt-3 grid gap-2 text-xs font-bold">
+                  <div className="mt-2 grid gap-1.5 text-xs font-bold">
                     <span className="flex items-center gap-2">
                       <span className="text-[#5c6860]">Volunteer</span>
-                      <span className="grid h-5 w-5 place-items-center rounded-full bg-[#ead7c5] text-[0.65rem] font-bold text-[#5c3e21]">
+                      <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-[#ead7c5] text-[0.65rem] font-bold text-[#5c3e21]">
                         {volunteerInitials}
                       </span>
-                      <span className="font-black text-[#101812]">
+                      <span className="truncate font-black text-[#101812]">
                         {volunteerName}
                       </span>
                     </span>
                     <span className="flex items-center gap-2">
                       <span className="text-[#5c6860]">Receiver</span>
-                      <span className="grid h-5 w-5 place-items-center rounded-full bg-[#fff4df] text-[#c46b00]">
+                      <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-[#fff4df] text-[#c46b00]">
                         <AppIcon name="leaf" className="h-3.5 w-3.5" />
                       </span>
-                      <span className="font-black text-[#101812]">
+                      <span className="truncate font-black text-[#101812]">
                         {receiverName}
                       </span>
                     </span>
                   </div>
-                </div>
-                <div className="grid content-between gap-3">
-                  <div className="grid gap-2 sm:grid-cols-2 2xl:grid-cols-1">
-                    <span
-                      className={cx(
-                        badgeBase,
-                        donorAccepted
-                          ? "bg-[#e4f1e0] text-[#116b35]"
-                          : "bg-[#fff3df] text-[#c46b00]",
-                      )}
-                    >
-                      Donor {donorAccepted ? "Accepted" : "Pending"}
-                    </span>
-                    <span
-                      className={cx(
-                        badgeBase,
-                        receiverAccepted
-                          ? "bg-[#e4f1e0] text-[#116b35]"
-                          : proposal.status === "rejected"
-                            ? "bg-[#fde9e4] text-[#9b2118]"
-                            : "bg-[#fff3df] text-[#c46b00]",
-                      )}
-                    >
-                      Receiver{" "}
-                      {proposal.status === "rejected"
-                        ? "Rejected"
-                        : receiverAccepted
-                          ? "Accepted"
-                          : "Pending"}
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-2 justify-self-end">
+                  <div className="mt-3 flex flex-wrap gap-2">
                     {viewerRole === "donor" && (() => {
                       const rawPhone = proposal.volunteerContactOverride ?? proposal.volunteerProfile?.contactValue ?? "";
                       if (!rawPhone) return null;
@@ -3985,10 +4101,10 @@ function DonationsTable({
   return (
     <>
     <section
-      className={cx(panel, "p-6", compact && "min-h-full")}
+      className={cx(panel, "min-w-0 p-6", compact && "min-h-full")}
       id="my-donations"
     >
-      <header className="mb-4 flex items-center justify-between gap-4">
+      <header className="mb-4 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <span className="grid h-12 w-12 place-items-center rounded-full bg-[#f4ead6] text-[#064c25]">
             <AppIcon name="package" className="h-6 w-6" />
@@ -4006,7 +4122,7 @@ function DonationsTable({
           ))}
         </select>
       </header>
-      <div className="mt-3 overflow-x-auto">
+      <div className="mt-3 min-w-0 overflow-x-auto">
         <table className="w-full min-w-[56rem] border-collapse">
           <thead className="text-left">
             <tr>
@@ -4195,58 +4311,24 @@ function NotificationsPanel({
   const unread = notifications.filter((item) => !item.read).length;
   const receiverVariant = viewerRole === "receiver";
   const [notificationFilter, setNotificationFilter] = useState<"all" | "unread">("all");
-  const [showAllModal, setShowAllModal] = useState(false);
   const visibleNotifications =
     receiverVariant && notificationFilter === "unread"
       ? notifications.filter((item) => !item.read)
       : notifications;
 
-  return (
-    <>
-    <aside
-      className={cx(panel, "lg:sticky lg:top-5 p-6")}
-      id="notifications"
-      aria-label="Notifications"
-    >
-      <header className="mb-3 flex items-center gap-3">
-        <h2 className={heading}>Notifications</h2>
-        {unread > 0 ? (
-          <span className="rounded-md bg-[#e5f1df] px-2 py-1 text-xs font-black text-[#064c25]">
-            {unread} unread
-          </span>
-        ) : null}
-        <button
-          className="ml-auto text-[#101812]"
-          type="button"
-          aria-label="Notification settings"
-        >
-          <AppIcon name="settings" className="h-5 w-5" />
-        </button>
-        <button className="text-[#101812]" type="button" aria-label="Close">
-          <AppIcon name="close" className="h-5 w-5" />
-        </button>
-      </header>
+  const listContent = (
+    <div className="grid gap-4">
       {receiverVariant ? (
-        <div className="mb-4 grid grid-cols-2 border-b border-[#ded7c9] text-center text-sm font-bold">
+        <div className="grid grid-cols-2 border-b border-[#ded7c9] text-center text-sm font-bold">
           <button
-            className={cx(
-              "py-3",
-              notificationFilter === "all"
-                ? "border-b-2 border-[#0b5b2b] text-[#064c25]"
-                : "text-[#46534a]",
-            )}
+            className={cx("py-3", notificationFilter === "all" ? "border-b-2 border-[#0b5b2b] text-[#064c25]" : "text-[#46534a]")}
             type="button"
             onClick={() => setNotificationFilter("all")}
           >
             All
           </button>
           <button
-            className={cx(
-              "py-3",
-              notificationFilter === "unread"
-                ? "border-b-2 border-[#0b5b2b] text-[#064c25]"
-                : "text-[#46534a]",
-            )}
+            className={cx("py-3", notificationFilter === "unread" ? "border-b-2 border-[#0b5b2b] text-[#064c25]" : "text-[#46534a]")}
             type="button"
             onClick={() => setNotificationFilter("unread")}
           >
@@ -4293,10 +4375,10 @@ function NotificationsPanel({
                 </span>
                 <div className="min-w-0">
                   <div className="flex items-start justify-between gap-3">
-                    <strong className="block text-sm font-black text-[#101812] min-w-0">
+                    <strong className="block min-w-0 text-sm font-black text-[#101812]">
                       {receiverNotificationTitle(notification)}
                     </strong>
-                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                    <div className="flex shrink-0 items-center gap-1.5">
                       <span className="whitespace-nowrap text-xs font-bold text-[#46534a]">
                         {formatDate(notification.createdAt)}
                       </span>
@@ -4330,86 +4412,8 @@ function NotificationsPanel({
                 : "No notifications yet.",
             )}
       </div>
-      <button
-        className="mt-4 flex min-h-12 w-full items-center justify-center gap-3 rounded-md border border-[#9eb69f] bg-[#fffdf8] text-sm font-black text-[#064c25] transition hover:bg-[#f0f7eb]"
-        type="button"
-        onClick={() => setShowAllModal(true)}
-      >
-        View all notifications <span className="text-lg">→</span>
-      </button>
-    </aside>
-
-    {showAllModal && (
-      <SlidePanel title="All notifications" icon="bell" onClose={() => setShowAllModal(false)}>
-        <div className="grid">
-          {notifications.length > 0 ? (
-            notifications.map((notification) => (
-              <article
-                className={cx(
-                  "grid grid-cols-[3rem_1fr] gap-3 border-t border-[#e4ddcf] py-4 first:border-t-0",
-                  notification.read && "opacity-60",
-                )}
-                key={notification.id}
-              >
-                <span
-                  className={cx(
-                    "grid h-11 w-11 place-items-center rounded-full",
-                    notification.type === "proposal_accepted"
-                      ? "bg-[#ffe9c1] text-[#dd6700]"
-                      : notification.type === "pickup_assigned"
-                        ? "bg-[#deedf8] text-[#1c6796]"
-                        : notification.type === "pickup_completed"
-                          ? "bg-[#dfeedd] text-[#116b35]"
-                          : "bg-[#e5f1df] text-[#064c25]",
-                  )}
-                >
-                  <AppIcon
-                    name={
-                      notification.type === "pickup_assigned"
-                        ? "pickup"
-                        : notification.type === "pickup_completed"
-                          ? "check"
-                          : notification.type === "proposal_created"
-                            ? "package"
-                            : "team"
-                    }
-                    className="h-5 w-5"
-                  />
-                </span>
-                <div className="min-w-0">
-                  <div className="flex items-start justify-between gap-2">
-                    <strong className="block text-sm font-black text-[#101812]">
-                      {receiverNotificationTitle(notification)}
-                    </strong>
-                    {!notification.read && (
-                      <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[#ffbd1a]" />
-                    )}
-                  </div>
-                  <span className="mt-0.5 block text-xs font-bold text-[#46534a]">
-                    {formatDate(notification.createdAt)}
-                  </span>
-                  {!notification.read && (
-                    <button
-                      className="mt-2 text-xs font-black text-[#064c25] hover:text-[#116b35]"
-                      type="button"
-                      onClick={() =>
-                        runAction(async () => {
-                          await markNotificationRead(token, notification.id);
-                        }, "Notification marked read.")
-                      }
-                    >
-                      Mark read
-                    </button>
-                  )}
-                </div>
-              </article>
-            ))
-          ) : (
-            <p className="py-8 text-center text-sm font-bold text-[#46534a]">No notifications yet.</p>
-          )}
-        </div>
-      </SlidePanel>
-    )}
-  </>
+    </div>
   );
+
+  return listContent;
 }
