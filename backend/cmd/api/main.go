@@ -2,16 +2,21 @@ package main
 
 import (
 	"flag"
-	"log"
-	"net/http"
-
 	"foodlink-be/internal/config"
 	"foodlink-be/internal/db"
 	"foodlink-be/internal/server"
 	"foodlink-be/internal/store"
+	"log"
+	"net/http"
+
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	if err := godotenv.Load(); err != nil {
+		log.Print("No .env loaded.")
+	}
+
 	runMigrate := flag.Bool("migrate", false, "run database migrations and seed demo data")
 	cleanupSmoke := flag.Bool("cleanup-smoke", false, "delete smoke test records")
 	runNuke := flag.Bool("nuke", false, "drop all database tables (can be combined with --migrate)")
@@ -58,7 +63,7 @@ func main() {
 
 	apiServer := &http.Server{
 		Addr:    ":" + cfg.Port,
-		Handler: server.Handler(st, cfg.JWTSecret),
+		Handler: server.HandlerWithOptions(st, cfg.JWTSecret, server.Options{AllowedOrigins: cfg.AllowedOrigins}),
 	}
 
 	log.Printf("FoodLink API listening on :%s", cfg.Port)

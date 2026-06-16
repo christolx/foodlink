@@ -148,6 +148,15 @@ func TestVolunteerProposalFlow(t *testing.T) {
 	if pickupList.Total == 0 || pickupList.Items[0].Donation == nil {
 		t.Fatalf("listed pickup missing embedded donation: %+v", pickupList.Items)
 	}
+	matchingPickups := 0
+	for _, item := range pickupList.Items {
+		if item.ProposalId == proposal.Id {
+			matchingPickups++
+		}
+	}
+	if matchingPickups != 1 {
+		t.Fatalf("pickups for proposal = %d, want 1", matchingPickups)
+	}
 
 	status, body = doJSON(t, handler, http.MethodPost, "/api/v1/pickups/"+receiverAccepted.Pickup.Id+"/pickup", api.UpdatePickupStatusRequest{}, volunteerToken)
 	if status != http.StatusOK {
@@ -277,7 +286,49 @@ func TestCreateDonationRequiresImageURL(t *testing.T) {
 	}
 }
 
+func TestCORSPreflightAllowsConfiguredOrigin(t *testing.T) {
+	handler := newTestHandlerWithOrigins(t, []string{"https://app.foodlink.test"})
+	req := httptest.NewRequest(http.MethodOptions, "/api/v1/me", nil)
+	req.Header.Set("Origin", "https://app.foodlink.test")
+	req.Header.Set("Access-Control-Request-Method", http.MethodGet)
+	req.Header.Set("Access-Control-Request-Headers", "Authorization,Content-Type")
+	res := httptest.NewRecorder()
+
+	handler.ServeHTTP(res, req)
+
+	if res.Code != http.StatusNoContent {
+		t.Fatalf("preflight status = %d, want %d", res.Code, http.StatusNoContent)
+	}
+	if got := res.Header().Get("Access-Control-Allow-Origin"); got != "https://app.foodlink.test" {
+		t.Fatalf("Access-Control-Allow-Origin = %q", got)
+	}
+	if got := res.Header().Get("Access-Control-Allow-Headers"); got != "Authorization,Content-Type" {
+		t.Fatalf("Access-Control-Allow-Headers = %q", got)
+	}
+}
+
+func TestCORSDoesNotAllowUnconfiguredOrigin(t *testing.T) {
+	handler := newTestHandlerWithOrigins(t, []string{"https://app.foodlink.test"})
+	req := httptest.NewRequest(http.MethodOptions, "/api/v1/me", nil)
+	req.Header.Set("Origin", "https://evil.test")
+	req.Header.Set("Access-Control-Request-Method", http.MethodGet)
+	res := httptest.NewRecorder()
+
+	handler.ServeHTTP(res, req)
+
+	if res.Code != http.StatusNoContent {
+		t.Fatalf("preflight status = %d, want %d", res.Code, http.StatusNoContent)
+	}
+	if got := res.Header().Get("Access-Control-Allow-Origin"); got != "" {
+		t.Fatalf("Access-Control-Allow-Origin = %q, want empty", got)
+	}
+}
+
 func newTestHandler(t *testing.T) http.Handler {
+	return newTestHandlerWithOrigins(t, nil)
+}
+
+func newTestHandlerWithOrigins(t *testing.T, allowedOrigins []string) http.Handler {
 	t.Helper()
 	conn, err := gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{})
 	if err != nil {
@@ -290,7 +341,10 @@ func newTestHandler(t *testing.T) http.Handler {
 	if err := st.SeedDemoData(); err != nil {
 		t.Fatal(err)
 	}
-	return server.Handler(st, "test-secret")
+	if allowedOrigins == nil {
+		return server.Handler(st, "test-secret")
+	}
+	return server.HandlerWithOptions(st, "test-secret", server.Options{AllowedOrigins: allowedOrigins})
 }
 
 func login(t *testing.T, handler http.Handler, role api.UserRole) string {

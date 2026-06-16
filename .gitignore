@@ -6,4 +6,10 @@ bin/
 tmp/
 *.log
 .DS_Store
+
+# Backend env handling by godotenv
+.env
+# Automatic env handling by Next.JS
+.env.local
+
 .env.yaml

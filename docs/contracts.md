@@ -22,6 +22,7 @@
 
 ## API Shape
 
+- `GET /health`
 - `POST /auth/demo-login`
 - `GET /me`
 - `GET /me/profile`
@@ -47,8 +48,17 @@
 - `PickupDTO` may include embedded `donation`, `donorProfile`, `receiverProfile`, and `volunteerProfile` fields for active delivery timelines.
 - Embedded fields are optional compatibility additions; IDs remain canonical.
 
+## Notable Validation Rules
+
+- Authenticated business endpoints require `Authorization: Bearer <token>`.
+- `CreateDonationRequest.imageUrl` is required by contract.
+- Backend currently accepts only HTTPS URLs hosted at `res.cloudinary.com` for donation images.
+- List endpoints use `page` and `pageSize`, defaulting server-side to page `1` and page size `20`.
+- Errors use `{ code, message }`.
+
 ## Contract Rule
 
 - `contracts/openapi.yaml` is source of truth.
 - Backend generated types and strict server interfaces come from OpenAPI.
-- Frontend integration later should generate or mirror types from same contract.
+- Frontend currently hand-mirrors contract types in `frontend/src/lib/api.ts`.
+- Future frontend contract work should generate or verify types from OpenAPI instead of duplicating DTOs by hand.
