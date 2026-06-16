@@ -1,3 +1,4 @@
+import { HandHeart, Heart as LucideHeart, UsersRound } from "lucide-react";
 import type { CSSProperties } from "react";
 import type { DemoRole } from "../_data/roles";
 
@@ -207,14 +208,14 @@ export function SpinnerIcon() {
 
 export function RoleIcon({ icon }: { icon: DemoRole["icon"] }) {
   if (icon === "heart") {
-    return <HeartIcon />;
+    return <LucideHeart aria-hidden="true" strokeWidth={2.1} />;
   }
 
   if (icon === "hand") {
-    return <HandIcon />;
+    return <HandHeart aria-hidden="true" strokeWidth={2.1} />;
   }
 
-  return <PeopleIcon />;
+  return <UsersRound aria-hidden="true" strokeWidth={2.1} />;
 }
 
 export function DemoMotionStyles() {
