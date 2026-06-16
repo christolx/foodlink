@@ -19,6 +19,8 @@
 - `DeliveryProposalDTO`
 - `PickupDTO`
 - `NotificationDTO`
+- `ConversationDTO`
+- `ChatMessageDTO`
 
 ## API Shape
 
@@ -41,6 +43,11 @@
 - `GET /notifications`
 - `POST /notifications/:id/read`
 - `GET /notifications/stream`
+- `POST /chat/conversations`
+- `GET /chat/conversations`
+- `GET /chat/conversations/:id/messages`
+- `POST /chat/conversations/:id/messages`
+- `GET /chat/conversations/:id/events?token=...`
 
 ## Dashboard Response Shape
 
@@ -53,6 +60,9 @@
 - Authenticated business endpoints require `Authorization: Bearer <token>`.
 - `CreateDonationRequest.imageUrl` is required by contract.
 - Backend currently accepts only HTTPS URLs hosted at `res.cloudinary.com` for donation images.
+- Chat conversations can only be created between users already related through donation proposal or pickup data.
+- Chat read, send, and SSE endpoints require conversation membership.
+- Chat SSE uses `token` query auth because browser `EventSource` cannot set custom headers.
 - List endpoints use `page` and `pageSize`, defaulting server-side to page `1` and page size `20`.
 - Errors use `{ code, message }`.
 

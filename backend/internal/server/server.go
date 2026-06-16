@@ -11,6 +11,7 @@ import (
 type Server struct {
 	store     *store.Store
 	jwtSecret []byte
+	hub       *messageHub
 }
 
 type Options struct {
@@ -18,7 +19,7 @@ type Options struct {
 }
 
 func New(st *store.Store, jwtSecret string) *Server {
-	return &Server{store: st, jwtSecret: []byte(jwtSecret)}
+	return &Server{store: st, jwtSecret: []byte(jwtSecret), hub: newMessageHub()}
 }
 
 func Handler(st *store.Store, jwtSecret string) http.Handler {
@@ -33,9 +34,10 @@ func HandlerWithOptions(st *store.Store, jwtSecret string, opts Options) http.Ha
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("ok"))
 	})
+	srv := New(st, jwtSecret)
 
 	strict := api.NewStrictHandlerWithOptions(
-		New(st, jwtSecret),
+		srv,
 		[]api.StrictMiddlewareFunc{authMiddleware(jwtSecret)},
 		api.StrictHTTPServerOptions{
 			RequestErrorHandlerFunc: func(w http.ResponseWriter, r *http.Request, err error) {

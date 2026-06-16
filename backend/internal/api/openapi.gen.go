@@ -91,8 +91,37 @@ const (
 	Volunteer UserRole = "volunteer"
 )
 
+// ChatMessage defines model for ChatMessage.
+type ChatMessage struct {
+	Body           string    `json:"body"`
+	ConversationId string    `json:"conversationId"`
+	CreatedAt      time.Time `json:"createdAt"`
+	Id             string    `json:"id"`
+	SenderId       string    `json:"senderId"`
+}
+
+// ChatUserSummary defines model for ChatUserSummary.
+type ChatUserSummary struct {
+	DisplayName string `json:"displayName"`
+	Id          string `json:"id"`
+	Role        string `json:"role"`
+}
+
 // ContactMethod defines model for ContactMethod.
 type ContactMethod string
+
+// Conversation defines model for Conversation.
+type Conversation struct {
+	CreatedAt time.Time       `json:"createdAt"`
+	Id        string          `json:"id"`
+	OtherUser ChatUserSummary `json:"otherUser"`
+	UpdatedAt time.Time       `json:"updatedAt"`
+}
+
+// CreateConversationRequest defines model for CreateConversationRequest.
+type CreateConversationRequest struct {
+	OtherUserId string `json:"otherUserId"`
+}
 
 // CreateDeliveryProposalRequest defines model for CreateDeliveryProposalRequest.
 type CreateDeliveryProposalRequest struct {
@@ -294,6 +323,11 @@ type ProfileListResponse struct {
 // ProposalStatus defines model for ProposalStatus.
 type ProposalStatus string
 
+// SendChatMessageRequest defines model for SendChatMessageRequest.
+type SendChatMessageRequest struct {
+	Body string `json:"body"`
+}
+
 // UpdatePickupStatusRequest defines model for UpdatePickupStatusRequest.
 type UpdatePickupStatusRequest struct {
 	OccurredAt *time.Time `json:"occurredAt,omitempty"`
@@ -350,6 +384,11 @@ type NotFound = ErrorResponse
 // Unauthorized defines model for Unauthorized.
 type Unauthorized = ErrorResponse
 
+// StreamChatMessagesParams defines parameters for StreamChatMessages.
+type StreamChatMessagesParams struct {
+	Token string `form:"token" json:"token"`
+}
+
 // ListDeliveryProposalsParams defines parameters for ListDeliveryProposals.
 type ListDeliveryProposalsParams struct {
 	Page     *Page           `form:"page,omitempty" json:"page,omitempty"`
@@ -386,6 +425,12 @@ type ListReceiversParams struct {
 // DemoLoginJSONRequestBody defines body for DemoLogin for application/json ContentType.
 type DemoLoginJSONRequestBody = DemoLoginRequest
 
+// GetOrCreateChatConversationJSONRequestBody defines body for GetOrCreateChatConversation for application/json ContentType.
+type GetOrCreateChatConversationJSONRequestBody = CreateConversationRequest
+
+// SendChatMessageJSONRequestBody defines body for SendChatMessage for application/json ContentType.
+type SendChatMessageJSONRequestBody = SendChatMessageRequest
+
 // CreateDeliveryProposalJSONRequestBody defines body for CreateDeliveryProposal for application/json ContentType.
 type CreateDeliveryProposalJSONRequestBody = CreateDeliveryProposalRequest
 
@@ -406,6 +451,21 @@ type ServerInterface interface {
 	// Log in as a seeded demo user.
 	// (POST /auth/demo-login)
 	DemoLogin(w http.ResponseWriter, r *http.Request)
+	// List current user's chat conversations.
+	// (GET /chat/conversations)
+	ListChatConversations(w http.ResponseWriter, r *http.Request)
+	// Get or create chat conversation with related user.
+	// (POST /chat/conversations)
+	GetOrCreateChatConversation(w http.ResponseWriter, r *http.Request)
+	// Stream chat messages as Server-Sent Events. Use token query for EventSource.
+	// (GET /chat/conversations/{id}/events)
+	StreamChatMessages(w http.ResponseWriter, r *http.Request, id Id, params StreamChatMessagesParams)
+	// List messages for a conversation. Members only.
+	// (GET /chat/conversations/{id}/messages)
+	ListChatMessages(w http.ResponseWriter, r *http.Request, id Id)
+	// Send message to a conversation. Members only.
+	// (POST /chat/conversations/{id}/messages)
+	SendChatMessage(w http.ResponseWriter, r *http.Request, id Id)
 	// List delivery proposals visible to current role.
 	// (GET /delivery-proposals)
 	ListDeliveryProposals(w http.ResponseWriter, r *http.Request, params ListDeliveryProposalsParams)
@@ -448,7 +508,7 @@ type ServerInterface interface {
 	// List pickups visible to current role.
 	// (GET /pickups)
 	ListPickups(w http.ResponseWriter, r *http.Request, params ListPickupsParams)
-	// Mark pickup as delivered. Assigned volunteer only.
+	// Mark pickup as delivered. Assigned volunteer or receiver only.
 	// (POST /pickups/{id}/deliver)
 	MarkPickupDelivered(w http.ResponseWriter, r *http.Request, id Id)
 	// Mark pickup as picked up. Assigned volunteer only.
@@ -473,6 +533,157 @@ func (siw *ServerInterfaceWrapper) DemoLogin(w http.ResponseWriter, r *http.Requ
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.DemoLogin(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListChatConversations operation middleware
+func (siw *ServerInterfaceWrapper) ListChatConversations(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListChatConversations(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetOrCreateChatConversation operation middleware
+func (siw *ServerInterfaceWrapper) GetOrCreateChatConversation(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetOrCreateChatConversation(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// StreamChatMessages operation middleware
+func (siw *ServerInterfaceWrapper) StreamChatMessages(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params StreamChatMessagesParams
+
+	// ------------- Required query parameter "token" -------------
+
+	if paramValue := r.URL.Query().Get("token"); paramValue != "" {
+
+	} else {
+		siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "token"})
+		return
+	}
+
+	err = runtime.BindQueryParameter("form", true, true, "token", r.URL.Query(), &params.Token)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.StreamChatMessages(w, r, id, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListChatMessages operation middleware
+func (siw *ServerInterfaceWrapper) ListChatMessages(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListChatMessages(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SendChatMessage operation middleware
+func (siw *ServerInterfaceWrapper) SendChatMessage(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SendChatMessage(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -1138,6 +1349,11 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	}
 
 	m.HandleFunc("POST "+options.BaseURL+"/auth/demo-login", wrapper.DemoLogin)
+	m.HandleFunc("GET "+options.BaseURL+"/chat/conversations", wrapper.ListChatConversations)
+	m.HandleFunc("POST "+options.BaseURL+"/chat/conversations", wrapper.GetOrCreateChatConversation)
+	m.HandleFunc("GET "+options.BaseURL+"/chat/conversations/{id}/events", wrapper.StreamChatMessages)
+	m.HandleFunc("GET "+options.BaseURL+"/chat/conversations/{id}/messages", wrapper.ListChatMessages)
+	m.HandleFunc("POST "+options.BaseURL+"/chat/conversations/{id}/messages", wrapper.SendChatMessage)
 	m.HandleFunc("GET "+options.BaseURL+"/delivery-proposals", wrapper.ListDeliveryProposals)
 	m.HandleFunc("POST "+options.BaseURL+"/delivery-proposals", wrapper.CreateDeliveryProposal)
 	m.HandleFunc("POST "+options.BaseURL+"/delivery-proposals/{id}/accept", wrapper.AcceptDeliveryProposal)
@@ -1202,6 +1418,274 @@ type DemoLogin500JSONResponse struct {
 }
 
 func (response DemoLogin500JSONResponse) VisitDemoLoginResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListChatConversationsRequestObject struct {
+}
+
+type ListChatConversationsResponseObject interface {
+	VisitListChatConversationsResponse(w http.ResponseWriter) error
+}
+
+type ListChatConversations200JSONResponse []Conversation
+
+func (response ListChatConversations200JSONResponse) VisitListChatConversationsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListChatConversations401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response ListChatConversations401JSONResponse) VisitListChatConversationsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListChatConversations500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response ListChatConversations500JSONResponse) VisitListChatConversationsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetOrCreateChatConversationRequestObject struct {
+	Body *GetOrCreateChatConversationJSONRequestBody
+}
+
+type GetOrCreateChatConversationResponseObject interface {
+	VisitGetOrCreateChatConversationResponse(w http.ResponseWriter) error
+}
+
+type GetOrCreateChatConversation200JSONResponse Conversation
+
+func (response GetOrCreateChatConversation200JSONResponse) VisitGetOrCreateChatConversationResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetOrCreateChatConversation400JSONResponse struct{ BadRequestJSONResponse }
+
+func (response GetOrCreateChatConversation400JSONResponse) VisitGetOrCreateChatConversationResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetOrCreateChatConversation401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response GetOrCreateChatConversation401JSONResponse) VisitGetOrCreateChatConversationResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetOrCreateChatConversation403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response GetOrCreateChatConversation403JSONResponse) VisitGetOrCreateChatConversationResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetOrCreateChatConversation500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response GetOrCreateChatConversation500JSONResponse) VisitGetOrCreateChatConversationResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type StreamChatMessagesRequestObject struct {
+	Id     Id `json:"id"`
+	Params StreamChatMessagesParams
+}
+
+type StreamChatMessagesResponseObject interface {
+	VisitStreamChatMessagesResponse(w http.ResponseWriter) error
+}
+
+type StreamChatMessages200TexteventStreamResponse struct {
+	Body          io.Reader
+	ContentLength int64
+}
+
+func (response StreamChatMessages200TexteventStreamResponse) VisitStreamChatMessagesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/event-stream")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(200)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type StreamChatMessages401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response StreamChatMessages401JSONResponse) VisitStreamChatMessagesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type StreamChatMessages403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response StreamChatMessages403JSONResponse) VisitStreamChatMessagesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type StreamChatMessages500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response StreamChatMessages500JSONResponse) VisitStreamChatMessagesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListChatMessagesRequestObject struct {
+	Id Id `json:"id"`
+}
+
+type ListChatMessagesResponseObject interface {
+	VisitListChatMessagesResponse(w http.ResponseWriter) error
+}
+
+type ListChatMessages200JSONResponse []ChatMessage
+
+func (response ListChatMessages200JSONResponse) VisitListChatMessagesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListChatMessages401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response ListChatMessages401JSONResponse) VisitListChatMessagesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListChatMessages403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response ListChatMessages403JSONResponse) VisitListChatMessagesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListChatMessages404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response ListChatMessages404JSONResponse) VisitListChatMessagesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListChatMessages500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response ListChatMessages500JSONResponse) VisitListChatMessagesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type SendChatMessageRequestObject struct {
+	Id   Id `json:"id"`
+	Body *SendChatMessageJSONRequestBody
+}
+
+type SendChatMessageResponseObject interface {
+	VisitSendChatMessageResponse(w http.ResponseWriter) error
+}
+
+type SendChatMessage201JSONResponse ChatMessage
+
+func (response SendChatMessage201JSONResponse) VisitSendChatMessageResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type SendChatMessage400JSONResponse struct{ BadRequestJSONResponse }
+
+func (response SendChatMessage400JSONResponse) VisitSendChatMessageResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type SendChatMessage401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response SendChatMessage401JSONResponse) VisitSendChatMessageResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type SendChatMessage403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response SendChatMessage403JSONResponse) VisitSendChatMessageResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type SendChatMessage404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response SendChatMessage404JSONResponse) VisitSendChatMessageResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type SendChatMessage500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response SendChatMessage500JSONResponse) VisitSendChatMessageResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(500)
 
@@ -2103,6 +2587,21 @@ type StrictServerInterface interface {
 	// Log in as a seeded demo user.
 	// (POST /auth/demo-login)
 	DemoLogin(ctx context.Context, request DemoLoginRequestObject) (DemoLoginResponseObject, error)
+	// List current user's chat conversations.
+	// (GET /chat/conversations)
+	ListChatConversations(ctx context.Context, request ListChatConversationsRequestObject) (ListChatConversationsResponseObject, error)
+	// Get or create chat conversation with related user.
+	// (POST /chat/conversations)
+	GetOrCreateChatConversation(ctx context.Context, request GetOrCreateChatConversationRequestObject) (GetOrCreateChatConversationResponseObject, error)
+	// Stream chat messages as Server-Sent Events. Use token query for EventSource.
+	// (GET /chat/conversations/{id}/events)
+	StreamChatMessages(ctx context.Context, request StreamChatMessagesRequestObject) (StreamChatMessagesResponseObject, error)
+	// List messages for a conversation. Members only.
+	// (GET /chat/conversations/{id}/messages)
+	ListChatMessages(ctx context.Context, request ListChatMessagesRequestObject) (ListChatMessagesResponseObject, error)
+	// Send message to a conversation. Members only.
+	// (POST /chat/conversations/{id}/messages)
+	SendChatMessage(ctx context.Context, request SendChatMessageRequestObject) (SendChatMessageResponseObject, error)
 	// List delivery proposals visible to current role.
 	// (GET /delivery-proposals)
 	ListDeliveryProposals(ctx context.Context, request ListDeliveryProposalsRequestObject) (ListDeliveryProposalsResponseObject, error)
@@ -2145,7 +2644,7 @@ type StrictServerInterface interface {
 	// List pickups visible to current role.
 	// (GET /pickups)
 	ListPickups(ctx context.Context, request ListPickupsRequestObject) (ListPickupsResponseObject, error)
-	// Mark pickup as delivered. Assigned volunteer only.
+	// Mark pickup as delivered. Assigned volunteer or receiver only.
 	// (POST /pickups/{id}/deliver)
 	MarkPickupDelivered(ctx context.Context, request MarkPickupDeliveredRequestObject) (MarkPickupDeliveredResponseObject, error)
 	// Mark pickup as picked up. Assigned volunteer only.
@@ -2209,6 +2708,147 @@ func (sh *strictHandler) DemoLogin(w http.ResponseWriter, r *http.Request) {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(DemoLoginResponseObject); ok {
 		if err := validResponse.VisitDemoLoginResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListChatConversations operation middleware
+func (sh *strictHandler) ListChatConversations(w http.ResponseWriter, r *http.Request) {
+	var request ListChatConversationsRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListChatConversations(ctx, request.(ListChatConversationsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListChatConversations")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListChatConversationsResponseObject); ok {
+		if err := validResponse.VisitListChatConversationsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetOrCreateChatConversation operation middleware
+func (sh *strictHandler) GetOrCreateChatConversation(w http.ResponseWriter, r *http.Request) {
+	var request GetOrCreateChatConversationRequestObject
+
+	var body GetOrCreateChatConversationJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetOrCreateChatConversation(ctx, request.(GetOrCreateChatConversationRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetOrCreateChatConversation")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetOrCreateChatConversationResponseObject); ok {
+		if err := validResponse.VisitGetOrCreateChatConversationResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// StreamChatMessages operation middleware
+func (sh *strictHandler) StreamChatMessages(w http.ResponseWriter, r *http.Request, id Id, params StreamChatMessagesParams) {
+	var request StreamChatMessagesRequestObject
+
+	request.Id = id
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.StreamChatMessages(ctx, request.(StreamChatMessagesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "StreamChatMessages")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(StreamChatMessagesResponseObject); ok {
+		if err := validResponse.VisitStreamChatMessagesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListChatMessages operation middleware
+func (sh *strictHandler) ListChatMessages(w http.ResponseWriter, r *http.Request, id Id) {
+	var request ListChatMessagesRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListChatMessages(ctx, request.(ListChatMessagesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListChatMessages")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListChatMessagesResponseObject); ok {
+		if err := validResponse.VisitListChatMessagesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SendChatMessage operation middleware
+func (sh *strictHandler) SendChatMessage(w http.ResponseWriter, r *http.Request, id Id) {
+	var request SendChatMessageRequestObject
+
+	request.Id = id
+
+	var body SendChatMessageJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SendChatMessage(ctx, request.(SendChatMessageRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SendChatMessage")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SendChatMessageResponseObject); ok {
+		if err := validResponse.VisitSendChatMessageResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

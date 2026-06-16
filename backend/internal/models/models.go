@@ -94,3 +94,19 @@ type Notification struct {
 	CreatedAt  time.Time
 	ReadAt     *time.Time
 }
+
+type Conversation struct {
+	ID        string `gorm:"primaryKey"`
+	User1ID   string `gorm:"uniqueIndex:idx_conversation_users;index"`
+	User2ID   string `gorm:"uniqueIndex:idx_conversation_users;index"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+type Message struct {
+	ID             string `gorm:"primaryKey"`
+	ConversationID string `gorm:"index"`
+	SenderID       string `gorm:"index"`
+	Body           string
+	CreatedAt      time.Time
+}

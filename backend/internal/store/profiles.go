@@ -37,6 +37,15 @@ func (s *Store) ProfileByUserID(userID string) (models.Profile, error) {
 	return profile, err
 }
 
+func (s *Store) CreateUserWithProfile(user models.User, profile models.Profile) error {
+	return s.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(&user).Error; err != nil {
+			return err
+		}
+		return tx.Create(&profile).Error
+	})
+}
+
 func (s *Store) UpsertProfile(profile models.Profile) (models.Profile, error) {
 	now := time.Now().UTC()
 	var existing models.Profile

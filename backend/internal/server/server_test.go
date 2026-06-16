@@ -3,12 +3,15 @@ package server_test
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
 	"foodlink-be/internal/api"
+	"foodlink-be/internal/models"
 	"foodlink-be/internal/server"
 	"foodlink-be/internal/store"
 
@@ -286,6 +289,101 @@ func TestCreateDonationRequiresImageURL(t *testing.T) {
 	}
 }
 
+func TestChatAllowsRelatedUsersAndPersistsMessages(t *testing.T) {
+	handler := newTestHandler(t)
+	donorToken := login(t, handler, api.Donor)
+	receiverToken := login(t, handler, api.Receiver)
+
+	status, body := doJSON(t, handler, http.MethodPost, "/api/v1/chat/conversations", map[string]string{
+		"otherUserId": "user_receiver",
+	}, donorToken)
+	if status != http.StatusOK {
+		t.Fatalf("create conversation status = %d body = %s", status, body)
+	}
+	var conv chatConversation
+	decode(t, body, &conv)
+	if conv.OtherUser.ID != "user_receiver" {
+		t.Fatalf("other user = %s, want user_receiver", conv.OtherUser.ID)
+	}
+
+	status, body = doJSON(t, handler, http.MethodPost, "/api/v1/chat/conversations/"+conv.ID+"/messages", map[string]string{
+		"body": "Pickup window works.",
+	}, donorToken)
+	if status != http.StatusCreated {
+		t.Fatalf("send message status = %d body = %s", status, body)
+	}
+	var msg chatMessage
+	decode(t, body, &msg)
+	if msg.SenderID != "user_donor" || msg.Body != "Pickup window works." {
+		t.Fatalf("message = %+v", msg)
+	}
+
+	status, body = doJSON(t, handler, http.MethodGet, "/api/v1/chat/conversations/"+conv.ID+"/messages", nil, receiverToken)
+	if status != http.StatusOK {
+		t.Fatalf("list messages status = %d body = %s", status, body)
+	}
+	var messages []chatMessage
+	decode(t, body, &messages)
+	if len(messages) != 1 || messages[0].Body != "Pickup window works." {
+		t.Fatalf("messages = %+v", messages)
+	}
+}
+
+func TestChatBlocksUnrelatedUsers(t *testing.T) {
+	handler, st := newTestHandlerAndStore(t, nil)
+	addUnrelatedReceiver(t, st)
+	donorToken := login(t, handler, api.Donor)
+
+	status, body := doJSON(t, handler, http.MethodPost, "/api/v1/chat/conversations", map[string]string{
+		"otherUserId": "user_unrelated_receiver",
+	}, donorToken)
+	if status != http.StatusForbidden {
+		t.Fatalf("create unrelated conversation status = %d body = %s", status, body)
+	}
+}
+
+func TestChatForbidsNonMemberAccess(t *testing.T) {
+	handler, st := newTestHandlerAndStore(t, nil)
+	addUnrelatedReceiver(t, st)
+	donorToken := login(t, handler, api.Donor)
+	unrelatedToken := loginUser(t, handler, "user_unrelated_receiver")
+
+	status, body := doJSON(t, handler, http.MethodPost, "/api/v1/chat/conversations", map[string]string{
+		"otherUserId": "user_receiver",
+	}, donorToken)
+	if status != http.StatusOK {
+		t.Fatalf("create conversation status = %d body = %s", status, body)
+	}
+	var conv chatConversation
+	decode(t, body, &conv)
+
+	status, body = doJSON(t, handler, http.MethodGet, "/api/v1/chat/conversations/"+conv.ID+"/messages", nil, unrelatedToken)
+	if status != http.StatusForbidden {
+		t.Fatalf("non-member messages status = %d body = %s", status, body)
+	}
+}
+
+func TestChatSSERejectsInvalidToken(t *testing.T) {
+	handler := newTestHandler(t)
+	donorToken := login(t, handler, api.Donor)
+
+	status, body := doJSON(t, handler, http.MethodPost, "/api/v1/chat/conversations", map[string]string{
+		"otherUserId": "user_receiver",
+	}, donorToken)
+	if status != http.StatusOK {
+		t.Fatalf("create conversation status = %d body = %s", status, body)
+	}
+	var conv chatConversation
+	decode(t, body, &conv)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/chat/conversations/"+conv.ID+"/events?token=bad-token", nil)
+	res := httptest.NewRecorder()
+	handler.ServeHTTP(res, req)
+	if res.Code != http.StatusUnauthorized {
+		t.Fatalf("SSE invalid token status = %d body = %s", res.Code, res.Body.String())
+	}
+}
+
 func TestCORSPreflightAllowsConfiguredOrigin(t *testing.T) {
 	handler := newTestHandlerWithOrigins(t, []string{"https://app.foodlink.test"})
 	req := httptest.NewRequest(http.MethodOptions, "/api/v1/me", nil)
@@ -329,8 +427,13 @@ func newTestHandler(t *testing.T) http.Handler {
 }
 
 func newTestHandlerWithOrigins(t *testing.T, allowedOrigins []string) http.Handler {
+	handler, _ := newTestHandlerAndStore(t, allowedOrigins)
+	return handler
+}
+
+func newTestHandlerAndStore(t *testing.T, allowedOrigins []string) (http.Handler, *store.Store) {
 	t.Helper()
-	conn, err := gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{})
+	conn, err := gorm.Open(sqlite.Open(testSQLiteDSN(t)), &gorm.Config{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -342,9 +445,15 @@ func newTestHandlerWithOrigins(t *testing.T, allowedOrigins []string) http.Handl
 		t.Fatal(err)
 	}
 	if allowedOrigins == nil {
-		return server.Handler(st, "test-secret")
+		return server.Handler(st, "test-secret"), st
 	}
-	return server.HandlerWithOptions(st, "test-secret", server.Options{AllowedOrigins: allowedOrigins})
+	return server.HandlerWithOptions(st, "test-secret", server.Options{AllowedOrigins: allowedOrigins}), st
+}
+
+func testSQLiteDSN(t *testing.T) string {
+	t.Helper()
+	name := strings.NewReplacer("/", "_", " ", "_").Replace(t.Name())
+	return fmt.Sprintf("file:%s?mode=memory&cache=shared", name)
 }
 
 func login(t *testing.T, handler http.Handler, role api.UserRole) string {
@@ -356,6 +465,40 @@ func login(t *testing.T, handler http.Handler, role api.UserRole) string {
 	var response api.DemoLoginResponse
 	decode(t, body, &response)
 	return response.AccessToken
+}
+
+func loginUser(t *testing.T, handler http.Handler, userID string) string {
+	t.Helper()
+	status, body := doJSON(t, handler, http.MethodPost, "/api/v1/auth/demo-login", api.DemoLoginRequest{UserId: &userID}, "")
+	if status != http.StatusOK {
+		t.Fatalf("login user status = %d body = %s", status, body)
+	}
+	var response api.DemoLoginResponse
+	decode(t, body, &response)
+	return response.AccessToken
+}
+
+func addUnrelatedReceiver(t *testing.T, st *store.Store) {
+	t.Helper()
+	now := time.Now().UTC()
+	if err := st.CreateUserWithProfile(models.User{
+		ID:        "user_unrelated_receiver",
+		Name:      "Unrelated Receiver",
+		Email:     "unrelated@foodlink.local",
+		Role:      string(api.Receiver),
+		CreatedAt: now,
+	}, models.Profile{
+		UserID:        "user_unrelated_receiver",
+		DisplayName:   "Unrelated Receiver",
+		Role:          string(api.Receiver),
+		ContactMethod: string(api.ContactMethodWhatsapp),
+		ContactValue:  "+628144444444",
+		Location:      models.LocationFields{AddressLine1: "Jl. Elsewhere 1", City: "Jakarta", Region: "DKI Jakarta", PostalCode: "10220", Country: "ID"},
+		CreatedAt:     now,
+		UpdatedAt:     now,
+	}); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func doJSON(t *testing.T, handler http.Handler, method string, path string, payload any, token string) (int, []byte) {
@@ -376,6 +519,22 @@ func doJSON(t *testing.T, handler http.Handler, method string, path string, payl
 	res := httptest.NewRecorder()
 	handler.ServeHTTP(res, req)
 	return res.Code, res.Body.Bytes()
+}
+
+type chatConversation struct {
+	ID        string `json:"id"`
+	OtherUser struct {
+		ID          string `json:"id"`
+		DisplayName string `json:"displayName"`
+		Role        string `json:"role"`
+	} `json:"otherUser"`
+}
+
+type chatMessage struct {
+	ID             string `json:"id"`
+	ConversationID string `json:"conversationId"`
+	SenderID       string `json:"senderId"`
+	Body           string `json:"body"`
 }
 
 func decode(t *testing.T, body []byte, value any) {
