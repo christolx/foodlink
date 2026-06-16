@@ -1522,6 +1522,11 @@ function DonorDashboard({
     <>
       <div className="grid min-w-0 items-start gap-5 2xl:grid-cols-[minmax(0,1fr)_26rem]">
         <div className="grid min-w-0 gap-5" id="work">
+          <DonorMobileHero
+            availableCount={availableCount}
+            deliveredCount={deliveredCount}
+            pendingCount={pendingCount}
+          />
           <section className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
             <form
               className={cx(
@@ -1790,12 +1795,6 @@ function DonorDashboard({
                 </div>
               ) : null}
             </form>
-
-            <DonorMetricStrip
-              availableCount={availableCount}
-              pendingCount={pendingCount}
-              deliveredCount={deliveredCount}
-            />
 
             <ProposalQueue
               donations={data.donations}
@@ -2714,6 +2713,84 @@ function VolunteerPickupPanel({
             ? "Delivered ✓"
             : "Mark delivered"}
         </button>
+      </div>
+    </section>
+  );
+}
+
+function DonorMobileHero({
+  availableCount,
+  deliveredCount,
+  pendingCount,
+}: {
+  availableCount: number;
+  deliveredCount: number;
+  pendingCount: number;
+}) {
+  const stats = [
+    { label: "Available", value: availableCount, icon: "bag" as IconName },
+    { label: "Pending", value: pendingCount, icon: "box" as IconName },
+    { label: "Delivered", value: deliveredCount, icon: "check" as IconName },
+  ];
+
+  return (
+    <section className="relative isolate overflow-hidden rounded-[1.35rem] bg-[radial-gradient(circle_at_78%_78%,rgba(255,189,26,0.14),transparent_7rem),linear-gradient(135deg,#073515_0%,#0a401d_100%)] p-5 text-[#fffdf7] shadow-[0_1.5rem_3rem_rgba(6,30,14,0.22)] lg:hidden">
+      <div
+        className="absolute -right-10 -top-10 h-36 w-36 rounded-full border border-[#ffbd1a]/25"
+        aria-hidden="true"
+      />
+      <div
+        className="absolute right-8 top-20 h-24 w-24 rounded-full border border-dashed border-[#fff5d8]/25"
+        aria-hidden="true"
+      />
+      <div
+        className="absolute bottom-4 right-5 hidden h-16 w-16 place-items-center rounded-xl bg-[#d7b45d] text-[#173215] shadow-[0_1rem_2rem_rgba(0,0,0,0.18)] min-[390px]:grid"
+        aria-hidden="true"
+      >
+        <AppIcon name="leaf" className="h-9 w-9" />
+      </div>
+      <div className="relative grid gap-5">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-[#ffdf8b]">
+              Today
+            </p>
+            <h2 className="mt-2 font-serif text-[1.78rem] leading-none tracking-[-0.045em]">
+              Today&apos;s surplus flow
+            </h2>
+          </div>
+          <span className="grid h-11 w-11 place-items-center rounded-full bg-[#ffbd1a] text-[#0f240f]">
+            <AppIcon name="leaf" className="h-6 w-6" />
+          </span>
+        </div>
+        <div className="grid grid-cols-3 gap-0 rounded-2xl bg-white/[0.04] min-[390px]:mr-20">
+          {stats.map((stat, index) => (
+            <article
+              className={cx(
+                "grid justify-items-center gap-2 px-3 py-3 text-center",
+                index > 0 && "border-l border-[#ffdf8b]/28",
+              )}
+              key={stat.label}
+            >
+              <span
+                className={cx(
+                  "grid h-10 w-10 place-items-center rounded-full",
+                  index === 0
+                    ? "bg-[#ffbd1a] text-[#173215]"
+                    : "bg-[#dcebd5]/38 text-white",
+                )}
+              >
+                <AppIcon name={stat.icon} className="h-5 w-5" />
+              </span>
+              <strong className="block text-3xl font-black leading-none">
+                {stat.value}
+              </strong>
+              <span className="block text-xs font-black lowercase text-[#dcebd5]">
+                {stat.label}
+              </span>
+            </article>
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -4231,44 +4308,6 @@ function ReceiverTimelineCard({
   );
 }
 
-function DonorMetricStrip({
-  availableCount,
-  pendingCount,
-  deliveredCount,
-}: {
-  availableCount: number;
-  pendingCount: number;
-  deliveredCount: number;
-}) {
-  const metrics = [
-    { label: "Available", value: availableCount, icon: "bag" as IconName },
-    { label: "Pending", value: pendingCount, icon: "box" as IconName },
-    { label: "Delivered", value: deliveredCount, icon: "check" as IconName },
-  ];
-
-  return (
-    <section
-      className="grid grid-cols-3 gap-2 lg:hidden"
-      aria-label="Donation summary"
-    >
-      {metrics.map((metric) => (
-        <div
-          className="min-w-0 rounded-lg border border-[#ded7c9] bg-[#fffdf8] p-3 shadow-sm"
-          key={metric.label}
-        >
-          <AppIcon name={metric.icon} className="mb-2 h-4 w-4 text-[#14733a]" />
-          <strong className="block text-lg font-black leading-none text-[#101812]">
-            {metric.value}
-          </strong>
-          <span className="mt-1 block truncate text-[0.68rem] font-bold text-[#46534a]">
-            {metric.label}
-          </span>
-        </div>
-      ))}
-    </section>
-  );
-}
-
 function ReceiverNeedsCard({
   profile,
   token,
@@ -4582,7 +4621,14 @@ function ProposalQueue({
                             : "Pending"}
                       </span>
                     </div>
-                    <div className="flex flex-wrap gap-2 justify-self-start">
+                    <div
+                      className={cx(
+                        "gap-2 justify-self-start",
+                        viewerRole === "donor"
+                          ? "grid w-full grid-cols-3"
+                          : "flex flex-wrap",
+                      )}
+                    >
                       {viewerRole === "donor" &&
                         (() => {
                           const rawPhone =
@@ -4604,7 +4650,10 @@ function ProposalQueue({
                               rel="noopener noreferrer"
                               className={cx(
                                 ghostButton,
-                                "inline-flex items-center gap-1.5 !text-[#14733a]",
+                                viewerRole === "donor"
+                                  ? "min-h-11 px-2 text-xs"
+                                  : "inline-flex items-center gap-1.5",
+                                "!text-[#14733a]",
                               )}
                             >
                               <svg
@@ -4622,7 +4671,10 @@ function ProposalQueue({
                           );
                         })()}
                       <button
-                        className={ghostButton}
+                        className={cx(
+                          ghostButton,
+                          viewerRole === "donor" && "min-h-11 px-2 text-xs",
+                        )}
                         type="button"
                         onClick={() =>
                           runAction(async () => {
@@ -4634,7 +4686,10 @@ function ProposalQueue({
                       </button>
                       {proposal.status === "pending" ? (
                         <button
-                          className={primaryButton}
+                          className={cx(
+                            primaryButton,
+                            viewerRole === "donor" && "min-h-11 px-2 text-xs",
+                          )}
                           type="button"
                           onClick={() =>
                             runAction(async () => {
@@ -4646,7 +4701,10 @@ function ProposalQueue({
                         </button>
                       ) : (
                         <button
-                          className={ghostButton}
+                          className={cx(
+                            ghostButton,
+                            viewerRole === "donor" && "min-h-11 px-2 text-xs",
+                          )}
                           type="button"
                           onClick={() =>
                             setDetailProposal({ proposal, donation })
