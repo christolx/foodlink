@@ -27,7 +27,11 @@ export function LeafIcon() {
 
 export function HeartIcon() {
   return (
-    <svg aria-hidden="true" viewBox="0 0 24 24">
+    <svg
+      aria-hidden="true"
+      style={{ width: "2rem", height: "2rem", display: "block", flexShrink: 0 }}
+      viewBox="0 0 24 24"
+    >
       <path
         d="M19.2 5.2a5.1 5.1 0 0 0-7.2 0l-.5.5-.5-.5a5.1 5.1 0 0 0-7.2 7.2l7.7 7.7 7.7-7.7a5.1 5.1 0 0 0 0-7.2Z"
         fill="none"
@@ -42,7 +46,11 @@ export function HeartIcon() {
 
 export function HandIcon() {
   return (
-    <svg aria-hidden="true" viewBox="0 0 24 24">
+    <svg
+      aria-hidden="true"
+      style={{ width: "2rem", height: "2rem", display: "block", flexShrink: 0 }}
+      viewBox="0 0 24 24"
+    >
       <path
         d="M8.5 12.4V5.8a1.4 1.4 0 0 1 2.8 0v6"
         fill="none"
@@ -81,7 +89,11 @@ export function HandIcon() {
 
 export function PeopleIcon() {
   return (
-    <svg aria-hidden="true" viewBox="0 0 24 24">
+    <svg
+      aria-hidden="true"
+      style={{ width: "2rem", height: "2rem", display: "block", flexShrink: 0 }}
+      viewBox="0 0 24 24"
+    >
       <path
         d="M8.4 11.2a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM16.2 11.2a2.7 2.7 0 1 0 0-5.4"
         fill="none"
