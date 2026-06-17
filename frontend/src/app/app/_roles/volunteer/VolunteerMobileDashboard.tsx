@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import type { Donation, Pickup, Profile } from "@/lib/api";
+import { donationRouteUrl, pickupRouteUrl } from "@/lib/maps";
 import {
   AppIcon,
   compactFoodDescription,
@@ -379,6 +380,11 @@ function VolunteerMobileRoutePreview({
   donation?: Donation;
   receiver?: Profile;
 }) {
+  const routeUrl = donationRouteUrl({
+    pickupLocation: donation?.pickupLocation,
+    receiverLocation: receiver?.location,
+  });
+
   return (
     <section
       className="grid min-h-[30rem] grid-rows-[auto_1fr_auto] overflow-hidden rounded-[1.25rem] border border-[#d8d1c3] bg-[#fffdf8] shadow-[0_0.8rem_1.8rem_rgba(49,43,24,0.05)]"
@@ -388,6 +394,17 @@ function VolunteerMobileRoutePreview({
         <h2 className="text-lg font-black tracking-[-0.02em] text-[#061e0e]">
           Live map
         </h2>
+        {routeUrl ? (
+          <a
+            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-[#9eb69f] bg-[#fffdf8] px-3 text-xs font-black text-[#064c25]"
+            href={routeUrl}
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            Open in Maps
+            <AppIcon name="navigation" className="h-4 w-4" />
+          </a>
+        ) : null}
       </div>
       <div className="relative mx-4 min-h-[21rem] overflow-hidden rounded-lg border border-[#e4ddcf]">
         <VolunteerMapDynamic
@@ -565,6 +582,8 @@ function VolunteerMobilePickupCard({
 }: {
   activePickup?: Pickup;
 }) {
+  const routeUrl = pickupRouteUrl(activePickup);
+
   return (
     <section
       className="rounded-[1.25rem] border border-[#d8d1c3] bg-[#fffdf8] p-4 shadow-[0_0.8rem_1.8rem_rgba(49,43,24,0.05)]"
@@ -608,6 +627,17 @@ function VolunteerMobilePickupCard({
           );
         })}
       </div>
+      {routeUrl ? (
+        <a
+          className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-[#9eb69f] bg-[#fffdf8] px-4 text-sm font-black text-[#064c25]"
+          href={routeUrl}
+          rel="noopener noreferrer"
+          target="_blank"
+        >
+          Open route
+          <AppIcon name="navigation" className="h-5 w-5" />
+        </a>
+      ) : null}
     </section>
   );
 }

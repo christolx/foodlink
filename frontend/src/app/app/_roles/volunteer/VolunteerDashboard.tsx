@@ -11,6 +11,7 @@ import {
   type Pickup,
   type Profile,
 } from "@/lib/api";
+import { donationRouteUrl, pickupRouteUrl } from "@/lib/maps";
 import {
   AppIcon,
   badgeBase,
@@ -491,12 +492,28 @@ function VolunteerMapPanel({
   donation?: Donation;
   receiver?: Profile;
 }) {
+  const routeUrl = donationRouteUrl({
+    pickupLocation: donation?.pickupLocation,
+    receiverLocation: receiver?.location,
+  });
+
   return (
     <section className="grid min-h-[41rem] grid-rows-[auto_1fr_auto] border-[#ded7c9] 2xl:border-r">
       <header className="flex items-center justify-between p-5 pb-3">
         <h2 className="font-serif text-[1.35rem] leading-none tracking-[-0.045em] text-[#061e0e]">
           Live map
         </h2>
+        {routeUrl ? (
+          <a
+            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-[0.65rem] border border-[#9eb69f] bg-[#fffdf8] px-4 text-xs font-black text-[#064c25] transition hover:-translate-y-0.5 hover:bg-[#f6fbf3]"
+            href={routeUrl}
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            Open in Google Maps
+            <AppIcon name="navigation" className="h-4 w-4" />
+          </a>
+        ) : null}
       </header>
       <div className="relative mx-4 min-h-[28rem] overflow-hidden rounded-lg border border-[#e4ddcf]">
         <VolunteerMapDynamic
@@ -826,6 +843,7 @@ function VolunteerPickupPanel({
 }) {
   const canMarkPickedUp = activePickup?.status === "assigned";
   const canMarkDelivered = activePickup?.status === "picked_up";
+  const routeUrl = pickupRouteUrl(activePickup);
 
   const steps = [
     {
@@ -936,7 +954,17 @@ function VolunteerPickupPanel({
           </li>
         ))}
       </ol>
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+        {routeUrl ? (
+          <a
+            className={ghostButton}
+            href={routeUrl}
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            Open route
+          </a>
+        ) : null}
         <button
           className={ghostButton}
           type="button"
