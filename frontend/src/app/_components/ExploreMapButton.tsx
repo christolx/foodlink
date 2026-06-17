@@ -27,6 +27,7 @@ export function ExploreMapButton({ children }: ExploreMapButtonProps) {
           ? err.message
           : "Demo API unavailable. Check backend and try again.",
       );
+    } finally {
       setIsLoading(false);
     }
   }
