@@ -2,11 +2,13 @@ package server_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -17,6 +19,7 @@ import (
 
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 func TestVolunteerProposalFlow(t *testing.T) {
@@ -422,6 +425,71 @@ func TestCORSDoesNotAllowUnconfiguredOrigin(t *testing.T) {
 	}
 }
 
+func TestListDashboardEndpointsBatchRelationQueries(t *testing.T) {
+	handler, counter := newTestHandlerWithQueryCounter(t)
+	volunteerToken := login(t, handler, api.Volunteer)
+
+	counter.Reset()
+	status, body := doJSON(t, handler, http.MethodGet, "/api/v1/delivery-proposals", nil, volunteerToken)
+	if status != http.StatusOK {
+		t.Fatalf("list proposals status = %d body = %s", status, body)
+	}
+	var proposals api.DeliveryProposalListResponse
+	decode(t, body, &proposals)
+	if len(proposals.Items) < 2 {
+		t.Fatalf("proposal items = %d, want seeded list", len(proposals.Items))
+	}
+	if got, wantMax := counter.Count(), int64(5); got > wantMax {
+		t.Fatalf("proposal list SQL queries = %d, want <= %d", got, wantMax)
+	}
+
+	counter.Reset()
+	status, body = doJSON(t, handler, http.MethodGet, "/api/v1/pickups", nil, volunteerToken)
+	if status != http.StatusOK {
+		t.Fatalf("list pickups status = %d body = %s", status, body)
+	}
+	var pickups api.PickupListResponse
+	decode(t, body, &pickups)
+	if len(pickups.Items) < 2 {
+		t.Fatalf("pickup items = %d, want seeded list", len(pickups.Items))
+	}
+	if got, wantMax := counter.Count(), int64(5); got > wantMax {
+		t.Fatalf("pickup list SQL queries = %d, want <= %d", got, wantMax)
+	}
+}
+
+func TestListChatConversationsBatchProfileQueries(t *testing.T) {
+	handler, counter := newTestHandlerWithQueryCounter(t)
+	donorToken := login(t, handler, api.Donor)
+
+	status, body := doJSON(t, handler, http.MethodPost, "/api/v1/chat/conversations", map[string]string{
+		"otherUserId": "user_receiver",
+	}, donorToken)
+	if status != http.StatusOK {
+		t.Fatalf("create receiver conversation status = %d body = %s", status, body)
+	}
+	status, body = doJSON(t, handler, http.MethodPost, "/api/v1/chat/conversations", map[string]string{
+		"otherUserId": "user_volunteer",
+	}, donorToken)
+	if status != http.StatusOK {
+		t.Fatalf("create volunteer conversation status = %d body = %s", status, body)
+	}
+
+	counter.Reset()
+	status, body = doJSON(t, handler, http.MethodGet, "/api/v1/chat/conversations", nil, donorToken)
+	if status != http.StatusOK {
+		t.Fatalf("list conversations status = %d body = %s", status, body)
+	}
+	var conversations []chatConversation
+	decode(t, body, &conversations)
+	if len(conversations) < 2 {
+		t.Fatalf("conversations = %d, want at least 2", len(conversations))
+	}
+	if got, wantMax := counter.Count(), int64(2); got > wantMax {
+		t.Fatalf("conversation list SQL queries = %d, want <= %d", got, wantMax)
+	}
+}
+
 func newTestHandler(t *testing.T) http.Handler {
 	return newTestHandlerWithOrigins(t, nil)
 }
@@ -448,6 +516,52 @@ func newTestHandlerAndStore(t *testing.T, allowedOrigins []string) (http.Handler
 		return server.Handler(st, "test-secret"), st
 	}
 	return server.HandlerWithOptions(st, "test-secret", server.Options{AllowedOrigins: allowedOrigins}), st
+}
+
+func newTestHandlerWithQueryCounter(t *testing.T) (http.Handler, *queryCounter) {
+	t.Helper()
+	counter := &queryCounter{}
+	conn, err := gorm.Open(sqlite.Open(testSQLiteDSN(t)), &gorm.Config{Logger: counter})
+	if err != nil {
+		t.Fatal(err)
+	}
+	st := store.New(conn)
+	if err := st.AutoMigrate(); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.SeedDemoData(); err != nil {
+		t.Fatal(err)
+	}
+	return server.Handler(st, "test-secret"), counter
+}
+
+type queryCounter struct {
+	count atomic.Int64
+}
+
+func (q *queryCounter) Reset() {
+	q.count.Store(0)
+}
+
+func (q *queryCounter) Count() int64 {
+	return q.count.Load()
+}
+
+func (q *queryCounter) LogMode(logger.LogLevel) logger.Interface {
+	return q
+}
+
+func (q *queryCounter) Info(context.Context, string, ...any) {
+}
+
+func (q *queryCounter) Warn(context.Context, string, ...any) {
+}
+
+func (q *queryCounter) Error(context.Context, string, ...any) {
+}
+
+func (q *queryCounter) Trace(context.Context, time.Time, func() (string, int64), error) {
+	q.count.Add(1)
 }
 
 func testSQLiteDSN(t *testing.T) string {

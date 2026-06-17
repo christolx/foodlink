@@ -102,8 +102,13 @@ func requiredCloudinaryImageURL(value string) (string, error) {
 	return trimmed, nil
 }
 
-func (s *Server) deliveryProposalDTO(proposal models.DeliveryProposal) api.DeliveryProposal {
-	dto := api.DeliveryProposal{
+type dashboardRelations struct {
+	donations map[string]api.Donation
+	profiles  map[string]api.Profile
+}
+
+func deliveryProposalBaseDTO(proposal models.DeliveryProposal) api.DeliveryProposal {
+	return api.DeliveryProposal{
 		Id:                       proposal.ID,
 		DonationId:               proposal.DonationID,
 		ReceiverId:               proposal.ReceiverID,
@@ -116,12 +121,16 @@ func (s *Server) deliveryProposalDTO(proposal models.DeliveryProposal) api.Deliv
 		CreatedAt:                proposal.CreatedAt,
 		UpdatedAt:                proposal.UpdatedAt,
 	}
+}
+
+func (s *Server) deliveryProposalDTO(proposal models.DeliveryProposal) api.DeliveryProposal {
+	dto := deliveryProposalBaseDTO(proposal)
 	s.enrichDashboardRelations(&dto, nil)
 	return dto
 }
 
-func (s *Server) pickupDTO(pickup models.Pickup) api.Pickup {
-	dto := api.Pickup{
+func pickupBaseDTO(pickup models.Pickup) api.Pickup {
+	return api.Pickup{
 		Id:               pickup.ID,
 		DonationId:       pickup.DonationID,
 		ProposalId:       pickup.ProposalID,
@@ -135,8 +144,134 @@ func (s *Server) pickupDTO(pickup models.Pickup) api.Pickup {
 		CreatedAt:        pickup.CreatedAt,
 		UpdatedAt:        pickup.UpdatedAt,
 	}
+}
+
+func (s *Server) pickupDTO(pickup models.Pickup) api.Pickup {
+	dto := pickupBaseDTO(pickup)
 	s.enrichDashboardRelations(nil, &dto)
 	return dto
+}
+
+func (s *Server) deliveryProposalListDTOs(proposals []models.DeliveryProposal) ([]api.DeliveryProposal, error) {
+	donationIDs := make([]string, 0, len(proposals))
+	userIDs := make([]string, 0, len(proposals)*2)
+	for _, proposal := range proposals {
+		donationIDs = append(donationIDs, proposal.DonationID)
+		userIDs = append(userIDs, proposal.ReceiverID, proposal.VolunteerID)
+	}
+	relations, err := s.dashboardRelations(donationIDs, userIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	items := make([]api.DeliveryProposal, 0, len(proposals))
+	for _, proposal := range proposals {
+		dto := deliveryProposalBaseDTO(proposal)
+		enrichDashboardRelationsFromCache(&dto, nil, relations)
+		items = append(items, dto)
+	}
+	return items, nil
+}
+
+func (s *Server) pickupListDTOs(pickups []models.Pickup) ([]api.Pickup, error) {
+	donationIDs := make([]string, 0, len(pickups))
+	userIDs := make([]string, 0, len(pickups)*2)
+	for _, pickup := range pickups {
+		donationIDs = append(donationIDs, pickup.DonationID)
+		userIDs = append(userIDs, pickup.ReceiverID, pickup.VolunteerID)
+	}
+	relations, err := s.dashboardRelations(donationIDs, userIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	items := make([]api.Pickup, 0, len(pickups))
+	for _, pickup := range pickups {
+		dto := pickupBaseDTO(pickup)
+		enrichDashboardRelationsFromCache(nil, &dto, relations)
+		items = append(items, dto)
+	}
+	return items, nil
+}
+
+func (s *Server) dashboardRelations(donationIDs []string, userIDs []string) (dashboardRelations, error) {
+	relations := dashboardRelations{
+		donations: map[string]api.Donation{},
+		profiles:  map[string]api.Profile{},
+	}
+
+	donations, err := s.store.DonationsByIDs(uniqueStrings(donationIDs))
+	if err != nil {
+		return relations, err
+	}
+	for _, donation := range donations {
+		dto := donationDTO(donation)
+		relations.donations[donation.ID] = dto
+		userIDs = append(userIDs, donation.DonorID)
+	}
+
+	profiles, err := s.store.ProfilesByUserIDs(uniqueStrings(userIDs))
+	if err != nil {
+		return relations, err
+	}
+	for _, profile := range profiles {
+		dto := profileDTO(profile)
+		relations.profiles[profile.UserID] = dto
+	}
+	return relations, nil
+}
+
+func enrichDashboardRelationsFromCache(proposal *api.DeliveryProposal, pickup *api.Pickup, relations dashboardRelations) {
+	var donationID string
+	var receiverID string
+	var volunteerID string
+	if proposal != nil {
+		donationID = proposal.DonationId
+		receiverID = proposal.ReceiverId
+		volunteerID = proposal.VolunteerId
+	}
+	if pickup != nil {
+		donationID = pickup.DonationId
+		receiverID = pickup.ReceiverId
+		volunteerID = pickup.VolunteerId
+	}
+
+	if donation, ok := relations.donations[donationID]; ok {
+		donationDTO := donation
+		if proposal != nil {
+			proposal.Donation = &donationDTO
+		}
+		if pickup != nil {
+			pickup.Donation = &donationDTO
+		}
+		if profile, ok := relations.profiles[donation.DonorId]; ok {
+			profileDTO := profile
+			if proposal != nil {
+				proposal.DonorProfile = &profileDTO
+			}
+			if pickup != nil {
+				pickup.DonorProfile = &profileDTO
+			}
+		}
+	}
+	if profile, ok := relations.profiles[receiverID]; ok {
+		profileDTO := profile
+		if proposal != nil {
+			proposal.ReceiverProfile = &profileDTO
+		}
+		if pickup != nil {
+			pickup.ReceiverProfile = &profileDTO
+		}
+	}
+	if profile, ok := relations.profiles[volunteerID]; ok {
+		profileDTO := profile
+		if proposal != nil {
+			proposal.VolunteerProfile = &profileDTO
+		}
+		if pickup != nil {
+			pickup.VolunteerProfile = &profileDTO
+		}
+	}
 }
 
 func (s *Server) enrichDashboardRelations(proposal *api.DeliveryProposal, pickup *api.Pickup) {
@@ -191,6 +326,22 @@ func (s *Server) enrichDashboardRelations(proposal *api.DeliveryProposal, pickup
 			pickup.VolunteerProfile = &profileDTO
 		}
 	}
+}
+
+func uniqueStrings(values []string) []string {
+	seen := make(map[string]struct{}, len(values))
+	unique := make([]string, 0, len(values))
+	for _, value := range values {
+		if value == "" {
+			continue
+		}
+		if _, ok := seen[value]; ok {
+			continue
+		}
+		seen[value] = struct{}{}
+		unique = append(unique, value)
+	}
+	return unique
 }
 
 func notificationDTO(notification models.Notification) api.Notification {

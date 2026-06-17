@@ -22,9 +22,9 @@ func (s *Server) ListPickups(ctx context.Context, request api.ListPickupsRequest
 	if err != nil {
 		return api.ListPickups500JSONResponse{InternalServerErrorJSONResponse: internalError()}, nil
 	}
-	items := make([]api.Pickup, 0, len(pickups))
-	for _, pickup := range pickups {
-		items = append(items, s.pickupDTO(pickup))
+	items, err := s.pickupListDTOs(pickups)
+	if err != nil {
+		return api.ListPickups500JSONResponse{InternalServerErrorJSONResponse: internalError()}, nil
 	}
 	return api.ListPickups200JSONResponse{Items: items, Page: page, PageSize: pageSize, Total: int(total)}, nil
 }

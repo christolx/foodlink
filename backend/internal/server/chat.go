@@ -63,9 +63,13 @@ func (s *Server) ListChatConversations(ctx context.Context, request api.ListChat
 	if err != nil {
 		return api.ListChatConversations500JSONResponse{InternalServerErrorJSONResponse: internalError()}, nil
 	}
+	profiles, err := s.chatConversationProfiles(convs, userID)
+	if err != nil {
+		return api.ListChatConversations500JSONResponse{InternalServerErrorJSONResponse: internalError()}, nil
+	}
 	out := make([]api.Conversation, 0, len(convs))
 	for _, conv := range convs {
-		out = append(out, s.chatConversationDTO(conv, userID))
+		out = append(out, chatConversationDTOWithProfiles(conv, userID, profiles))
 	}
 	return api.ListChatConversations200JSONResponse(out), nil
 }
@@ -186,6 +190,49 @@ func (s *Server) chatConversationDTO(conv models.Conversation, myID string) api.
 	if profile, err := s.store.ProfileByUserID(otherID); err == nil {
 		displayName = profile.DisplayName
 		role = profile.Role
+	}
+	return api.Conversation{
+		Id: conv.ID,
+		OtherUser: api.ChatUserSummary{
+			Id:          otherID,
+			DisplayName: displayName,
+			Role:        role,
+		},
+		CreatedAt: conv.CreatedAt,
+		UpdatedAt: conv.UpdatedAt,
+	}
+}
+
+func (s *Server) chatConversationProfiles(convs []models.Conversation, myID string) (map[string]api.Profile, error) {
+	otherIDs := make([]string, 0, len(convs))
+	for _, conv := range convs {
+		otherID := conv.User2ID
+		if otherID == myID {
+			otherID = conv.User1ID
+		}
+		otherIDs = append(otherIDs, otherID)
+	}
+
+	profiles, err := s.store.ProfilesByUserIDs(uniqueStrings(otherIDs))
+	if err != nil {
+		return nil, err
+	}
+	out := make(map[string]api.Profile, len(profiles))
+	for _, profile := range profiles {
+		out[profile.UserID] = profileDTO(profile)
+	}
+	return out, nil
+}
+
+func chatConversationDTOWithProfiles(conv models.Conversation, myID string, profiles map[string]api.Profile) api.Conversation {
+	otherID := conv.User2ID
+	if otherID == myID {
+		otherID = conv.User1ID
+	}
+	displayName, role := otherID, "unknown"
+	if profile, ok := profiles[otherID]; ok {
+		displayName = profile.DisplayName
+		role = string(profile.Role)
 	}
 	return api.Conversation{
 		Id: conv.ID,

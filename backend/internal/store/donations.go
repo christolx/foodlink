@@ -27,6 +27,15 @@ func (s *Store) DonationByID(id string) (models.Donation, error) {
 	return donation, err
 }
 
+func (s *Store) DonationsByIDs(ids []string) ([]models.Donation, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	var donations []models.Donation
+	err := s.db.Where("id IN ?", ids).Find(&donations).Error
+	return donations, err
+}
+
 func (s *Store) ListDonations(page, pageSize int, status *api.DonationStatus, user models.User) ([]models.Donation, int64, error) {
 	var donations []models.Donation
 	query := s.db.Model(&models.Donation{})

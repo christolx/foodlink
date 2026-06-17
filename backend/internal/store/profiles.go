@@ -37,6 +37,15 @@ func (s *Store) ProfileByUserID(userID string) (models.Profile, error) {
 	return profile, err
 }
 
+func (s *Store) ProfilesByUserIDs(userIDs []string) ([]models.Profile, error) {
+	if len(userIDs) == 0 {
+		return nil, nil
+	}
+	var profiles []models.Profile
+	err := s.db.Where("user_id IN ?", userIDs).Find(&profiles).Error
+	return profiles, err
+}
+
 func (s *Store) CreateUserWithProfile(user models.User, profile models.Profile) error {
 	return s.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(&user).Error; err != nil {

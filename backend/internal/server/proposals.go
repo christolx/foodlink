@@ -21,9 +21,9 @@ func (s *Server) ListDeliveryProposals(ctx context.Context, request api.ListDeli
 	if err != nil {
 		return api.ListDeliveryProposals500JSONResponse{InternalServerErrorJSONResponse: internalError()}, nil
 	}
-	items := make([]api.DeliveryProposal, 0, len(proposals))
-	for _, proposal := range proposals {
-		items = append(items, s.deliveryProposalDTO(proposal))
+	items, err := s.deliveryProposalListDTOs(proposals)
+	if err != nil {
+		return api.ListDeliveryProposals500JSONResponse{InternalServerErrorJSONResponse: internalError()}, nil
 	}
 	return api.ListDeliveryProposals200JSONResponse{Items: items, Page: page, PageSize: pageSize, Total: int(total)}, nil
 }
