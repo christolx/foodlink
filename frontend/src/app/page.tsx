@@ -1,5 +1,6 @@
 import Image from "next/image";
 import type { UserRole } from "@/lib/api";
+import { ExploreMapButton } from "./_components/ExploreMapButton";
 
 type LandingRole = {
   eyebrow: string;
@@ -227,10 +228,9 @@ export default function Home() {
               Real-time map of available food, open requests, and volunteer
               activity in your area.
             </p>
-            <a href="#get-involved">
-              Explore map
+            <ExploreMapButton>
               <ArrowIcon />
-            </a>
+            </ExploreMapButton>
           </div>
           <div className="map-art" aria-hidden="true">
             <span className="river" />
