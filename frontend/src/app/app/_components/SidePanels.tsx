@@ -4,6 +4,12 @@ import { useState } from "react";
 import type { Donation, Profile } from "@/lib/api";
 import type { DashboardData } from "../_types/dashboard";
 import {
+  type DashboardSettings,
+  defaultDashboardSettings,
+  loadDashboardSettings,
+  saveDashboardSettings,
+} from "./dashboard-utils";
+import {
   AppIcon,
   badgeBase,
   cx,
@@ -76,61 +82,81 @@ export function ProfilePanelContent({
   );
 }
 
-function loadPref(key: string, def: boolean): boolean {
+function loadSettings(): DashboardSettings {
+  const settings = loadDashboardSettings();
+
+  if (typeof window === "undefined") {
+    return settings;
+  }
+
   try {
-    const v = localStorage.getItem(`foodlink_${key}`);
-    return v !== null ? v === "true" : def;
+    const raw = window.localStorage.getItem("foodlink-dashboard-settings");
+    if (raw) {
+      return settings;
+    }
+
+    const next = { ...settings };
+    for (const key of Object.keys(
+      defaultDashboardSettings,
+    ) as (keyof DashboardSettings)[]) {
+      const legacyValue = window.localStorage.getItem(`foodlink_${key}`);
+      if (legacyValue !== null) {
+        next[key] = legacyValue === "true";
+      }
+    }
+
+    return next;
   } catch {
-    return def;
+    return settings;
   }
 }
 
-function savePref(key: string, value: boolean) {
-  try {
-    localStorage.setItem(`foodlink_${key}`, String(value));
-  } catch {}
-}
-
 export function SettingsPanelContent() {
-  const [notifPickup, setNotifPickup] = useState(() =>
-    loadPref("notifPickup", true),
+  const [settings, setSettings] = useState<DashboardSettings>(() =>
+    loadSettings(),
   );
-  const [notifProposal, setNotifProposal] = useState(() =>
-    loadPref("notifProposal", true),
-  );
-  const [notifDelivery, setNotifDelivery] = useState(() =>
-    loadPref("notifDelivery", false),
-  );
-  const [compactMode, setCompactMode] = useState(() =>
-    loadPref("compactMode", false),
-  );
+
+  function updateSetting(key: keyof DashboardSettings) {
+    setSettings((current) => {
+      const next = {
+        ...current,
+        [key]: !current[key],
+      };
+      saveDashboardSettings(next);
+      return next;
+    });
+  }
 
   function Toggle({
     checked,
-    onChange,
+    onToggle,
     label,
     description,
   }: {
     checked: boolean;
-    onChange: () => void;
+    onToggle: () => void;
     label: string;
     description: string;
   }) {
     return (
-      <label className="flex cursor-pointer items-start justify-between gap-4 py-3">
-        <div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        aria-label={label}
+        onClick={onToggle}
+        className="flex w-full cursor-pointer items-start justify-between gap-4 py-3 text-left"
+      >
+        <span>
           <strong className="block text-sm font-black text-[#101812]">
             {label}
           </strong>
           <span className="mt-0.5 block text-xs font-bold text-[#46534a]">
             {description}
           </span>
-        </div>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={checked}
-          onClick={onChange}
+        </span>
+        <span
+          aria-hidden="true"
           className={cx(
             "relative mt-0.5 h-6 w-11 shrink-0 rounded-full border-2 transition-colors",
             checked
@@ -140,12 +166,12 @@ export function SettingsPanelContent() {
         >
           <span
             className={cx(
-              "absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform",
-              checked ? "translate-x-5" : "translate-x-0.5",
+              "absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform",
+              checked ? "translate-x-5" : "translate-x-0",
             )}
           />
-        </button>
-      </label>
+        </span>
+      </button>
     );
   }
 
@@ -157,38 +183,20 @@ export function SettingsPanelContent() {
         </h3>
         <div className="divide-y divide-[#e4ddcf] rounded-lg border border-[#e4ddcf] bg-white px-4">
           <Toggle
-            checked={notifPickup}
-            onChange={() =>
-              setNotifPickup((v) => {
-                const next = !v;
-                savePref("notifPickup", next);
-                return next;
-              })
-            }
+            checked={settings.notifPickup}
+            onToggle={() => updateSetting("notifPickup")}
             label="Pickup assigned"
             description="When a new pickup is assigned to you"
           />
           <Toggle
-            checked={notifProposal}
-            onChange={() =>
-              setNotifProposal((v) => {
-                const next = !v;
-                savePref("notifProposal", next);
-                return next;
-              })
-            }
+            checked={settings.notifProposal}
+            onToggle={() => updateSetting("notifProposal")}
             label="Proposal accepted"
             description="When your proposal is accepted"
           />
           <Toggle
-            checked={notifDelivery}
-            onChange={() =>
-              setNotifDelivery((v) => {
-                const next = !v;
-                savePref("notifDelivery", next);
-                return next;
-              })
-            }
+            checked={settings.notifDelivery}
+            onToggle={() => updateSetting("notifDelivery")}
             label="Delivery confirmed"
             description="When the receiver confirms delivery"
           />
@@ -200,14 +208,8 @@ export function SettingsPanelContent() {
         </h3>
         <div className="divide-y divide-[#e4ddcf] rounded-lg border border-[#e4ddcf] bg-white px-4">
           <Toggle
-            checked={compactMode}
-            onChange={() =>
-              setCompactMode((v) => {
-                const next = !v;
-                savePref("compactMode", next);
-                return next;
-              })
-            }
+            checked={settings.compactMode}
+            onToggle={() => updateSetting("compactMode")}
             label="Compact mode"
             description="Reduce spacing in donation list"
           />
