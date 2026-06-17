@@ -1,6 +1,8 @@
 package db
 
 import (
+	"context"
+	"database/sql"
 	"time"
 
 	"foodlink-be/internal/models"
@@ -23,12 +25,39 @@ func Open(databaseURL string) (*gorm.DB, error) {
 		return nil, err
 	}
 
-	sqlDB.SetMaxOpenConns(25)
-	sqlDB.SetMaxIdleConns(10)
-	sqlDB.SetConnMaxLifetime(5 * time.Minute)
-	sqlDB.SetConnMaxIdleTime(1 * time.Minute)
+	sqlDB.SetMaxOpenConns(4)
+	sqlDB.SetMaxIdleConns(4)
+	sqlDB.SetConnMaxLifetime(30 * time.Minute)
+	sqlDB.SetConnMaxIdleTime(15 * time.Minute)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	if err := warmConnections(ctx, sqlDB, 4); err != nil {
+		return nil, err
+	}
 
 	return conn, nil
+}
+
+func warmConnections(ctx context.Context, sqlDB *sql.DB, count int) error {
+	conns := make([]*sql.Conn, 0, count)
+	defer func() {
+		for _, conn := range conns {
+			_ = conn.Close()
+		}
+	}()
+
+	for i := 0; i < count; i++ {
+		conn, err := sqlDB.Conn(ctx)
+		if err != nil {
+			return err
+		}
+		conns = append(conns, conn)
+		if err := conn.PingContext(ctx); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func AutoMigrate(conn *gorm.DB) error {
