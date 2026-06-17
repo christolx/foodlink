@@ -67,7 +67,8 @@
 .button,
 .text-link,
 .role-card a,
-.map-copy a {
+.map-copy a,
+.map-copy button {
   display: inline-flex;
   align-items: center;
 }
@@ -142,7 +143,8 @@
 .button svg,
 .text-link svg,
 .role-card a svg,
-.map-copy a svg {
+.map-copy a svg,
+.map-copy button svg {
   fill: none;
   stroke: currentColor;
   stroke-linecap: round;
@@ -550,10 +552,38 @@
 
 .text-link,
 .role-card a,
-.map-copy a {
+.map-copy a,
+.map-copy button {
   gap: 0.55rem;
   color: var(--leaf-deep);
   font-weight: 1000;
+}
+
+.map-login {
+  display: grid;
+  justify-items: start;
+  gap: 0.55rem;
+}
+
+.map-copy button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+}
+
+.map-copy button:disabled {
+  cursor: wait;
+  opacity: 0.68;
+}
+
+.map-login p {
+  max-width: 18rem;
+  margin: 0;
+  color: #8f271c;
+  font-size: 0.75rem;
+  font-weight: 900;
 }
 
 .roles-map {
