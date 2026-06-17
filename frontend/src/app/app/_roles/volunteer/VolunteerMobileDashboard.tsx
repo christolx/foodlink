@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import type { Donation, Pickup, Profile } from "@/lib/api";
 import {
@@ -7,6 +8,7 @@ import {
   compactFoodDescription,
   cx,
   DonationThumbnail,
+  donorDisplayName,
   emptyCopy,
   formatTime,
   quantityNumber,
@@ -14,6 +16,15 @@ import {
   roleLabels,
 } from "../../_components/ui";
 import type { DashboardData } from "../../_types/dashboard";
+
+const VolunteerMapDynamic = dynamic(() => import("./VolunteerMap"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-full items-center justify-center text-sm font-bold text-[#46534a]">
+      Loading map…
+    </div>
+  ),
+});
 
 export function VolunteerMobileDashboard({
   data,
@@ -191,7 +202,6 @@ export function VolunteerMobileDashboard({
       <VolunteerMobileRoutePreview
         donation={selectedDonation}
         receiver={selectedReceiver}
-        distance={routeDistance}
       />
 
       <section className="grid gap-3" id="volunteer-mobile-receivers">
@@ -356,55 +366,58 @@ function VolunteerMobileDonationCard({
 function VolunteerMobileRoutePreview({
   donation,
   receiver,
-  distance,
 }: {
   donation?: Donation;
   receiver?: Profile;
-  distance: string;
 }) {
   return (
     <section
-      className="overflow-hidden rounded-[1.25rem] border border-[#d8d1c3] bg-[#fffdf8] shadow-[0_0.8rem_1.8rem_rgba(49,43,24,0.05)]"
+      className="grid min-h-[30rem] grid-rows-[auto_1fr_auto] overflow-hidden rounded-[1.25rem] border border-[#d8d1c3] bg-[#fffdf8] shadow-[0_0.8rem_1.8rem_rgba(49,43,24,0.05)]"
       id="volunteer-mobile-route"
     >
       <div className="flex items-center justify-between gap-3 px-4 py-3">
         <h2 className="text-lg font-black tracking-[-0.02em] text-[#061e0e]">
-          Route preview
+          Live map
         </h2>
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-[#e9efe1] px-3 py-1 text-xs font-black text-[#23452b]">
-          <AppIcon name="navigation" className="h-3.5 w-3.5" />
-          {distance}
-        </span>
       </div>
-      <div
-        className="relative mx-4 mb-4 h-44 overflow-hidden rounded-2xl bg-[#dfe8d7]"
-        style={{
-          backgroundImage:
-            "linear-gradient(90deg, rgba(255,255,255,.62) 1px, transparent 1px), linear-gradient(0deg, rgba(255,255,255,.62) 1px, transparent 1px), linear-gradient(135deg, rgba(47,122,70,.12), rgba(255,189,26,.12))",
-          backgroundSize: "34px 34px, 34px 34px, 100% 100%",
-        }}
-      >
-        <div className="absolute left-8 top-10 h-20 w-56 rotate-[-10deg] rounded-full border-[5px] border-dashed border-[#2f7a46]/85" />
-        <div className="absolute left-20 top-2 h-44 w-4 rotate-[32deg] rounded-full bg-white/50" />
-        <div className="absolute right-20 top-0 h-48 w-4 rotate-[-25deg] rounded-full bg-white/45" />
-        <span className="absolute left-8 top-8 grid h-8 w-8 place-items-center rounded-full bg-[#2f7a46] text-white shadow-lg">
-          <AppIcon name="bag" className="h-4 w-4" />
-        </span>
-        <span className="absolute bottom-9 right-10 grid h-8 w-8 place-items-center rounded-full bg-[#ffbd1a] text-[#10140d] shadow-lg">
-          <AppIcon name="team" className="h-4 w-4" />
-        </span>
-        <article className="absolute inset-x-3 bottom-3 grid grid-cols-[2.75rem_1fr] gap-3 rounded-xl border border-[#d8d1c3] bg-[#fffdf8]/96 p-2 shadow-[0_0.7rem_1.4rem_rgba(49,43,24,0.12)] backdrop-blur">
-          <DonationThumbnail donation={donation} size="sm" />
-          <span className="min-w-0">
-            <strong className="block truncate text-sm font-black text-[#101812]">
-              {donation?.title ?? "Select donation"}
-            </strong>
-            <span className="block truncate text-xs font-bold text-[#46534a]">
-              to {receiver?.displayName ?? "receiver"}
+      <div className="relative mx-4 min-h-[21rem] overflow-hidden rounded-lg border border-[#e4ddcf]">
+        <VolunteerMapDynamic
+          donorLocation={donation?.pickupLocation}
+          receiverLocation={receiver?.location}
+          donorLabel={
+            donation ? (donorDisplayName(donation) ?? "Donor") : undefined
+          }
+          receiverLabel={receiver?.displayName}
+        />
+        {donation ? (
+          <article className="absolute inset-x-3 bottom-3 z-[1000] grid grid-cols-[2.75rem_1fr] gap-3 rounded-xl border border-[#d8d1c3] bg-[#fffdf8]/96 p-2 shadow-[0_0.7rem_1.4rem_rgba(49,43,24,0.12)] backdrop-blur">
+            <DonationThumbnail donation={donation} size="sm" />
+            <span className="min-w-0">
+              <strong className="block truncate text-sm font-black text-[#101812]">
+                {donation.title}
+              </strong>
+              <span className="block truncate text-xs font-bold text-[#46534a]">
+                to {receiver?.displayName ?? "receiver"}
+              </span>
             </span>
-          </span>
-        </article>
+          </article>
+        ) : null}
       </div>
+      <footer className="mx-4 mb-4 mt-3 grid min-h-14 grid-cols-3 items-center rounded-lg border border-[#e4ddcf] bg-[#fffdf8] px-4 text-xs font-bold">
+        {[
+          ["#2f7a46", "Donor"],
+          ["#ffb91f", "Receiver"],
+          ["#287bd5", "You"],
+        ].map(([color, label]) => (
+          <span className="inline-flex items-center gap-2" key={label}>
+            <span
+              className="h-3 w-3 rounded-full"
+              style={{ backgroundColor: color }}
+            />
+            {label}
+          </span>
+        ))}
+      </footer>
     </section>
   );
 }
