@@ -225,20 +225,28 @@ export function readableDonationId(value: string) {
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
-export function donorDisplayName(donation?: Donation) {
-  if (!donation?.description) {
-    return "Kedai Roti Hangat";
-  }
+export function donorDisplayName(donation?: Donation): string {
+  return donation?.title ?? "Donor";
+}
 
-  const description = donation.description.trim();
-
-  if (description.length <= 28) {
-    return description;
-  }
-
-  return ["Kedai Roti Hangat", "Dapur Baik Warteg", "Restoran Nusantara"][
-    quantityNumber(donation.quantity) % 3
-  ];
+export function haversineKm(
+  a: { latitude?: number; longitude?: number },
+  b: { latitude?: number; longitude?: number },
+): string {
+  if (!a.latitude || !a.longitude || !b.latitude || !b.longitude) return "—";
+  const R = 6371;
+  const dLat = ((b.latitude - a.latitude) * Math.PI) / 180;
+  const dLon = ((b.longitude - a.longitude) * Math.PI) / 180;
+  const sinA = Math.sin(dLat / 2);
+  const sinB = Math.sin(dLon / 2);
+  const h =
+    sinA * sinA +
+    Math.cos((a.latitude * Math.PI) / 180) *
+      Math.cos((b.latitude * Math.PI) / 180) *
+      sinB *
+      sinB;
+  const km = R * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+  return `${km.toFixed(1)} km`;
 }
 
 export function compactFoodDescription(donation?: Donation) {
