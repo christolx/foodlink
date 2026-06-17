@@ -57,7 +57,7 @@ export function ReceiverEtaBlock({ donation }: { donation?: Donation }) {
           <AppIcon name="pickup" className="h-5 w-5 text-[#14733a]" />
           Est. duration
         </h3>
-        <p className="mt-2 text-xs font-bold text-[#1f2a23]">35 min (12 km)</p>
+        <p className="mt-2 text-xs font-bold text-[#1f2a23]">—</p>
       </div>
     </div>
   );
@@ -92,7 +92,7 @@ export function ReceiverDetailNote({
       ))}
       {action ? (
         <button
-          className="mt-2 inline-flex min-h-10 w-max items-center gap-2 rounded-md border border-[#9eb69f] bg-[#e9f4e3] px-4 text-xs font-black text-[#064c25]"
+          className="mt-2 inline-flex min-h-10 w-full items-center gap-2 rounded-md border border-[#9eb69f] bg-[#e9f4e3] px-4 text-xs font-black text-[#064c25]"
           type="button"
           onClick={onActionClick}
         >
@@ -104,7 +104,17 @@ export function ReceiverDetailNote({
   );
 }
 
-export function ReceiverRouteSummary({ from }: { from: string }) {
+export function ReceiverRouteSummary({
+  from,
+  fromCity,
+  toName,
+  toCity,
+}: {
+  from: string;
+  fromCity?: string;
+  toName?: string;
+  toCity?: string;
+}) {
   return (
     <div className="grid content-start gap-2 px-1 lg:px-4">
       <h3 className="flex items-center gap-2 text-sm font-black text-[#101812]">
@@ -115,12 +125,12 @@ export function ReceiverRouteSummary({ from }: { from: string }) {
         <span className="relative grid">
           <span className="absolute -left-[1.35rem] top-1 h-2.5 w-2.5 rounded-full bg-[#14733a]" />
           <strong>{from}</strong>
-          Kemang, Jakarta Selatan
+          {fromCity ?? "—"}
         </span>
         <span className="relative grid">
           <span className="absolute -left-[1.35rem] top-1 h-2.5 w-2.5 rounded-full bg-[#ef3e32]" />
-          <strong>Panti Harapan</strong>
-          Cilandak, Jakarta Selatan
+          <strong>{toName ?? "Receiver"}</strong>
+          {toCity ?? "—"}
         </span>
       </div>
     </div>

@@ -19,6 +19,7 @@ import {
   DonationThumbnail,
   donorDisplayName,
   formatDate,
+  formatTime,
   ghostButton,
   type IconName,
   leafMark,
@@ -196,12 +197,7 @@ function ReceiverPriorityProposalCard({
 
   const activeDonation =
     donation ?? proposal.donation ?? donationsById.get(proposal.donationId);
-  const volunteerName =
-    proposal.volunteerProfile?.displayName ??
-    (proposal.volunteerId === "user_volunteer" ||
-    proposal.volunteerId === "demo_volunteer"
-      ? "Budi Santoso"
-      : "Siti Nur A.");
+  const volunteerName = proposal.volunteerProfile?.displayName ?? "Volunteer";
   const needsDecision =
     proposal.status === "pending" && !proposal.receiverAcceptedAt;
 
@@ -265,7 +261,10 @@ function ReceiverPriorityProposalCard({
               </span>
               <span className="inline-flex items-center gap-2">
                 <AppIcon name="clock" className="h-5 w-5" />
-                ETA: 35 min
+                Until:{" "}
+                {activeDonation
+                  ? formatTime(activeDonation.availableUntil)
+                  : "—"}
               </span>
             </div>
           </div>
@@ -379,7 +378,7 @@ function ReceiverMobileProposalDetails({
   const volunteerContactValue =
     proposal.volunteerContactOverride ??
     proposal.volunteerProfile?.contactValue ??
-    "+62 812-3456-7890";
+    "";
 
   function openMaps(loc?: {
     latitude?: number;
@@ -437,10 +436,10 @@ function ReceiverMobileProposalDetails({
           title="Pickup location"
           body={[
             donorName,
-            donation?.pickupLocation.addressLine1 ?? "Jl. Kemang Raya No.10",
+            donation?.pickupLocation.addressLine1 ?? "Address not available",
             [donation?.pickupLocation.city, donation?.pickupLocation.region]
               .filter(Boolean)
-              .join(", ") || "Jakarta",
+              .join(", ") || "—",
           ]}
           action="Open in Maps"
           onActionClick={() => openMaps(donation?.pickupLocation)}
@@ -449,15 +448,15 @@ function ReceiverMobileProposalDetails({
           icon="marker"
           title="Delivery to"
           body={[
-            proposal.receiverProfile?.displayName ?? "Panti Harapan",
+            proposal.receiverProfile?.displayName ?? "Receiver",
             proposal.receiverProfile?.location.addressLine1 ??
-              "Jl. Damai No. 25",
+              "Address not available",
             [
               proposal.receiverProfile?.location.city,
               proposal.receiverProfile?.location.region,
             ]
               .filter(Boolean)
-              .join(", ") || "Jakarta",
+              .join(", ") || "—",
           ]}
           action="Open in Maps"
           onActionClick={() => openMaps(proposal.receiverProfile?.location)}
@@ -476,10 +475,10 @@ function ReceiverMobileProposalDetails({
           title="Contact volunteer"
           body={[
             proposal.volunteerProfile?.displayName ?? "Volunteer",
-            volunteerContactValue,
+            ...(volunteerContactValue ? [volunteerContactValue] : []),
           ]}
-          action="Message on WhatsApp"
-          onActionClick={openWhatsApp}
+          action={volunteerContactValue ? "Message on WhatsApp" : undefined}
+          onActionClick={volunteerContactValue ? openWhatsApp : undefined}
         />
       </div>
     </SlidePanel>
@@ -549,13 +548,13 @@ function ReceiverCompactTimeline({
             <DonationThumbnail donation={donation} size="md" />
             <div className="min-w-0">
               <strong className="block truncate text-sm font-black text-[#101812]">
-                {donation?.title ?? "Fresh Fruit & Bread Pack"}
+                {donation?.title ?? "Awaiting assignment"}
               </strong>
               <span className="mt-1 block truncate text-xs font-bold text-[#46534a]">
                 From: {donorDisplayName(donation)}
               </span>
               <span className="mt-2 block text-xs font-bold text-[#46534a]">
-                ETA: 35 min
+                Until: {donation ? formatTime(donation.availableUntil) : "—"}
               </span>
             </div>
           </article>

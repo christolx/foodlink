@@ -15,23 +15,7 @@ export function ReceiverNeedsCard({
   runAction: (callback: () => Promise<void>, success: string) => Promise<void>;
 }) {
   const [showAllNeeds, setShowAllNeeds] = useState(false);
-  const needs = [
-    [
-      "Cooked meals for 30 children",
-      "Balanced meals with protein and vegetables.",
-      "May 19",
-    ],
-    [
-      "Staple food & snacks",
-      "Rice, eggs, fruits, milk, healthy snacks.",
-      "May 18",
-    ],
-    [
-      "Hygiene & daily needs",
-      "Soap, shampoo, toothpaste, sanitary supplies.",
-      "May 16",
-    ],
-  ];
+  const hasNotes = !!profile.notes?.trim();
 
   function handleUpdateNeeds() {
     const notes = window.prompt("Update needs notes", profile.notes ?? "");
@@ -67,46 +51,33 @@ export function ReceiverNeedsCard({
           </button>
         </header>
         <div className="grid gap-3">
-          {needs.map(([title, description, date], index) => (
-            <article
-              className="grid grid-cols-[3rem_1fr_auto] items-start gap-3"
-              key={title}
-            >
-              <span
-                className={cx(
-                  "grid h-10 w-10 place-items-center rounded-full",
-                  index === 1
-                    ? "bg-[#fee8ba] text-[#4d3510]"
-                    : "bg-[#dcebd5] text-[#064c25]",
-                )}
-              >
-                <AppIcon
-                  name={index === 2 ? "leaf" : index === 1 ? "package" : "bag"}
-                  className="h-5 w-5"
-                />
+          {hasNotes ? (
+            <article className="grid grid-cols-[3rem_1fr] items-start gap-3">
+              <span className="grid h-10 w-10 place-items-center rounded-full bg-[#dcebd5] text-[#064c25]">
+                <AppIcon name="bag" className="h-5 w-5" />
               </span>
               <span className="grid">
                 <strong className="text-xs font-black text-[#101812]">
-                  {title}
+                  Current needs
                 </strong>
                 <span className="mt-1 text-xs font-bold leading-5 text-[#46534a]">
-                  {index === 0 && profile.notes ? profile.notes : description}
+                  {profile.notes}
                 </span>
               </span>
-              <span className="text-[0.65rem] font-bold text-[#7a817b]">
-                Updated
-                <br />
-                {date}
-              </span>
             </article>
-          ))}
+          ) : (
+            <p className="text-xs font-bold text-[#46534a]">
+              No needs specified yet. Use &quot;Update needs&quot; to add your
+              requirements.
+            </p>
+          )}
         </div>
         <button
           type="button"
           className="flex min-h-10 items-center justify-center gap-3 rounded-lg border border-[#ded7c9] bg-[#fffdf8] text-xs font-black text-[#064c25] hover:bg-[#f4f0e8]"
           onClick={() => setShowAllNeeds(true)}
         >
-          View all needs <AppIcon name="arrow" className="h-4 w-4" />
+          View details <AppIcon name="arrow" className="h-4 w-4" />
         </button>
       </section>
 
@@ -124,45 +95,25 @@ export function ReceiverNeedsCard({
             >
               Update needs
             </button>
-            <div className="grid gap-4">
-              {needs.map(([title, description, date], index) => (
-                <article
-                  className="grid grid-cols-[3rem_1fr_auto] items-start gap-3 rounded-xl border border-[#ded7c9] bg-[#fafaf7] p-4"
-                  key={title}
-                >
-                  <span
-                    className={cx(
-                      "grid h-10 w-10 place-items-center rounded-full",
-                      index === 1
-                        ? "bg-[#fee8ba] text-[#4d3510]"
-                        : "bg-[#dcebd5] text-[#064c25]",
-                    )}
-                  >
-                    <AppIcon
-                      name={
-                        index === 2 ? "leaf" : index === 1 ? "package" : "bag"
-                      }
-                      className="h-5 w-5"
-                    />
+            {hasNotes ? (
+              <article className="grid grid-cols-[3rem_1fr] items-start gap-3 rounded-xl border border-[#ded7c9] bg-[#fafaf7] p-4">
+                <span className="grid h-10 w-10 place-items-center rounded-full bg-[#dcebd5] text-[#064c25]">
+                  <AppIcon name="bag" className="h-5 w-5" />
+                </span>
+                <span className="grid">
+                  <strong className="text-sm font-black text-[#101812]">
+                    Current needs
+                  </strong>
+                  <span className="mt-1 text-xs font-bold leading-5 text-[#46534a]">
+                    {profile.notes}
                   </span>
-                  <span className="grid">
-                    <strong className="text-sm font-black text-[#101812]">
-                      {title}
-                    </strong>
-                    <span className="mt-1 text-xs font-bold leading-5 text-[#46534a]">
-                      {index === 0 && profile.notes
-                        ? profile.notes
-                        : description}
-                    </span>
-                  </span>
-                  <span className="text-[0.65rem] font-bold text-[#7a817b]">
-                    Updated
-                    <br />
-                    {date}
-                  </span>
-                </article>
-              ))}
-            </div>
+                </span>
+              </article>
+            ) : (
+              <p className="py-8 text-center text-sm font-bold text-[#46534a]">
+                No needs specified yet.
+              </p>
+            )}
           </div>
         </SlidePanel>
       )}

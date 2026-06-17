@@ -263,7 +263,7 @@ function ReceiverProposalInbox({
 
       <div className="grid gap-3">
         {sortedProposals.length > 0
-          ? sortedProposals.map((proposal, index) => {
+          ? sortedProposals.map((proposal) => {
               const donation =
                 proposal.donation ?? donationsById.get(proposal.donationId);
               const expanded = proposal.id === activeProposalId;
@@ -272,7 +272,6 @@ function ReceiverProposalInbox({
                 <ReceiverProposalCard
                   donation={donation}
                   expanded={expanded}
-                  index={index}
                   key={proposal.id}
                   proposal={proposal}
                   token={token}
@@ -292,7 +291,6 @@ function ReceiverProposalCard({
   proposal,
   donation,
   expanded,
-  index,
   token,
   runAction,
   openChat,
@@ -301,7 +299,6 @@ function ReceiverProposalCard({
   proposal: DeliveryProposal;
   donation?: Donation;
   expanded: boolean;
-  index: number;
   token: string;
   runAction: (callback: () => Promise<void>, success: string) => Promise<void>;
   openChat: (userId: string) => void;
@@ -336,13 +333,11 @@ function ReceiverProposalCard({
       );
     }
   }
-  const volunteerName =
-    proposal.volunteerProfile?.displayName ??
-    (index % 2 === 0 ? "Siti Nur A." : "Budi Santoso");
+  const volunteerName = proposal.volunteerProfile?.displayName ?? "Volunteer";
   const volunteerContactValue =
     proposal.volunteerContactOverride ??
     proposal.volunteerProfile?.contactValue ??
-    "+62 812-3456-7890";
+    "";
   const volunteerContactMethodLabel =
     proposal.volunteerProfile?.contactMethod === "whatsapp"
       ? "WhatsApp"
@@ -446,10 +441,10 @@ function ReceiverProposalCard({
               body={[
                 donorName ?? "Donor",
                 donation?.pickupLocation.addressLine1 ??
-                  "Jl. Kemang Raya No.10",
+                  "Address not available",
                 [donation?.pickupLocation.city, donation?.pickupLocation.region]
                   .filter(Boolean)
-                  .join(", ") || "Jakarta",
+                  .join(", ") || "—",
               ]}
               action="Open in Maps"
               onActionClick={() => openMaps(donation?.pickupLocation)}
@@ -460,13 +455,13 @@ function ReceiverProposalCard({
               body={[
                 proposal.receiverProfile?.displayName ?? "Receiver",
                 proposal.receiverProfile?.location.addressLine1 ??
-                  "Jl. Damai No. 25",
+                  "Address not available",
                 [
                   proposal.receiverProfile?.location.city,
                   proposal.receiverProfile?.location.region,
                 ]
                   .filter(Boolean)
-                  .join(", ") || "Jakarta",
+                  .join(", ") || "—",
               ]}
               action="Open in Maps"
               onActionClick={() => openMaps(proposal.receiverProfile?.location)}
@@ -526,18 +521,28 @@ function ReceiverProposalCard({
             <ReceiverDetailNote
               icon="message"
               title="Contact volunteer"
-              body={[volunteerContactMethodLabel, volunteerContactValue]}
-              action="Message on WhatsApp"
-              onActionClick={() => {
-                const cleanNumber = volunteerContactValue.replace(/\D/g, "");
-                if (cleanNumber) {
-                  window.open(
-                    `https://wa.me/${cleanNumber}`,
-                    "_blank",
-                    "noopener,noreferrer",
-                  );
-                }
-              }}
+              body={[
+                volunteerContactMethodLabel,
+                ...(volunteerContactValue ? [volunteerContactValue] : []),
+              ]}
+              action={volunteerContactValue ? "Message on WhatsApp" : undefined}
+              onActionClick={
+                volunteerContactValue
+                  ? () => {
+                      const cleanNumber = volunteerContactValue.replace(
+                        /\D/g,
+                        "",
+                      );
+                      if (cleanNumber) {
+                        window.open(
+                          `https://wa.me/${cleanNumber}`,
+                          "_blank",
+                          "noopener,noreferrer",
+                        );
+                      }
+                    }
+                  : undefined
+              }
             />
             <ReceiverDetailNote
               icon="message"
@@ -549,7 +554,23 @@ function ReceiverProposalCard({
               action="Chat in-app"
               onActionClick={() => openChat(proposal.volunteerId)}
             />
-            <ReceiverRouteSummary from={donorName} />
+            <ReceiverRouteSummary
+              from={donorName}
+              fromCity={
+                [donation?.pickupLocation.city, donation?.pickupLocation.region]
+                  .filter(Boolean)
+                  .join(", ") || undefined
+              }
+              toName={proposal.receiverProfile?.displayName}
+              toCity={
+                [
+                  proposal.receiverProfile?.location.city,
+                  proposal.receiverProfile?.location.region,
+                ]
+                  .filter(Boolean)
+                  .join(", ") || undefined
+              }
+            />
           </div>
         </div>
       ) : null}
