@@ -32,4 +32,6 @@ export type SidePanelType =
   | "settings"
   | "reports"
   | "help"
-  | "messages";
+  | "messages"
+  | "donations"
+  | "receivers";

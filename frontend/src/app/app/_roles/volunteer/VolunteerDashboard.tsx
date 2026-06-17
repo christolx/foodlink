@@ -20,12 +20,13 @@ import {
   emptyCopy,
   formatTime,
   ghostButton,
+  haversineKm,
   type IconName,
   panel,
   primaryButton,
   statusClass,
 } from "../../_components/ui";
-import type { DashboardData } from "../../_types/dashboard";
+import type { DashboardData, SidePanelType } from "../../_types/dashboard";
 import { VolunteerMobileDashboard } from "./VolunteerMobileDashboard";
 
 const VolunteerMapDynamic = dynamic(() => import("./VolunteerMap"), {
@@ -42,11 +43,17 @@ export function VolunteerDashboard({
   token,
   runAction,
   openChat,
+  openPanel,
+  search = "",
+  statusFilter = "All",
 }: {
   data: DashboardData;
   token: string;
   runAction: (callback: () => Promise<void>, success: string) => Promise<void>;
   openChat: (userId: string) => void;
+  openPanel?: (panel: SidePanelType) => void;
+  search?: string;
+  statusFilter?: "All" | "Available" | "Proposal pending";
 }) {
   const [selectedDonationId, setSelectedDonationId] = useState<string | null>(
     null,
@@ -60,15 +67,48 @@ export function VolunteerDashboard({
   const pendingProposals = data.proposals.filter(
     (proposal) => proposal.status === "pending",
   ).length;
-  const availableDonations = data.donations.filter(
-    (donation) => donation.status === "available",
+
+  const filteredDonations = data.donations.filter((d) => {
+    if (statusFilter === "Available" && d.status !== "available") return false;
+    if (statusFilter === "Proposal pending" && d.status !== "proposal_pending")
+      return false;
+    if (
+      statusFilter === "All" &&
+      d.status !== "available" &&
+      d.status !== "proposal_pending"
+    )
+      return false;
+    if (search) {
+      const q = search.toLowerCase();
+      if (
+        !d.title.toLowerCase().includes(q) &&
+        !(d.description ?? "").toLowerCase().includes(q) &&
+        !(d.pickupLocation.city ?? "").toLowerCase().includes(q)
+      )
+        return false;
+    }
+    return true;
+  });
+
+  const filteredReceivers = data.receivers.filter((r) => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return (
+      r.displayName.toLowerCase().includes(q) ||
+      (r.location.city ?? "").toLowerCase().includes(q) ||
+      (r.notes ?? "").toLowerCase().includes(q)
+    );
+  });
+
+  const availableDonations = filteredDonations.filter(
+    (d) => d.status === "available",
   );
   const availableDonation =
     availableDonations.find((donation) => donation.id === selectedDonationId) ??
     availableDonations[0];
   const receiver =
-    data.receivers.find((item) => item.userId === selectedReceiverId) ??
-    data.receivers[0];
+    filteredReceivers.find((item) => item.userId === selectedReceiverId) ??
+    filteredReceivers[0];
   const activePickup = data.pickups.find(
     (pickup) => pickup.status === "assigned" || pickup.status === "picked_up",
   );
@@ -119,15 +159,20 @@ export function VolunteerDashboard({
       <div className="hidden gap-3 lg:grid">
         <section className="grid min-h-[41rem] gap-0 overflow-hidden rounded-xl border border-[#ded7c9] bg-[#fffdf8]/78 shadow-[0_1rem_2.8rem_rgba(49,43,24,0.08)] 2xl:grid-cols-[minmax(23rem,1.04fr)_minmax(21rem,0.96fr)_minmax(19rem,0.78fr)]">
           <VolunteerDonationsPanel
-            donations={data.donations}
+            donations={filteredDonations}
             selectedDonation={availableDonation}
             onSelect={setSelectedDonationId}
+            volunteerLocation={data.profile.location}
+            onViewAll={() => openPanel?.("donations")}
           />
           <VolunteerMapPanel donation={availableDonation} receiver={receiver} />
           <VolunteerReceiversPanel
-            receivers={data.receivers}
+            receivers={filteredReceivers}
             selectedReceiver={receiver}
             onSelect={setSelectedReceiverId}
+            volunteerLocation={data.profile.location}
+            selectedDonation={availableDonation}
+            onViewAll={() => openPanel?.("receivers")}
           />
         </section>
 
@@ -135,6 +180,7 @@ export function VolunteerDashboard({
           <VolunteerProposalPanel
             donation={availableDonation}
             receiver={receiver}
+            volunteerName={data.profile.displayName}
             onCreate={() => setShowProposalModal(true)}
             onChat={() => receiver && openChat(receiver.userId)}
             disabled={!availableDonation || !receiver}
@@ -292,23 +338,18 @@ function VolunteerDonationsPanel({
   donations,
   selectedDonation,
   onSelect,
+  volunteerLocation,
+  onViewAll,
 }: {
   donations: Donation[];
   selectedDonation?: Donation;
   onSelect: (id: string) => void;
+  volunteerLocation: { latitude?: number; longitude?: number };
+  onViewAll?: () => void;
 }) {
-  const [filter, setFilter] = useState<
-    "All" | "Available" | "Proposal pending"
-  >("All");
   const [sortNewest, setSortNewest] = useState(false);
 
-  const filtered = donations.filter((d) => {
-    if (filter === "Available") return d.status === "available";
-    if (filter === "Proposal pending") return d.status === "proposal_pending";
-    return true;
-  });
-
-  const sortedDonations = [...filtered].sort((a, b) => {
+  const sortedDonations = [...donations].sort((a, b) => {
     if (sortNewest) {
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     }
@@ -325,33 +366,16 @@ function VolunteerDonationsPanel({
           Available donations
         </h2>
         <span className="rounded-full bg-[#dcebd5] px-3 py-1 text-xs font-black text-[#14351f]">
-          {filtered.length}
+          {donations.length}
         </span>
       </header>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap gap-2">
-          {(["All", "Available", "Proposal pending"] as const).map((item) => (
-            <button
-              className={cx(
-                "min-h-9 rounded-full border px-4 text-xs font-black",
-                filter === item
-                  ? "border-[#2f7a46] bg-[#3f7d48] text-white"
-                  : "border-[#d9d1c2] bg-[#fffdf8] text-[#1f2a23]",
-              )}
-              key={item}
-              type="button"
-              onClick={() => setFilter(item)}
-            >
-              {item}
-            </button>
-          ))}
-        </div>
+      <div className="flex justify-end">
         <button
           className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-[#d9d1c2] bg-[#fffdf8] px-3 text-xs font-black"
           type="button"
           onClick={() => setSortNewest((v) => !v)}
         >
-          {sortNewest ? "Newest" : "Nearest"}{" "}
+          {sortNewest ? "Newest" : "Status"}{" "}
           <AppIcon name="chevron" className="h-4 w-4" />
         </button>
       </div>
@@ -359,23 +383,24 @@ function VolunteerDonationsPanel({
         {sortedDonations.length > 0
           ? sortedDonations
               .slice(0, 5)
-              .map((donation, index) => (
+              .map((donation) => (
                 <VolunteerDonationCard
                   donation={donation}
                   key={donation.id}
                   selected={donation.id === selectedDonation?.id}
-                  index={index}
                   onSelect={onSelect}
+                  volunteerLocation={volunteerLocation}
                 />
               ))
-          : emptyCopy("No donations visible yet.")}
+          : emptyCopy("No donations match your filters.")}
       </div>
-      <a
-        className="mt-2 flex min-h-11 items-center justify-center gap-3 rounded-lg border border-[#ded7c9] bg-[#fffdf8] text-sm font-black"
-        href="#available-donations"
+      <button
+        className="mt-2 flex min-h-11 w-full items-center justify-center gap-3 rounded-lg border border-[#ded7c9] bg-[#fffdf8] text-sm font-black hover:bg-[#f4f0e8]"
+        type="button"
+        onClick={onViewAll}
       >
         View all donations <AppIcon name="arrow" className="h-4 w-4" />
-      </a>
+      </button>
     </section>
   );
 }
@@ -383,15 +408,15 @@ function VolunteerDonationsPanel({
 function VolunteerDonationCard({
   donation,
   selected,
-  index,
   onSelect,
+  volunteerLocation,
 }: {
   donation: Donation;
   selected: boolean;
-  index: number;
   onSelect: (id: string) => void;
+  volunteerLocation: { latitude?: number; longitude?: number };
 }) {
-  const distance = `${(1.2 + index * 0.6).toFixed(1)} km`;
+  const distance = haversineKm(volunteerLocation, donation.pickupLocation);
   const selectable = donation.status === "available";
 
   return (
@@ -529,15 +554,17 @@ function VolunteerReceiversPanel({
   receivers,
   selectedReceiver,
   onSelect,
+  volunteerLocation,
+  selectedDonation,
+  onViewAll,
 }: {
   receivers: Profile[];
   selectedReceiver?: Profile;
   onSelect: (id: string) => void;
+  volunteerLocation: { latitude?: number; longitude?: number };
+  selectedDonation?: Donation;
+  onViewAll?: () => void;
 }) {
-  const [searchQuery, setSearchQuery] = useState("");
-  const filteredReceivers = receivers.filter((r) =>
-    r.displayName.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
   return (
     <section className="grid content-start gap-4 p-5" id="receiver-directory">
       <header className="flex items-center justify-between gap-3">
@@ -545,41 +572,32 @@ function VolunteerReceiversPanel({
           Receiver directory
         </h2>
         <span className="rounded-full bg-[#dcebd5] px-3 py-1 text-xs font-black text-[#14351f]">
-          {filteredReceivers.length}
+          {receivers.length}
         </span>
       </header>
-      <label className="grid min-h-11 grid-cols-[2.5rem_1fr] items-center rounded-lg border border-[#d7d0c2] bg-[#fffdf8] shadow-sm">
-        <span className="grid place-items-center text-[#526158]">
-          <AppIcon name="search" className="h-5 w-5" />
-        </span>
-        <input
-          className="h-full bg-transparent pr-3 text-sm font-bold outline-none placeholder:text-[#7b837c]"
-          placeholder="Search receivers..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-      </label>
       <div className="grid gap-2">
-        {filteredReceivers.length > 0
-          ? filteredReceivers
+        {receivers.length > 0
+          ? receivers
               .slice(0, 4)
-              .map((receiver, index) => (
+              .map((receiver) => (
                 <VolunteerReceiverCard
                   key={receiver.userId}
                   receiver={receiver}
                   selected={receiver.userId === selectedReceiver?.userId}
-                  index={index}
                   onSelect={onSelect}
+                  volunteerLocation={volunteerLocation}
+                  selectedDonation={selectedDonation}
                 />
               ))
           : emptyCopy("No receiver profiles available.")}
       </div>
-      <a
-        className="mt-1 flex min-h-11 items-center justify-center gap-3 rounded-lg border border-[#ded7c9] bg-[#fffdf8] text-sm font-black"
-        href="#work"
+      <button
+        className="mt-1 flex min-h-11 w-full items-center justify-center gap-3 rounded-lg border border-[#ded7c9] bg-[#fffdf8] text-sm font-black hover:bg-[#f4f0e8]"
+        type="button"
+        onClick={onViewAll}
       >
         View all receivers <AppIcon name="arrow" className="h-4 w-4" />
-      </a>
+      </button>
     </section>
   );
 }
@@ -587,15 +605,18 @@ function VolunteerReceiversPanel({
 function VolunteerReceiverCard({
   receiver,
   selected,
-  index,
   onSelect,
+  volunteerLocation,
+  selectedDonation,
 }: {
   receiver: Profile;
   selected: boolean;
-  index: number;
   onSelect: (id: string) => void;
+  volunteerLocation: { latitude?: number; longitude?: number };
+  selectedDonation?: Donation;
 }) {
-  const accent = ["#2f7a46", "#e18a18", "#2f7a46", "#d8841a"][index % 4];
+  const fromPoint = selectedDonation?.pickupLocation ?? volunteerLocation;
+  const distance = haversineKm(fromPoint, receiver.location);
 
   return (
     <article
@@ -617,14 +638,8 @@ function VolunteerReceiverCard({
       >
         {selected ? <AppIcon name="check" className="h-4 w-4" /> : null}
       </button>
-      <span
-        className="grid h-14 w-14 place-items-center rounded-full bg-[#e5f1df]"
-        style={{ color: accent }}
-      >
-        <AppIcon
-          name={index === 3 ? "pickup" : index === 2 ? "leaf" : "team"}
-          className="h-7 w-7"
-        />
+      <span className="grid h-14 w-14 place-items-center rounded-full bg-[#e5f1df] text-[#2f7a46]">
+        <AppIcon name="team" className="h-7 w-7" />
       </span>
       <div className="min-w-0">
         <strong className="block truncate text-sm font-black text-[#101812]">
@@ -636,10 +651,18 @@ function VolunteerReceiverCard({
         <div className="mt-2 flex flex-wrap gap-3 text-xs font-bold text-[#46534a]">
           <span>{receiver.contactMethod}</span>
           <span>•</span>
-          <span>{(1.6 + index * 0.5).toFixed(1)} km</span>
+          <span
+            title={
+              selectedDonation ? "Pickup → receiver" : "Volunteer → receiver"
+            }
+          >
+            {distance}
+          </span>
         </div>
         <p className="mt-3 rounded-md bg-[#e7f0df] p-2 text-xs font-bold leading-5 text-[#1f2a23]">
-          Needs: {receiver.notes ?? "Nasi box, lauk, sayur, buah"}
+          {receiver.notes
+            ? `Needs: ${receiver.notes}`
+            : "No specific needs listed."}
         </p>
       </div>
     </article>
@@ -649,12 +672,14 @@ function VolunteerReceiverCard({
 function VolunteerProposalPanel({
   donation,
   receiver,
+  volunteerName,
   disabled,
   onCreate,
   onChat,
 }: {
   donation?: Donation;
   receiver?: Profile;
+  volunteerName: string;
   disabled: boolean;
   onCreate: () => void;
   onChat: () => void;
@@ -677,27 +702,39 @@ function VolunteerProposalPanel({
         <AppIcon name="arrow" className="h-7 w-7" />
       </div>
       <SelectedReceiverSummary receiver={receiver} />
-      <footer className="grid gap-3 rounded-lg border border-[#e4ddcf] bg-[#fbfaf3] p-3 lg:col-span-3 xl:grid-cols-[repeat(4,1fr)_max-content_max-content] xl:items-center">
-        <MiniMetric icon="navigation" label="Est. distance" value="4.1 km" />
-        <MiniMetric icon="clock" label="Est. time" value="18 min" />
-        <MiniMetric icon="profile" label="Volunteer" value="Budi Relawan" />
-        <MiniMetric icon="message" label="Contact" value="WhatsApp" />
-        <button
-          className={primaryButton}
-          type="button"
-          onClick={onCreate}
-          disabled={disabled}
-        >
-          Create proposal <AppIcon name="arrow" className="h-5 w-5" />
-        </button>
-        <button
-          className={ghostButton}
-          type="button"
-          onClick={onChat}
-          disabled={!receiver}
-        >
-          Chat in-app
-        </button>
+      <footer className="grid gap-3 rounded-lg border border-[#e4ddcf] bg-[#fbfaf3] p-3 lg:col-span-3">
+        <div className="flex flex-wrap gap-x-5 gap-y-2 items-center">
+          <MiniMetric
+            icon="navigation"
+            label="Est. distance"
+            value={
+              donation && receiver
+                ? haversineKm(donation.pickupLocation, receiver.location)
+                : "—"
+            }
+          />
+          <MiniMetric icon="clock" label="Est. time" value="—" />
+          <MiniMetric icon="profile" label="Volunteer" value={volunteerName} />
+          <MiniMetric icon="message" label="Contact" value="WhatsApp" />
+        </div>
+        <div className="flex gap-2">
+          <button
+            className={primaryButton}
+            type="button"
+            onClick={onCreate}
+            disabled={disabled}
+          >
+            Create proposal <AppIcon name="arrow" className="h-5 w-5" />
+          </button>
+          <button
+            className={ghostButton}
+            type="button"
+            onClick={onChat}
+            disabled={!receiver}
+          >
+            Chat in-app
+          </button>
+        </div>
       </footer>
     </section>
   );
@@ -745,11 +782,12 @@ function SelectedReceiverSummary({ receiver }: { receiver?: Profile }) {
         <div className="mt-2 flex flex-wrap gap-3 text-xs font-bold text-[#46534a]">
           <span>{receiver?.entityType ?? "Receiver"}</span>
           <span>{receiver?.contactMethod ?? "Contact"}</span>
-          <span>1.6 km</span>
         </div>
-        <p className="mt-3 rounded-md bg-[#e7f0df] p-2 text-xs font-bold leading-5 text-[#1f2a23]">
-          Needs: {receiver?.notes ?? "Nasi box, lauk, sayur, buah"}
-        </p>
+        {receiver?.notes ? (
+          <p className="mt-3 rounded-md bg-[#e7f0df] p-2 text-xs font-bold leading-5 text-[#1f2a23]">
+            Needs: {receiver.notes}
+          </p>
+        ) : null}
       </div>
     </article>
   );

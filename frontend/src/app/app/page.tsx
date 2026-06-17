@@ -38,6 +38,10 @@ export default function AppPage() {
   const [action, setAction] = useState<ActionState>(null);
   const [activePanel, setActivePanel] = useState<SidePanelType | null>(null);
   const [chatTargetUserId, setChatTargetUserId] = useState<string | null>(null);
+  const [volunteerSearch, setVolunteerSearch] = useState("");
+  const [volunteerStatusFilter, setVolunteerStatusFilter] = useState<
+    "All" | "Available" | "Proposal pending"
+  >("All");
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: bootstrap runs once; action refresh reuses latest token.
   useEffect(() => {
@@ -144,7 +148,21 @@ export default function AppPage() {
           )}
           aria-labelledby="dashboard-title"
         >
-          <DashboardTopbar data={data} />
+          <DashboardTopbar
+            data={data}
+            volunteerSearch={volunteerSearch}
+            onVolunteerSearch={setVolunteerSearch}
+            volunteerStatusFilter={volunteerStatusFilter}
+            onVolunteerFilter={() =>
+              setVolunteerStatusFilter((f) =>
+                f === "All"
+                  ? "Available"
+                  : f === "Available"
+                    ? "Proposal pending"
+                    : "All",
+              )
+            }
+          />
 
           {action ? (
             <p
@@ -176,6 +194,9 @@ export default function AppPage() {
                     token={token}
                     runAction={runAction}
                     openChat={openChat}
+                    openPanel={setActivePanel}
+                    search={volunteerSearch}
+                    statusFilter={volunteerStatusFilter}
                   />
                 ) : null}
                 {data.user.role === "receiver" ? (
@@ -209,9 +230,21 @@ export default function AppPage() {
             </div>
           ) : null}
         </section>
-        {data.user.role === "donor" ? <DonorBottomNavigation /> : null}
-        {data.user.role === "receiver" ? <ReceiverBottomNavigation /> : null}
-        {data.user.role === "volunteer" ? <VolunteerBottomNavigation /> : null}
+        {data.user.role === "donor" ? (
+          <DonorBottomNavigation
+            onMessagesClick={() => setActivePanel("messages")}
+          />
+        ) : null}
+        {data.user.role === "receiver" ? (
+          <ReceiverBottomNavigation
+            onMessagesClick={() => setActivePanel("messages")}
+          />
+        ) : null}
+        {data.user.role === "volunteer" ? (
+          <VolunteerBottomNavigation
+            onMessagesClick={() => setActivePanel("messages")}
+          />
+        ) : null}
       </main>
     </DashboardErrorBoundary>
   );

@@ -11,7 +11,7 @@ import {
   donorDisplayName,
   emptyCopy,
   formatTime,
-  quantityNumber,
+  haversineKm,
   receiverNotificationTitle,
   roleLabels,
 } from "../../_components/ui";
@@ -50,10 +50,12 @@ export function VolunteerMobileDashboard({
   const unread = data.notifications.filter((item) => !item.read).length;
   const visibleDonations = availableDonations.slice(0, 2);
   const visibleReceivers = data.receivers.slice(0, 2);
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Morning" : hour < 17 ? "Afternoon" : "Evening";
   const routeDistance =
     selectedDonation && selectedReceiver
-      ? `${(3.4 + quantityNumber(selectedDonation.quantity) / 20).toFixed(1)} km`
-      : "3.8 km";
+      ? haversineKm(selectedDonation.pickupLocation, selectedReceiver.location)
+      : "—";
   const city = data.profile.location.city || "Jakarta Selatan";
 
   return (
@@ -90,7 +92,7 @@ export function VolunteerMobileDashboard({
       <div className="grid gap-3">
         <div>
           <h1 className="font-serif text-[1.75rem] leading-none tracking-[-0.05em] text-[#063514]">
-            Morning, {data.profile.displayName}
+            {greeting}, {data.profile.displayName}
           </h1>
           <p className="mt-2 text-sm font-bold text-[#46534a]">
             Routes, matches, and pickup progress for today.
@@ -193,6 +195,7 @@ export function VolunteerMobileDashboard({
                   key={donation.id}
                   selected={donation.id === selectedDonation?.id}
                   onSelect={onSelectDonation}
+                  volunteerLocation={data.profile.location}
                 />
               ))
             : emptyCopy("No available donations yet.")}
@@ -222,6 +225,8 @@ export function VolunteerMobileDashboard({
                   key={receiver.userId}
                   selected={receiver.userId === selectedReceiver?.userId}
                   onSelect={onSelectReceiver}
+                  volunteerLocation={data.profile.location}
+                  selectedDonation={selectedDonation}
                 />
               ))
             : emptyCopy("No receiver profiles available.")}
@@ -313,13 +318,15 @@ function VolunteerHeroStat({
 function VolunteerMobileDonationCard({
   donation,
   selected,
-  index,
+  index: _index,
   onSelect,
+  volunteerLocation,
 }: {
   donation: Donation;
   selected: boolean;
   index: number;
   onSelect: (id: string) => void;
+  volunteerLocation?: { latitude?: number; longitude?: number };
 }) {
   return (
     <button
@@ -339,7 +346,9 @@ function VolunteerMobileDonationCard({
             {donation.title}
           </strong>
           <span className="shrink-0 text-xs font-black text-[#46534a]">
-            {(1.2 + index * 0.7).toFixed(1)} km
+            {volunteerLocation
+              ? haversineKm(volunteerLocation, donation.pickupLocation)
+              : "—"}
           </span>
         </span>
         <span className="line-clamp-2 text-xs font-bold leading-5 text-[#46534a]">
@@ -425,14 +434,20 @@ function VolunteerMobileRoutePreview({
 function VolunteerMobileReceiverCard({
   receiver,
   selected,
-  index,
+  index: _index,
   onSelect,
+  volunteerLocation,
+  selectedDonation,
 }: {
   receiver: Profile;
   selected: boolean;
   index: number;
   onSelect: (id: string) => void;
+  volunteerLocation?: { latitude?: number; longitude?: number };
+  selectedDonation?: Donation;
 }) {
+  const fromPoint = selectedDonation?.pickupLocation ?? volunteerLocation;
+  const distance = fromPoint ? haversineKm(fromPoint, receiver.location) : "—";
   return (
     <button
       className={cx(
@@ -445,18 +460,19 @@ function VolunteerMobileReceiverCard({
       onClick={() => onSelect(receiver.userId)}
     >
       <span className="grid h-12 w-12 place-items-center rounded-full bg-[#e5f1df] text-[#2f7a46]">
-        <AppIcon name={index === 0 ? "team" : "leaf"} className="h-6 w-6" />
+        <AppIcon name="team" className="h-6 w-6" />
       </span>
       <span className="min-w-0">
         <strong className="block truncate text-sm font-black text-[#101812]">
           {receiver.displayName}
         </strong>
         <span className="mt-1 block text-xs font-bold capitalize text-[#46534a]">
-          {(1.5 + index * 0.6).toFixed(1)} km ·{" "}
-          {receiver.entityType ?? "Receiver"}
+          {distance} · {receiver.entityType ?? "Receiver"}
         </span>
         <span className="mt-2 block rounded-xl bg-[#e7f0df] p-3 text-xs font-bold leading-5 text-[#1f2a23]">
-          Needs: {receiver.notes ?? "Fresh meals and vegetables."}
+          {receiver.notes
+            ? `Needs: ${receiver.notes}`
+            : "No specific needs listed."}
         </span>
       </span>
       {selected ? (

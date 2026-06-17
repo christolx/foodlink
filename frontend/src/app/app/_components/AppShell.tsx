@@ -6,6 +6,8 @@ import { createPortal } from "react-dom";
 import type { DashboardData, SidePanelType } from "../_types/dashboard";
 import { ChatPanel } from "./ChatPanel";
 import {
+  AllDonationsPanelContent,
+  AllReceiversPanelContent,
   HelpPanelContent,
   ProfilePanelContent,
   ReportsPanelContent,
@@ -142,18 +144,11 @@ export function DashboardSidebar({
       ).length;
       return [
         {
-          label: "Dashboard",
-          icon: "dashboard" as IconName,
-          href: "#dashboard-title",
-        },
-        {
           label: "Proposals",
           icon: "box" as IconName,
           href: "#proposal-queue",
           badge: pendingCount,
         },
-        { label: "Deliveries", icon: "pickup" as IconName, href: "#work" },
-        { label: "Needs", icon: "bag" as IconName, href: "#my-food-requests" },
         {
           label: "Messages",
           icon: "message" as IconName,
@@ -174,28 +169,13 @@ export function DashboardSidebar({
         {
           label: "Available donations",
           icon: "bag" as IconName,
-          href: "#available-donations",
+          panel: "donations" as SidePanelType,
           badge: availableCount,
         },
         {
           label: "Receivers",
           icon: "team" as IconName,
-          href: "#receiver-directory",
-        },
-        {
-          label: "My proposals",
-          icon: "box" as IconName,
-          href: "#my-proposals",
-        },
-        {
-          label: "Pickups",
-          icon: "pickup" as IconName,
-          href: "#active-pickup",
-        },
-        {
-          label: "History",
-          icon: "clock" as IconName,
-          href: "#today-at-a-glance",
+          panel: "receivers" as SidePanelType,
         },
         {
           label: "Messages",
@@ -226,14 +206,8 @@ export function DashboardSidebar({
     }
     // Donor
     return [
-      {
-        label: "Dashboard",
-        icon: "dashboard" as IconName,
-        href: "#dashboard-title",
-      },
       { label: "My donations", icon: "bag" as IconName, href: "#my-donations" },
       { label: "Proposals", icon: "box" as IconName, href: "#proposal-queue" },
-      { label: "Pickups", icon: "pickup" as IconName, href: "#work" },
       {
         label: "Messages",
         icon: "message" as IconName,
@@ -446,7 +420,11 @@ export function DashboardSidebar({
                   ? "Settings"
                   : activePanel === "reports"
                     ? "Reports"
-                    : "Help & support"
+                    : activePanel === "donations"
+                      ? "Available donations"
+                      : activePanel === "receivers"
+                        ? "Receiver directory"
+                        : "Help & support"
           }
           icon={
             activePanel === "profile"
@@ -457,7 +435,11 @@ export function DashboardSidebar({
                   ? "settings"
                   : activePanel === "reports"
                     ? "chart"
-                    : "message"
+                    : activePanel === "donations"
+                      ? "bag"
+                      : activePanel === "receivers"
+                        ? "team"
+                        : "message"
           }
           onClose={() => setActivePanel(null)}
         >
@@ -472,6 +454,18 @@ export function DashboardSidebar({
               token={token}
               currentUserId={data.user.id}
               initialOtherUserId={chatTargetUserId}
+            />
+          )}
+          {activePanel === "donations" && (
+            <AllDonationsPanelContent
+              donations={data.donations}
+              volunteerLocation={data.profile.location}
+            />
+          )}
+          {activePanel === "receivers" && (
+            <AllReceiversPanelContent
+              receivers={data.receivers}
+              volunteerLocation={data.profile.location}
             />
           )}
         </SlidePanel>
@@ -489,62 +483,88 @@ export function DashboardSidebar({
   );
 }
 
-export function DonorBottomNavigation() {
-  const items = [
+export function DonorBottomNavigation({
+  onMessagesClick,
+}: {
+  onMessagesClick?: () => void;
+}) {
+  const linkItems = [
     { label: "Home", icon: "dashboard" as IconName, href: "#dashboard-title" },
     { label: "Donations", icon: "bag" as IconName, href: "#my-donations" },
     { label: "Proposals", icon: "box" as IconName, href: "#proposal-queue" },
-    { label: "Inbox", icon: "bell" as IconName, href: "#notifications" },
   ];
+
+  const itemClass =
+    "grid min-h-14 place-items-center gap-1 rounded-lg px-1 text-center text-[0.68rem] font-black text-[#46534a] transition hover:bg-[#f0f7eb] hover:text-[#064c25]";
 
   return (
     <nav
       className="fixed inset-x-4 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] z-50 grid grid-cols-4 rounded-[1.35rem] border border-[#ded7c9] bg-[#fffdf8]/96 p-2 shadow-[0_-0.75rem_2rem_rgba(49,43,24,0.12)] backdrop-blur lg:hidden"
       aria-label="Donor navigation"
     >
-      {items.map((item) => (
-        <a
-          className="grid min-h-14 place-items-center gap-1 rounded-lg px-1 text-center text-[0.68rem] font-black text-[#46534a] transition hover:bg-[#f0f7eb] hover:text-[#064c25]"
-          href={item.href}
-          key={item.label}
-        >
+      {linkItems.map((item) => (
+        <a className={itemClass} href={item.href} key={item.label}>
           <AppIcon name={item.icon} className="text-2xl" />
           <span>{item.label}</span>
         </a>
       ))}
+      <button
+        type="button"
+        className={itemClass}
+        onClick={onMessagesClick}
+        aria-label="Open messages"
+      >
+        <AppIcon name="message" className="text-2xl" />
+        <span>Messages</span>
+      </button>
     </nav>
   );
 }
 
-export function ReceiverBottomNavigation() {
-  const items = [
+export function ReceiverBottomNavigation({
+  onMessagesClick,
+}: {
+  onMessagesClick?: () => void;
+}) {
+  const linkItems = [
     { label: "Home", icon: "dashboard" as IconName, href: "#dashboard-title" },
     { label: "Proposals", icon: "box" as IconName, href: "#receiver-priority" },
-    { label: "Deliveries", icon: "pickup" as IconName, href: "#deliveries" },
     { label: "Inbox", icon: "bell" as IconName, href: "#notifications" },
   ];
+
+  const itemClass =
+    "grid min-h-14 place-items-center gap-1 rounded-lg px-1 text-center text-[0.68rem] font-black text-[#46534a] transition hover:bg-[#f0f7eb] hover:text-[#064c25]";
 
   return (
     <nav
       className="fixed inset-x-4 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] z-50 grid grid-cols-4 rounded-[1.35rem] border border-[#ded7c9] bg-[#fffdf8]/96 p-2 shadow-[0_-0.75rem_2rem_rgba(49,43,24,0.12)] backdrop-blur lg:hidden"
       aria-label="Receiver navigation"
     >
-      {items.map((item) => (
-        <a
-          className="grid min-h-14 place-items-center gap-1 rounded-lg px-1 text-center text-[0.68rem] font-black text-[#46534a] transition hover:bg-[#f0f7eb] hover:text-[#064c25]"
-          href={item.href}
-          key={item.label}
-        >
+      {linkItems.map((item) => (
+        <a className={itemClass} href={item.href} key={item.label}>
           <AppIcon name={item.icon} className="text-2xl" />
           <span>{item.label}</span>
         </a>
       ))}
+      <button
+        type="button"
+        className={itemClass}
+        onClick={onMessagesClick}
+        aria-label="Open messages"
+      >
+        <AppIcon name="message" className="text-2xl" />
+        <span>Messages</span>
+      </button>
     </nav>
   );
 }
 
-export function VolunteerBottomNavigation() {
-  const items = [
+export function VolunteerBottomNavigation({
+  onMessagesClick,
+}: {
+  onMessagesClick?: () => void;
+}) {
+  const linkItems = [
     {
       label: "Home",
       icon: "dashboard" as IconName,
@@ -560,34 +580,48 @@ export function VolunteerBottomNavigation() {
       icon: "navigation" as IconName,
       href: "#volunteer-mobile-route",
     },
-    {
-      label: "Messages",
-      icon: "bell" as IconName,
-      href: "#volunteer-mobile-messages",
-    },
   ];
+
+  const itemClass =
+    "grid min-h-14 place-items-center gap-1 rounded-lg px-1 text-center text-[0.68rem] font-black text-[#46534a] transition hover:bg-[#f0f7eb] hover:text-[#064c25]";
 
   return (
     <nav
       className="fixed inset-x-4 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] z-50 grid grid-cols-4 rounded-[1.35rem] border border-[#ded7c9] bg-[#fffdf8]/96 p-2 shadow-[0_-0.75rem_2rem_rgba(49,43,24,0.12)] backdrop-blur lg:hidden"
       aria-label="Volunteer navigation"
     >
-      {items.map((item) => (
-        <a
-          className="grid min-h-14 place-items-center gap-1 rounded-lg px-1 text-center text-[0.68rem] font-black text-[#46534a] transition hover:bg-[#f0f7eb] hover:text-[#064c25]"
-          href={item.href}
-          key={item.label}
-        >
+      {linkItems.map((item) => (
+        <a className={itemClass} href={item.href} key={item.label}>
           <AppIcon name={item.icon} className="text-2xl" />
           <span>{item.label}</span>
         </a>
       ))}
+      <button
+        type="button"
+        className={itemClass}
+        onClick={onMessagesClick}
+        aria-label="Open messages"
+      >
+        <AppIcon name="message" className="text-2xl" />
+        <span>Messages</span>
+      </button>
     </nav>
   );
 }
 
-export function DashboardTopbar({ data }: { data: DashboardData }) {
-  const [searchValue, setSearchValue] = useState("");
+export function DashboardTopbar({
+  data,
+  volunteerSearch = "",
+  onVolunteerSearch,
+  volunteerStatusFilter = "All",
+  onVolunteerFilter,
+}: {
+  data: DashboardData;
+  volunteerSearch?: string;
+  onVolunteerSearch?: (v: string) => void;
+  volunteerStatusFilter?: "All" | "Available" | "Proposal pending";
+  onVolunteerFilter?: () => void;
+}) {
   const unread = data.notifications.filter((item) => !item.read).length;
   const initials = data.profile.displayName
     .split(" ")
@@ -608,17 +642,12 @@ export function DashboardTopbar({ data }: { data: DashboardData }) {
         >
           FoodLink
         </Link>
-        <div className="grid gap-3 md:grid-cols-[10.5rem_13rem_minmax(16rem,1fr)_auto] md:items-end xl:justify-self-end">
+        <div className="grid gap-3 md:grid-cols-[10.5rem_minmax(16rem,1fr)_auto] md:items-end xl:justify-self-end">
           <TopbarSelect
             icon="team"
             label="Role"
             value={roleLabels[data.user.role]}
             href="/demo"
-          />
-          <TopbarSelect
-            icon="marker"
-            label="Location"
-            value={data.profile.location.city || "Jakarta Selatan"}
           />
           <label className="grid gap-1 text-xs font-bold text-[#5d675f]">
             <span className="sr-only">Search</span>
@@ -629,21 +658,34 @@ export function DashboardTopbar({ data }: { data: DashboardData }) {
               <input
                 className="h-full bg-transparent pr-3 text-sm font-bold text-[#111a14] outline-none placeholder:text-[#7b837c]"
                 placeholder="Search donations, receivers, or locations..."
-                value={searchValue}
-                onChange={(e) => setSearchValue(e.target.value)}
+                value={volunteerSearch}
+                onChange={(e) => onVolunteerSearch?.(e.target.value)}
               />
             </span>
           </label>
-          <button
-            className="relative inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-[#d7d0c2] bg-[#fffdf8] px-4 text-sm font-black text-[#111a14] shadow-sm"
-            type="button"
-          >
-            <AppIcon name="filter" className="h-5 w-5" />
-            Filters
-            <span className="absolute -right-2 -top-2 grid h-5 min-w-5 place-items-center rounded-full bg-[#ffbd1a] px-1 text-[0.65rem] font-black">
-              2
-            </span>
-          </button>
+          {(() => {
+            const filterActive = volunteerStatusFilter !== "All";
+            return (
+              <button
+                className={cx(
+                  "relative inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border px-4 text-sm font-black shadow-sm",
+                  filterActive
+                    ? "border-[#2f7a46] bg-[#3f7d48] text-white"
+                    : "border-[#d7d0c2] bg-[#fffdf8] text-[#111a14]",
+                )}
+                type="button"
+                onClick={onVolunteerFilter}
+              >
+                <AppIcon name="filter" className="h-5 w-5" />
+                {filterActive ? volunteerStatusFilter : "Filters"}
+                {filterActive && (
+                  <span className="absolute -right-2 -top-2 grid h-5 min-w-5 place-items-center rounded-full bg-[#ffbd1a] px-1 text-[0.65rem] font-black text-[#101812]">
+                    1
+                  </span>
+                )}
+              </button>
+            );
+          })()}
         </div>
         <a
           className="relative justify-self-start border-l border-[#ded7c9] pl-6 text-[#101812] xl:justify-self-end"
@@ -741,7 +783,6 @@ export function DashboardTopbar({ data }: { data: DashboardData }) {
             <strong className="font-black text-[#101812]">
               {data.profile.displayName}
             </strong>
-            <AppIcon name="chevron" className="h-4 w-4" />
           </div>
         </div>
       </header>
@@ -836,7 +877,6 @@ export function DashboardTopbar({ data }: { data: DashboardData }) {
               {roleLabels[data.user.role]}
             </span>
           </span>
-          <span className="text-xl leading-none">⌄</span>
         </div>
       </div>
     </header>

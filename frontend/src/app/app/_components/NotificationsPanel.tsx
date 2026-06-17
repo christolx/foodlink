@@ -181,7 +181,7 @@ export function ProposalQueue({
                       className={cx(
                         "gap-2 justify-self-start",
                         viewerRole === "donor"
-                          ? "grid w-full grid-cols-4"
+                          ? "grid w-full grid-cols-2"
                           : "flex flex-wrap",
                       )}
                     >
@@ -784,14 +784,16 @@ export function NotificationsPanel({
           >
             <AppIcon name="settings" className="h-5 w-5" />
           </button>
-          <button
-            className="text-[#101812]"
-            type="button"
-            aria-label="Close"
-            onClick={onClose}
-          >
-            <AppIcon name="close" className="h-5 w-5" />
-          </button>
+          {onClose && (
+            <button
+              className="text-[#101812]"
+              type="button"
+              aria-label="Close"
+              onClick={onClose}
+            >
+              <AppIcon name="close" className="h-5 w-5" />
+            </button>
+          )}
         </header>
         {receiverVariant ? (
           <div className="mb-4 grid grid-cols-2 border-b border-[#ded7c9] text-center text-sm font-bold">

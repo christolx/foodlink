@@ -1,8 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import type { Donation, Profile } from "@/lib/api";
 import type { DashboardData } from "../_types/dashboard";
-import { AppIcon, badgeBase, cx } from "./ui";
+import {
+  AppIcon,
+  badgeBase,
+  cx,
+  DonationThumbnail,
+  formatTime,
+  haversineKm,
+  statusClass,
+} from "./ui";
 
 export function ProfilePanelContent({
   data,
@@ -67,11 +76,34 @@ export function ProfilePanelContent({
   );
 }
 
+function loadPref(key: string, def: boolean): boolean {
+  try {
+    const v = localStorage.getItem(`foodlink_${key}`);
+    return v !== null ? v === "true" : def;
+  } catch {
+    return def;
+  }
+}
+
+function savePref(key: string, value: boolean) {
+  try {
+    localStorage.setItem(`foodlink_${key}`, String(value));
+  } catch {}
+}
+
 export function SettingsPanelContent() {
-  const [notifPickup, setNotifPickup] = useState(true);
-  const [notifProposal, setNotifProposal] = useState(true);
-  const [notifDelivery, setNotifDelivery] = useState(false);
-  const [compactMode, setCompactMode] = useState(false);
+  const [notifPickup, setNotifPickup] = useState(() =>
+    loadPref("notifPickup", true),
+  );
+  const [notifProposal, setNotifProposal] = useState(() =>
+    loadPref("notifProposal", true),
+  );
+  const [notifDelivery, setNotifDelivery] = useState(() =>
+    loadPref("notifDelivery", false),
+  );
+  const [compactMode, setCompactMode] = useState(() =>
+    loadPref("compactMode", false),
+  );
 
   function Toggle({
     checked,
@@ -126,19 +158,37 @@ export function SettingsPanelContent() {
         <div className="divide-y divide-[#e4ddcf] rounded-lg border border-[#e4ddcf] bg-white px-4">
           <Toggle
             checked={notifPickup}
-            onChange={() => setNotifPickup((v) => !v)}
+            onChange={() =>
+              setNotifPickup((v) => {
+                const next = !v;
+                savePref("notifPickup", next);
+                return next;
+              })
+            }
             label="Pickup assigned"
             description="When a new pickup is assigned to you"
           />
           <Toggle
             checked={notifProposal}
-            onChange={() => setNotifProposal((v) => !v)}
+            onChange={() =>
+              setNotifProposal((v) => {
+                const next = !v;
+                savePref("notifProposal", next);
+                return next;
+              })
+            }
             label="Proposal accepted"
             description="When your proposal is accepted"
           />
           <Toggle
             checked={notifDelivery}
-            onChange={() => setNotifDelivery((v) => !v)}
+            onChange={() =>
+              setNotifDelivery((v) => {
+                const next = !v;
+                savePref("notifDelivery", next);
+                return next;
+              })
+            }
             label="Delivery confirmed"
             description="When the receiver confirms delivery"
           />
@@ -151,7 +201,13 @@ export function SettingsPanelContent() {
         <div className="divide-y divide-[#e4ddcf] rounded-lg border border-[#e4ddcf] bg-white px-4">
           <Toggle
             checked={compactMode}
-            onChange={() => setCompactMode((v) => !v)}
+            onChange={() =>
+              setCompactMode((v) => {
+                const next = !v;
+                savePref("compactMode", next);
+                return next;
+              })
+            }
             label="Compact mode"
             description="Reduce spacing in donation list"
           />
@@ -162,7 +218,7 @@ export function SettingsPanelContent() {
           Account
         </h3>
         <div className="rounded-lg border border-[#e4ddcf] bg-white px-4 py-3 text-sm font-bold text-[#46534a]">
-          Settings are saved automatically.
+          Preferences are saved in your browser.
         </div>
       </div>
     </div>
@@ -336,6 +392,110 @@ export function HelpPanelContent() {
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+export function AllDonationsPanelContent({
+  donations,
+  volunteerLocation,
+}: {
+  donations: Donation[];
+  volunteerLocation: { latitude?: number; longitude?: number };
+}) {
+  const relevant = donations.filter(
+    (d) => d.status === "available" || d.status === "proposal_pending",
+  );
+
+  if (relevant.length === 0) {
+    return (
+      <p className="text-sm font-bold text-[#46534a]">
+        No available donations right now.
+      </p>
+    );
+  }
+
+  return (
+    <div className="grid gap-3">
+      {relevant.map((donation) => (
+        <article
+          key={donation.id}
+          className="grid grid-cols-[3.5rem_1fr] gap-3 rounded-lg border border-[#ded7c9] bg-[#fafaf7] p-3"
+        >
+          <DonationThumbnail donation={donation} size="sm" />
+          <div className="min-w-0">
+            <strong className="block truncate text-sm font-black text-[#101812]">
+              {donation.title}
+            </strong>
+            <span className="mt-1 block text-xs font-bold text-[#46534a]">
+              {donation.quantity} · until {formatTime(donation.availableUntil)}
+            </span>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <span
+                className={cx(
+                  badgeBase,
+                  donation.status === "available"
+                    ? "bg-[#dbeafe] text-[#1e40af]"
+                    : statusClass(donation.status),
+                )}
+              >
+                {donation.status === "proposal_pending"
+                  ? "Proposal pending"
+                  : "Available"}
+              </span>
+              <span className="text-xs font-bold text-[#46534a]">
+                {haversineKm(volunteerLocation, donation.pickupLocation)}
+              </span>
+            </div>
+          </div>
+        </article>
+      ))}
+    </div>
+  );
+}
+
+export function AllReceiversPanelContent({
+  receivers,
+  volunteerLocation,
+}: {
+  receivers: Profile[];
+  volunteerLocation: { latitude?: number; longitude?: number };
+}) {
+  if (receivers.length === 0) {
+    return (
+      <p className="text-sm font-bold text-[#46534a]">
+        No receiver profiles available.
+      </p>
+    );
+  }
+
+  return (
+    <div className="grid gap-3">
+      {receivers.map((receiver) => (
+        <article
+          key={receiver.userId}
+          className="grid grid-cols-[3rem_1fr] gap-3 rounded-lg border border-[#ded7c9] bg-[#fafaf7] p-3"
+        >
+          <span className="grid h-12 w-12 place-items-center rounded-full bg-[#e5f1df] text-[#2f7a46]">
+            <AppIcon name="team" className="h-6 w-6" />
+          </span>
+          <div className="min-w-0">
+            <strong className="block truncate text-sm font-black text-[#101812]">
+              {receiver.displayName}
+            </strong>
+            <span className="mt-1 block text-xs font-bold capitalize text-[#46534a]">
+              {receiver.entityType ?? "Receiver"} ·{" "}
+              {receiver.location.city || "—"} ·{" "}
+              {haversineKm(volunteerLocation, receiver.location)}
+            </span>
+            {receiver.notes ? (
+              <p className="mt-2 rounded-md bg-[#e7f0df] px-2 py-1.5 text-xs font-bold leading-5 text-[#1f2a23]">
+                {receiver.notes}
+              </p>
+            ) : null}
+          </div>
+        </article>
+      ))}
     </div>
   );
 }
