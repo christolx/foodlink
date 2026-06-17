@@ -25,7 +25,7 @@ import {
   panel,
   primaryButton,
 } from "../../_components/ui";
-import type { DashboardData } from "../../_types/dashboard";
+import type { DashboardData, SidePanelType } from "../../_types/dashboard";
 
 const LocationPickerMapDynamic = dynamic(() => import("./LocationPickerMap"), {
   ssr: false,
@@ -67,11 +67,13 @@ export function DonorDashboard({
   token,
   runAction,
   openChat,
+  openPanel,
 }: {
   data: DashboardData;
   token: string;
   runAction: (callback: () => Promise<void>, success: string) => Promise<void>;
   openChat: (userId: string) => void;
+  openPanel?: (panel: SidePanelType) => void;
 }) {
   const [uploadedImageUrl, setUploadedImageUrl] = useState("");
   const [uploadError, setUploadError] = useState("");
@@ -463,6 +465,7 @@ export function DonorDashboard({
           viewerRole={data.user.role}
           token={token}
           runAction={runAction}
+          onSettingsClick={() => openPanel?.("settings")}
         />
       </div>
 

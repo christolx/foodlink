@@ -1,5 +1,6 @@
 export {
   DashboardSidebar,
+  DashboardSidePanel,
   DashboardTopbar,
   DonorBottomNavigation,
   ReceiverBottomNavigation,

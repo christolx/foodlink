@@ -112,17 +112,104 @@ export function SlidePanel({
   );
 }
 
-export function DashboardSidebar({
+function panelTitle(panel: SidePanelType) {
+  return panel === "profile"
+    ? "My profile"
+    : panel === "messages"
+      ? "Messages"
+      : panel === "settings"
+        ? "Settings"
+        : panel === "reports"
+          ? "Reports"
+          : panel === "donations"
+            ? "Available donations"
+            : panel === "receivers"
+              ? "Receiver directory"
+              : "Help & support";
+}
+
+function panelIcon(panel: SidePanelType): IconName {
+  return panel === "profile"
+    ? "profile"
+    : panel === "messages"
+      ? "message"
+      : panel === "settings"
+        ? "settings"
+        : panel === "reports"
+          ? "chart"
+          : panel === "donations"
+            ? "bag"
+            : panel === "receivers"
+              ? "team"
+              : "message";
+}
+
+export function DashboardSidePanel({
   data,
   token,
   chatTargetUserId,
+  activePanel,
+  onClose,
+}: {
+  data: DashboardData;
+  token: string;
+  chatTargetUserId?: string | null;
+  activePanel: SidePanelType | null;
+  onClose: () => void;
+}) {
+  if (!activePanel) {
+    return null;
+  }
+
+  const initials = data.profile.displayName
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+  return (
+    <SlidePanel
+      title={panelTitle(activePanel)}
+      icon={panelIcon(activePanel)}
+      onClose={onClose}
+    >
+      {activePanel === "profile" && (
+        <ProfilePanelContent data={data} initials={initials} />
+      )}
+      {activePanel === "settings" && <SettingsPanelContent />}
+      {activePanel === "reports" && <ReportsPanelContent data={data} />}
+      {activePanel === "help" && <HelpPanelContent />}
+      {activePanel === "messages" && (
+        <ChatPanel
+          token={token}
+          currentUserId={data.user.id}
+          initialOtherUserId={chatTargetUserId}
+        />
+      )}
+      {activePanel === "donations" && (
+        <AllDonationsPanelContent
+          donations={data.donations}
+          volunteerLocation={data.profile.location}
+        />
+      )}
+      {activePanel === "receivers" && (
+        <AllReceiversPanelContent
+          receivers={data.receivers}
+          volunteerLocation={data.profile.location}
+        />
+      )}
+    </SlidePanel>
+  );
+}
+
+export function DashboardSidebar({
+  data,
   signOut,
   activePanel,
   setActivePanel,
 }: {
   data: DashboardData;
-  token: string;
-  chatTargetUserId?: string | null;
   signOut: () => void;
   activePanel: SidePanelType | null;
   setActivePanel: (panel: SidePanelType | null) => void;
@@ -153,6 +240,21 @@ export function DashboardSidebar({
           label: "Messages",
           icon: "message" as IconName,
           panel: "messages" as SidePanelType,
+        },
+        {
+          label: "Profile",
+          icon: "profile" as IconName,
+          panel: "profile" as SidePanelType,
+        },
+        {
+          label: "Settings",
+          icon: "settings" as IconName,
+          panel: "settings" as SidePanelType,
+        },
+        {
+          label: "Help & support",
+          icon: "message" as IconName,
+          panel: "help" as SidePanelType,
         },
       ];
     }
@@ -212,6 +314,21 @@ export function DashboardSidebar({
         label: "Messages",
         icon: "message" as IconName,
         panel: "messages" as SidePanelType,
+      },
+      {
+        label: "Profile",
+        icon: "profile" as IconName,
+        panel: "profile" as SidePanelType,
+      },
+      {
+        label: "Settings",
+        icon: "settings" as IconName,
+        panel: "settings" as SidePanelType,
+      },
+      {
+        label: "Help & support",
+        icon: "message" as IconName,
+        panel: "help" as SidePanelType,
       },
     ];
   }, [role, data]);
@@ -358,17 +475,19 @@ export function DashboardSidebar({
               ? activePanel === item.panel
               : "href" in item && item.href === activeHref;
           const sharedClass = cx(
-            "flex min-h-10 items-center gap-3.5 rounded-lg px-4 text-sm font-black transition shrink-0",
+            "grid min-h-10 grid-cols-[1.25rem_minmax(0,1fr)_auto] items-center gap-3.5 rounded-lg px-4 py-2 text-left text-sm font-black transition shrink-0",
             isActive
               ? "bg-[#116b35] shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]"
               : "hover:bg-white/10",
           );
           const badge =
             item.badge !== undefined && item.badge > 0 ? (
-              <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-[#ffbd1a] px-1 text-[0.65rem] font-black text-[#052b12]">
+              <span className="grid h-5 min-w-5 place-items-center rounded-full bg-[#ffbd1a] px-1 text-[0.65rem] font-black text-[#052b12]">
                 {item.badge}
               </span>
-            ) : null;
+            ) : (
+              <span aria-hidden="true" />
+            );
 
           if ("panel" in item && item.panel) {
             return (
@@ -385,7 +504,7 @@ export function DashboardSidebar({
                 }
               >
                 <AppIcon name={item.icon} className="h-5 w-5 shrink-0" />
-                {item.label}
+                <span className="min-w-0 leading-5">{item.label}</span>
                 {badge}
               </button>
             );
@@ -402,74 +521,13 @@ export function DashboardSidebar({
               }}
             >
               <AppIcon name={item.icon} className="h-5 w-5 shrink-0" />
-              {item.label}
+              <span className="min-w-0 leading-5">{item.label}</span>
               {badge}
             </a>
           );
         })}
       </nav>
 
-      {activePanel && (
-        <SlidePanel
-          title={
-            activePanel === "profile"
-              ? "My profile"
-              : activePanel === "messages"
-                ? "Messages"
-                : activePanel === "settings"
-                  ? "Settings"
-                  : activePanel === "reports"
-                    ? "Reports"
-                    : activePanel === "donations"
-                      ? "Available donations"
-                      : activePanel === "receivers"
-                        ? "Receiver directory"
-                        : "Help & support"
-          }
-          icon={
-            activePanel === "profile"
-              ? "profile"
-              : activePanel === "messages"
-                ? "message"
-                : activePanel === "settings"
-                  ? "settings"
-                  : activePanel === "reports"
-                    ? "chart"
-                    : activePanel === "donations"
-                      ? "bag"
-                      : activePanel === "receivers"
-                        ? "team"
-                        : "message"
-          }
-          onClose={() => setActivePanel(null)}
-        >
-          {activePanel === "profile" && (
-            <ProfilePanelContent data={data} initials={initials} />
-          )}
-          {activePanel === "settings" && <SettingsPanelContent />}
-          {activePanel === "reports" && <ReportsPanelContent data={data} />}
-          {activePanel === "help" && <HelpPanelContent />}
-          {activePanel === "messages" && (
-            <ChatPanel
-              token={token}
-              currentUserId={data.user.id}
-              initialOtherUserId={chatTargetUserId}
-            />
-          )}
-          {activePanel === "donations" && (
-            <AllDonationsPanelContent
-              donations={data.donations}
-              volunteerLocation={data.profile.location}
-            />
-          )}
-          {activePanel === "receivers" && (
-            <AllReceiversPanelContent
-              receivers={data.receivers}
-              volunteerLocation={data.profile.location}
-            />
-          )}
-        </SlidePanel>
-      )}
       {bottomCard}
       <button
         className="flex min-h-10 items-center gap-3.5 rounded-lg px-4 text-sm font-black transition hover:bg-white/10 shrink-0"

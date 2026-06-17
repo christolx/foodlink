@@ -14,6 +14,7 @@ import { getMe, getMyProfile } from "@/lib/session";
 import { DashboardErrorBoundary } from "./_components/ErrorBoundary";
 import {
   DashboardSidebar,
+  DashboardSidePanel,
   DashboardTopbar,
   DonorBottomNavigation,
   ReceiverBottomNavigation,
@@ -133,8 +134,6 @@ export default function AppPage() {
       <main className="grid min-h-screen overflow-x-clip bg-[#f8f6ef] text-[#101812] lg:grid-cols-[13.75rem_minmax(0,1fr)]">
         <DashboardSidebar
           data={data}
-          token={token}
-          chatTargetUserId={chatTargetUserId}
           signOut={signOut}
           activePanel={activePanel}
           setActivePanel={setActivePanel}
@@ -183,6 +182,7 @@ export default function AppPage() {
               token={token}
               runAction={runAction}
               openChat={openChat}
+              openPanel={setActivePanel}
             />
           ) : null}
           {data.user.role !== "donor" ? (
@@ -245,6 +245,13 @@ export default function AppPage() {
             onMessagesClick={() => setActivePanel("messages")}
           />
         ) : null}
+        <DashboardSidePanel
+          data={data}
+          token={token}
+          chatTargetUserId={chatTargetUserId}
+          activePanel={activePanel}
+          onClose={() => setActivePanel(null)}
+        />
       </main>
     </DashboardErrorBoundary>
   );
