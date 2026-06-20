@@ -1,0 +1,19 @@
+aws_region   = "ap-southeast-1"
+project_name = "foodlink"
+environment  = "prod"
+
+ssh_key_name            = "foodlink-prod"
+ssh_allowed_cidr_blocks = ["203.0.113.10/32"]
+
+container_image = "ghcr.io/christolx/foodlink-api:latest"
+
+# Only needed if the GHCR package is private.
+# registry_username = "christolx"
+# registry_token    = "github_pat_replace_me"
+
+database_url    = "postgresql://postgres.project-ref:replace-me@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres?sslmode=require"
+demo_jwt_secret = "replace-with-long-random-secret"
+
+allowed_origins = [
+  "https://foodlink.example.com",
+]
