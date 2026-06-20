@@ -68,6 +68,7 @@ go build ./cmd/api
 
 Frontend variables:
 
+- `NEXT_PUBLIC_API_BASE_URL` - optional backend origin when API is on another host, for example `http://localhost:8080`.
 - `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` - Cloudinary cloud name for client-side image uploads.
 - `NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET` - unsigned upload preset for client-side image uploads.
 
