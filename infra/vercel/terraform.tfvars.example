@@ -1,0 +1,12 @@
+project_name            = "foodlink"
+git_repo                = "your-org/foodlink"
+frontend_root_directory = "frontend"
+api_url                 = "http://203.0.113.20:8080"
+
+cloudinary_cloud_name    = "your-cloud-name"
+cloudinary_upload_preset = "your-unsigned-preset"
+
+# domain = "foodlink.example.com"
+
+# Set via TF_VAR_vercel_api_token or an uncommitted terraform.tfvars file.
+vercel_api_token = "replace-me"
