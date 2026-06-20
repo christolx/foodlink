@@ -11,6 +11,26 @@ Go core service for FoodLink.
 - `go test ./...`: run backend tests.
 - `hurl --test --variable base_url=http://localhost:8080 backend/smoke/api.hurl`: run local API smoke tests against a running backend.
 
+## Docker
+
+Build:
+
+```bash
+docker build -t foodlink-api .
+```
+
+Run migrations and seed demo data:
+
+```bash
+docker run --rm --env-file .env foodlink-api --migrate
+```
+
+Run API:
+
+```bash
+docker run --rm --env-file .env -p 8080:8080 foodlink-api
+```
+
 Smoke tests create donations with a `[SMOKE_TEST]` title prefix. Use `--cleanup-smoke` with the same `DATABASE_URL` to delete those donations and related proposals, pickups, and notifications.
 
 
