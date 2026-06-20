@@ -47,6 +47,10 @@ Supabase
 
 No inbound `80` or `443` needed unless adding reverse proxy later.
 
+SSH uses the EC2 key pair named by `ssh_key_name` plus the security group
+CIDR allowlist. The example value is `foodlink-prod`, so that key pair must
+exist in the target AWS region before `terraform apply`.
+
 ## Deployment Plan
 
 1. Terraform creates EC2, security group, and Elastic IP.
@@ -54,6 +58,38 @@ No inbound `80` or `443` needed unless adding reverse proxy later.
 3. Backend connects to Supabase through `DATABASE_URL`.
 4. Terraform outputs `backend_public_ip` and `backend_api_url`.
 5. Vercel uses `NEXT_PUBLIC_API_BASE_URL=http://<elastic-ip>:8080`.
+
+## Prerequisites
+
+Verify AWS credentials and account:
+
+```sh
+aws sts get-caller-identity
+```
+
+Create the example EC2 key pair if it does not already exist:
+
+```sh
+aws ec2 create-key-pair \
+  --key-name foodlink-prod \
+  --region ap-southeast-1 \
+  --query 'KeyMaterial' \
+  --output text > ~/.ssh/foodlink-prod.pem
+
+chmod 400 ~/.ssh/foodlink-prod.pem
+```
+
+Use your current public IP for `ssh_allowed_cidr_blocks`:
+
+```sh
+curl ifconfig.me
+```
+
+Set it as a `/32` CIDR in `terraform.tfvars`, for example:
+
+```hcl
+ssh_allowed_cidr_blocks = ["203.0.113.10/32"]
+```
 
 ## Usage
 
@@ -74,9 +110,14 @@ curl "$(terraform output -raw backend_api_url)/health"
 Logs:
 
 ```sh
-ssh ec2-user@$(terraform output -raw backend_public_ip)
+ssh -i ~/.ssh/foodlink-prod.pem ec2-user@$(terraform output -raw backend_public_ip)
 sudo journalctl -u foodlink-api -f
 ```
+
+To update the allowed SSH IP later, edit `ssh_allowed_cidr_blocks` in
+`terraform.tfvars`, then run `terraform plan` and `terraform apply`. Terraform
+should update the security group rule in place without replacing the EC2
+instance.
 
 `database_url`, `demo_jwt_secret`, and optional registry credentials are sensitive Terraform variables, but Terraform state still contains values used in EC2 user data. Store state somewhere private.
 
