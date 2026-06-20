@@ -9,9 +9,9 @@ resource "vercel_project" "frontend" {
   }
 }
 
-resource "vercel_project_environment_variable" "api_base_url" {
+resource "vercel_project_environment_variable" "api_origin" {
   project_id = vercel_project.frontend.id
-  key        = "NEXT_PUBLIC_API_BASE_URL"
+  key        = "FOODLINK_API_ORIGIN"
   value      = var.api_url
   target     = var.environment_targets
 }

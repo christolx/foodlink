@@ -4,7 +4,7 @@ output "backend_public_ip" {
 }
 
 output "backend_api_url" {
-  description = "Public API base URL for frontend NEXT_PUBLIC_API_BASE_URL."
+  description = "Public API origin for frontend FOODLINK_API_ORIGIN."
   value       = "http://${aws_eip.api.public_ip}:${var.api_port}"
 }
 

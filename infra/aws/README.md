@@ -21,7 +21,8 @@ Resources:
 
 ```txt
 Vercel frontend
-  NEXT_PUBLIC_API_BASE_URL=http://<elastic-ip>:8080
+  FOODLINK_API_ORIGIN=http://<elastic-ip>:8080
+  browser calls same-origin /api/v1 through Next.js rewrites
 
 AWS EC2 backend
   Docker container listens on :8080
@@ -57,7 +58,7 @@ exist in the target AWS region before `terraform apply`.
 2. EC2 installs Docker, pulls the configured backend image, runs migrations, and starts a systemd-managed container.
 3. Backend connects to Supabase through `DATABASE_URL`.
 4. Terraform outputs `backend_public_ip` and `backend_api_url`.
-5. Vercel uses `NEXT_PUBLIC_API_BASE_URL=http://<elastic-ip>:8080`.
+5. Vercel uses `FOODLINK_API_ORIGIN=http://<elastic-ip>:8080` for server-side rewrites.
 
 ## Prerequisites
 

@@ -24,13 +24,15 @@ Next.js frontend app for FoodLink.
 
 - API requests use `frontend/src/lib/api.ts`.
 - Requests are sent to `/api/v1` by default.
-- Set `NEXT_PUBLIC_API_BASE_URL` to call a backend on another origin.
+- Set `FOODLINK_API_ORIGIN` so Next.js rewrites `/api/v1` to the backend.
+- Only set `NEXT_PUBLIC_API_BASE_URL` when the backend is HTTPS-compatible with the frontend page.
 - Demo auth stores the access token in `localStorage` as `foodlink.demoToken`.
 - `GET /me` and `GET /me/profile` bootstrap the dashboard session.
 
 ## Environment Variables
 
-- `NEXT_PUBLIC_API_BASE_URL`: optional API origin, for example `http://localhost:8080`.
+- `FOODLINK_API_ORIGIN`: backend origin for Next.js rewrites, for example `http://localhost:8080`.
+- `NEXT_PUBLIC_API_BASE_URL`: optional browser-visible API origin. Use HTTPS for HTTPS frontend deploys.
 - `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`: Cloudinary cloud name for client-side image uploads.
 - `NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET`: unsigned upload preset for client-side image uploads.
 

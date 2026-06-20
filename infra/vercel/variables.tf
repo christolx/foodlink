@@ -32,7 +32,7 @@ variable "frontend_root_directory" {
 }
 
 variable "api_url" {
-  description = "Public backend API URL exposed to frontend."
+  description = "Backend API origin used by Next.js rewrites. Keep server-side to avoid browser mixed content."
   type        = string
 }
 

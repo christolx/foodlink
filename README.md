@@ -74,7 +74,8 @@ go build ./cmd/api
 
 | Variable | App | Required | Notes |
 | --- | --- | --- | --- |
-| `NEXT_PUBLIC_API_BASE_URL` | Frontend | No | Backend origin when API is on another host, for example `http://localhost:8080`. |
+| `FOODLINK_API_ORIGIN` | Frontend | No | Server-side backend origin for Next.js rewrites, for example `http://localhost:8080`. |
+| `NEXT_PUBLIC_API_BASE_URL` | Frontend | No | Optional browser-visible API origin. Use only with HTTPS backends in HTTPS deployments. |
 | `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` | Frontend | Yes, for uploads | Cloudinary cloud name for client-side image uploads. |
 | `NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET` | Frontend | Yes, for uploads | Unsigned upload preset for client-side image uploads. |
 | `PORT` | Backend | No | API port, default `8080`. |

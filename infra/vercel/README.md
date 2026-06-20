@@ -6,7 +6,7 @@ Resources:
 
 - Vercel project for `frontend/`
 - Git repository link
-- public API URL env var
+- server-side API origin env var
 - optional Cloudinary env vars
 - optional custom domain
 
@@ -14,7 +14,7 @@ Resources:
 
 ```sh
 cp terraform.tfvars.example terraform.tfvars
-# edit terraform.tfvars with repo, backend API URL, Cloudinary values, optional domain
+# edit terraform.tfvars with repo, backend API origin, Cloudinary values, optional domain
 terraform init
 terraform plan
 terraform apply

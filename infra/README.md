@@ -12,7 +12,7 @@ Terraform for deploying FoodLink frontend and backend.
 
 - AWS owns backend runtime and networking.
 - Supabase owns PostgreSQL through `DATABASE_URL`.
-- Vercel owns Next.js frontend project, domains, and public frontend env vars.
+- Vercel owns Next.js frontend project, domains, and frontend env vars.
 
 ## Usage
 

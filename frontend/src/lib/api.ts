@@ -377,8 +377,14 @@ export function chatEventsUrl(conversationId: string, token: string) {
 }
 
 function apiUrl(path: string) {
-  const baseURL =
-    process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ?? "";
+  let baseURL = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ?? "";
+  if (
+    typeof window !== "undefined" &&
+    window.location.protocol === "https:" &&
+    baseURL.startsWith("http://")
+  ) {
+    baseURL = "";
+  }
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
   const prefixedPath = normalizedPath.startsWith(API_PREFIX)
     ? normalizedPath

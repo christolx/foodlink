@@ -30,7 +30,7 @@
 - `backend/` owns API routing, auth, role gates, persistence, seeding, and state transitions.
 - `contracts/openapi.yaml` is the API shape source of truth.
 - `docs/` tracks scope and implementation decisions.
-- Frontend calls `/api/v1` by default, or `NEXT_PUBLIC_API_BASE_URL` when set.
+- Frontend calls `/api/v1` by default. Next.js rewrites proxy to `FOODLINK_API_ORIGIN` when set.
 - Browser sessions store the demo JWT in `localStorage` under `foodlink.demoToken`.
 - Donation image upload uses Cloudinary on the client; backend validates Cloudinary HTTPS image URLs.
 
