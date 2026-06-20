@@ -3,33 +3,39 @@
 FoodLink is a demo-first food rescue app for connecting surplus food with people
 who need it, coordinated through donors, receivers, and volunteers.
 
-![FoodLink landing page preview](frontend/public/preview/uz3hu39s7mqbylgyoefz.webp)
+<p align="center"><strong>Watch the Demo Video by Clicking the Image Below</strong></p>
 
-## What is included
+[![FoodLink demo preview](frontend/public/preview/uz3hu39s7mqbylgyoefz.webp)](https://youtu.be/67UDlpDQFZc)
 
-- `frontend/` - Next.js app with React, TypeScript, Tailwind CSS, and Biome.
-- `backend/` - Go API service with demo JWT auth and PostgreSQL persistence.
-- `contracts/` - shared OpenAPI contract for `/api/v1`.
-- `docs/` - product scope, architecture, frontend, backend, and contract notes.
+## Repo Map
 
-## Current direction
+| Path | Purpose |
+| --- | --- |
+| `frontend/` | Next.js app with React, TypeScript, Tailwind CSS, and Biome. |
+| `backend/` | Go API service with demo JWT auth and PostgreSQL persistence. |
+| `contracts/` | Shared OpenAPI contract for `/api/v1`. |
+| `docs/` | Product scope, architecture, frontend, backend, and contract notes. |
+| `infra/` | Terraform IaC for AWS backend runtime and Vercel frontend config. |
+| `.github/workflows/` | GitHub Actions CI/CD workflow definitions. |
 
-- Demo-first workflow with one volunteer-driven matching path end to end.
-- Monolith-first backend, service-ready later.
-- One repo with separate frontend and backend deploys.
-- In-app map planned with Leaflet and OpenStreetMap.
-- Volunteer navigation can hand off to Google Maps links.
+## Stack & Direction
 
-## Tech stack
+| Area | Current choice |
+| --- | --- |
+| Product shape | Demo-first workflow with one volunteer-driven matching path end to end. |
+| Repo shape | Monorepo with separate frontend and backend deploys. |
+| Backend shape | Monolith-first, service-ready later. |
+| Frontend | Next.js, React, TypeScript, Tailwind CSS, Biome. |
+| Backend | Go, GORM, PostgreSQL. |
+| Contracts | OpenAPI 3.0. |
+| Maps | Leaflet with OpenStreetMap tiles, plus Google Maps handoff links for volunteer navigation. |
+| Asset storage | Cloudinary for donation image uploads. |
+| CI/CD | GitHub Actions for frontend CI, backend CI, and backend image publishing. |
+| IaC | Terraform for AWS EC2 backend deployment and Vercel frontend configuration. |
 
-- Frontend: Next.js, React, TypeScript, Tailwind CSS, Biome.
-- Backend: Go, GORM, PostgreSQL.
-- Contracts: OpenAPI 3.0.
-- Maps: Leaflet with OpenStreetMap tiles.
+## Local Development
 
-## Local development
-
-Run frontend commands from `frontend/`:
+1. Start frontend from `frontend/`:
 
 ```bash
 pnpm install
@@ -38,7 +44,7 @@ pnpm dev
 
 Frontend runs at `http://localhost:3000`.
 
-Run backend commands from `backend/`:
+2. Start backend from `backend/`:
 
 ```bash
 go run ./cmd/api
@@ -64,27 +70,26 @@ go test ./...
 go build ./cmd/api
 ```
 
-## Environment configuration
+## Environment Configuration
 
-Frontend variables:
+| Variable | App | Required | Notes |
+| --- | --- | --- | --- |
+| `NEXT_PUBLIC_API_BASE_URL` | Frontend | No | Backend origin when API is on another host, for example `http://localhost:8080`. |
+| `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` | Frontend | Yes, for uploads | Cloudinary cloud name for client-side image uploads. |
+| `NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET` | Frontend | Yes, for uploads | Unsigned upload preset for client-side image uploads. |
+| `PORT` | Backend | No | API port, default `8080`. |
+| `DATABASE_URL` | Backend | Yes | PostgreSQL connection string. |
+| `DEMO_JWT_SECRET` | Backend | Yes | JWT signing secret for demo auth. |
 
-- `NEXT_PUBLIC_API_BASE_URL` - optional backend origin when API is on another host, for example `http://localhost:8080`.
-- `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` - Cloudinary cloud name for client-side image uploads.
-- `NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET` - unsigned upload preset for client-side image uploads.
-
-See [frontend/README.md](frontend/README.md) for Cloudinary setup details.
-
-Backend variables:
-
-- `PORT` - API port, default `8080`.
-- `DATABASE_URL` - PostgreSQL connection string.
-- `DEMO_JWT_SECRET` - JWT signing secret for demo auth.
-
-See [backend/README.md](backend/README.md) for backend usage examples.
+See [frontend/README.md](frontend/README.md) for Cloudinary setup details and [backend/README.md](backend/README.md) for backend usage examples.
 
 ## Docs
 
-- [Project docs](docs/README.md)
-- [Scope](docs/scope.md)
-- [Architecture](docs/architecture.md)
-- [Contracts](contracts/README.md)
+| Doc | Purpose |
+| --- | --- |
+| [Project docs](docs/README.md) | Index for scope, architecture, frontend, backend, and contract notes. |
+| [Scope](docs/scope.md) | Demo goals, role flow, status flow, and stretch work. |
+| [Architecture](docs/architecture.md) | System shape, runtime boundaries, and split candidates. |
+| [Contracts](contracts/README.md) | API contract conventions and generation targets. |
+| [OpenAPI spec](contracts/openapi.yaml) | Source of truth for `/api/v1`. |
+| [Infrastructure](infra/README.md) | Terraform deploy flow for AWS backend and Vercel frontend. |
