@@ -19,3 +19,4 @@ tmp/
 .env
 # Automatic env handling by Next.JS
 .env.local
+.vercel
