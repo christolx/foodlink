@@ -63,21 +63,15 @@ resource "aws_instance" "api" {
 
   user_data_replace_on_change = true
   user_data = templatefile("${path.module}/user_data.sh.tftpl", {
-    api_port        = var.api_port
-    database_url    = var.database_url
-    demo_jwt_secret = var.demo_jwt_secret
-    allowed_origins = join(",", var.allowed_origins)
-    run_migrations  = var.run_migrations_on_boot
-    container_image = var.container_image
-    registry_server = var.registry_server
-    registry_username = coalesce(
-      var.registry_username,
-      "",
-    )
-    registry_token_base64 = base64encode(coalesce(
-      var.registry_token,
-      "",
-    ))
+    api_port              = var.api_port
+    database_url          = var.database_url
+    demo_jwt_secret       = var.demo_jwt_secret
+    allowed_origins       = join(",", var.allowed_origins)
+    run_migrations        = var.run_migrations_on_boot
+    container_image       = var.container_image
+    registry_server       = var.registry_server
+    registry_username     = var.registry_username == null ? "" : var.registry_username
+    registry_token_base64 = base64encode(var.registry_token == null ? "" : var.registry_token)
   })
 
   root_block_device {
