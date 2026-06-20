@@ -7,6 +7,14 @@ tmp/
 *.log
 .DS_Store
 
+# Terraform/OpenTofu
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfvars
+!*.tfvars.example
+
 # Backend env handling by godotenv
 .env
 # Automatic env handling by Next.JS

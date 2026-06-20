@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+CONTAINER_IMAGE="${container_image}"
+
+dnf update -y
+dnf install -y docker
+systemctl enable --now docker
+
+cat >/etc/foodlink-api.env <<'ENV'
+PORT=${api_port}
+DATABASE_URL=${database_url}
+DEMO_JWT_SECRET=${demo_jwt_secret}
+FOODLINK_ALLOWED_ORIGINS=${allowed_origins}
+ENV
+chmod 600 /etc/foodlink-api.env
+chown root:root /etc/foodlink-api.env
+
+if [ -n "${registry_username}" ] && [ -n "${registry_token_base64}" ]; then
+  printf '%s' "${registry_token_base64}" | base64 --decode | docker login "${registry_server}" --username "${registry_username}" --password-stdin
+fi
+
+docker pull "$CONTAINER_IMAGE"
+
+if [ "${run_migrations}" = "true" ]; then
+  docker run --rm --env-file /etc/foodlink-api.env "$CONTAINER_IMAGE" --migrate
+fi
+
+cat >/etc/systemd/system/foodlink-api.service <<'SERVICE'
+[Unit]
+Description=FoodLink API
+After=network-online.target docker.service
+Wants=network-online.target docker.service
+
+[Service]
+ExecStartPre=-/usr/bin/docker rm -f foodlink-api
+ExecStartPre=/usr/bin/docker pull ${container_image}
+ExecStart=/usr/bin/docker run --name foodlink-api --env-file /etc/foodlink-api.env -p ${api_port}:${api_port} ${container_image}
+ExecStop=/usr/bin/docker stop foodlink-api
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+SERVICE
+
+systemctl daemon-reload
+systemctl enable --now foodlink-api
