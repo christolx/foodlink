@@ -11,7 +11,17 @@ container_image = "ghcr.io/christolx/foodlink-api:latest"
 # registry_username = "christolx"
 # registry_token    = "github_pat_replace_me"
 
-database_url    = "postgresql://postgres.project-ref:replace-me@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres?sslmode=require"
+database_name           = "foodlink"
+database_username       = "foodlink_admin"
+database_instance_class = "db.t4g.micro"
+
+# Free Plan-compatible default. Increase after upgrading the AWS account plan.
+database_backup_retention_days = 1
+
+# Demo defaults. Enable both protections for persistent production data.
+database_deletion_protection   = false
+database_skip_final_snapshot   = true
+
 demo_jwt_secret = "replace-with-long-random-secret"
 
 allowed_origins = [

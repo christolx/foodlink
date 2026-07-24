@@ -66,10 +66,68 @@ variable "registry_token" {
   sensitive   = true
 }
 
-variable "database_url" {
-  description = "Supabase PostgreSQL connection string used by the API."
+variable "database_name" {
+  description = "Name of the PostgreSQL database created in RDS."
   type        = string
-  sensitive   = true
+  default     = "foodlink"
+
+  validation {
+    condition     = can(regex("^[A-Za-z][A-Za-z0-9_]*$", var.database_name))
+    error_message = "database_name must start with a letter and contain only letters, numbers, or underscores."
+  }
+}
+
+variable "database_username" {
+  description = "Master username for the PostgreSQL RDS instance."
+  type        = string
+  default     = "foodlink_admin"
+
+  validation {
+    condition     = can(regex("^[A-Za-z][A-Za-z0-9_]*$", var.database_username))
+    error_message = "database_username must start with a letter and contain only letters, numbers, or underscores."
+  }
+}
+
+variable "database_instance_class" {
+  description = "RDS instance class."
+  type        = string
+  default     = "db.t4g.micro"
+}
+
+variable "database_allocated_storage_gb" {
+  description = "Initial RDS storage allocation in GiB."
+  type        = number
+  default     = 20
+}
+
+variable "database_max_allocated_storage_gb" {
+  description = "RDS storage autoscaling limit in GiB."
+  type        = number
+  default     = 100
+}
+
+variable "database_backup_retention_days" {
+  description = "Number of days to retain automated RDS backups."
+  type        = number
+  default     = 1
+}
+
+variable "database_multi_az" {
+  description = "Create a synchronous RDS standby in another availability zone."
+  type        = bool
+  default     = false
+}
+
+variable "database_deletion_protection" {
+  description = "Protect the RDS instance from deletion."
+  type        = bool
+  default     = false
+}
+
+variable "database_skip_final_snapshot" {
+  description = "Skip a final snapshot when destroying the RDS instance."
+  type        = bool
+  default     = true
 }
 
 variable "demo_jwt_secret" {

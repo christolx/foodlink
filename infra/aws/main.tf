@@ -22,9 +22,21 @@ data "aws_ami" "amazon_linux_2023" {
   }
 }
 
+data "aws_vpc" "default" {
+  default = true
+}
+
+data "aws_subnets" "default" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.default.id]
+  }
+}
+
 resource "aws_security_group" "api" {
   name        = "${local.name_prefix}-api"
   description = "FoodLink API access"
+  vpc_id      = data.aws_vpc.default.id
 
   ingress {
     description = "SSH"
@@ -64,7 +76,7 @@ resource "aws_instance" "api" {
   user_data_replace_on_change = true
   user_data = templatefile("${path.module}/user_data.sh.tftpl", {
     api_port              = var.api_port
-    database_url          = var.database_url
+    database_url          = local.database_url
     demo_jwt_secret       = var.demo_jwt_secret
     allowed_origins       = join(",", var.allowed_origins)
     run_migrations        = var.run_migrations_on_boot
