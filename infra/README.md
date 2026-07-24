@@ -4,14 +4,13 @@ Terraform for deploying FoodLink frontend and backend.
 
 ## Layout
 
-- `aws/`: backend EC2 runtime.
+- `aws/`: backend EC2 runtime and PostgreSQL RDS.
 - `vercel/`: frontend project/config target.
 - `shared/`: notes or reusable modules later.
 
 ## Intended Split
 
-- AWS owns backend runtime and networking.
-- Supabase owns PostgreSQL through `DATABASE_URL`.
+- AWS owns backend runtime, networking, and PostgreSQL.
 - Vercel owns Next.js frontend project, domains, and frontend env vars.
 
 ## Usage
@@ -38,4 +37,5 @@ terraform plan
 terraform apply
 ```
 
-Keep provider credentials, `DATABASE_URL`, JWT secret, and real `*.tfvars` outside git.
+Keep provider credentials, JWT secret, real `*.tfvars`, and Terraform state
+outside git. Terraform state contains the generated RDS password.

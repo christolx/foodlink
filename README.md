@@ -31,7 +31,7 @@ who need it, coordinated through donors, receivers, and volunteers.
 | Maps | Leaflet with OpenStreetMap tiles, plus Google Maps handoff links for volunteer navigation. |
 | Asset storage | Cloudinary for donation image uploads. |
 | CI/CD | GitHub Actions for frontend CI, backend CI, and backend image publishing. |
-| IaC | Terraform for AWS EC2 backend deployment and Vercel frontend configuration. |
+| IaC | Terraform for AWS EC2, PostgreSQL RDS, and Vercel frontend configuration. |
 
 ## Local Development
 
