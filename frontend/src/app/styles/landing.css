@@ -24,6 +24,7 @@
 
 .hero-photo {
   overflow: hidden;
+  background: oklch(22% 0.055 153);
 }
 
 .hero-photo-image {
@@ -667,6 +668,7 @@
 .role-media {
   position: relative;
   min-height: 14.3rem;
+  background: oklch(91% 0.025 102);
 }
 
 .role-text {

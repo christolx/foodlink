@@ -1,6 +1,7 @@
-import Image from "next/image";
 import type { UserRole } from "@/lib/api";
+import { imageBlurDataUrls } from "@/lib/image-placeholders";
 import { ExploreMapButton } from "./_components/ExploreMapButton";
+import { ProgressiveImage } from "./_components/ProgressiveImage";
 
 type LandingRole = {
   eyebrow: string;
@@ -74,12 +75,18 @@ export default function Home() {
     <main className="site-shell">
       <section className="hero" aria-labelledby="hero-title">
         <div className="hero-photo" aria-hidden="true">
-          <Image
+          <ProgressiveImage
             src="/landing/foodlink_hero_girl_giving_food_v4.png"
             alt=""
             fill
             priority
             quality={95}
+            blurDataURL={
+              imageBlurDataUrls[
+                "/landing/foodlink_hero_girl_giving_food_v4.png"
+              ]
+            }
+            fadeDuration={400}
             className="hero-photo-image"
             sizes="100vw"
           />
@@ -208,11 +215,13 @@ export default function Home() {
                 </a>
               </div>
               <div className="role-media" aria-hidden="true">
-                <Image
+                <ProgressiveImage
                   src={role.image}
                   alt=""
                   fill
                   quality={90}
+                  blurDataURL={imageBlurDataUrls[role.image]}
+                  fadeDuration={250}
                   sizes="(max-width: 560px) 100vw, (max-width: 820px) 32vw, 18vw"
                 />
               </div>

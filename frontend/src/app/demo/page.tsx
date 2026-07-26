@@ -1,11 +1,12 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import type { UserRole } from "@/lib/api";
+import { imageBlurDataUrls } from "@/lib/image-placeholders";
 import { demoLogin, getMyProfile } from "@/lib/session";
+import { ProgressiveImage } from "../_components/ProgressiveImage";
 import {
   ArrowIcon,
   BackArrowIcon,
@@ -136,16 +137,12 @@ function DemoPageContent() {
                 onClick={() => setSelectedRole(role.role)}
                 aria-pressed={isSelected}
               >
-                <Image
+                <span
                   className={`demo-role-image absolute bottom-0 right-0 object-cover object-right-bottom transition duration-300 group-hover:scale-105 md:h-[82%] md:w-[54%] ${
                     isSelected
                       ? "h-[76%] w-[50%] opacity-50 mix-blend-screen"
                       : "h-full w-[27%] opacity-26 md:opacity-90"
                   }`}
-                  src={role.image}
-                  alt=""
-                  width={500}
-                  height={660}
                   style={{
                     WebkitMaskImage:
                       "linear-gradient(90deg, transparent 0%, black 26%), linear-gradient(180deg, transparent 0%, black 18%)",
@@ -154,7 +151,17 @@ function DemoPageContent() {
                     maskImage:
                       "linear-gradient(90deg, transparent 0%, black 26%), linear-gradient(180deg, transparent 0%, black 18%)",
                   }}
-                />
+                >
+                  <ProgressiveImage
+                    src={role.image}
+                    alt=""
+                    fill
+                    className="object-cover object-right-bottom"
+                    blurDataURL={imageBlurDataUrls[role.image]}
+                    fadeDuration={250}
+                    sizes="(max-width: 767px) 50vw, 27vw"
+                  />
+                </span>
                 <span
                   className={`pointer-events-none absolute inset-0 ${
                     isSelected
