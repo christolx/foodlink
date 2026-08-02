@@ -10,6 +10,20 @@ jobs:
   backend-ci:
     name: Backend CI
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: foodlink
+          POSTGRES_USER: foodlink
+          POSTGRES_PASSWORD: foodlink
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U foodlink -d foodlink"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
     defaults:
       run:
         working-directory: backend
@@ -43,6 +57,37 @@ jobs:
 
       - name: Build Go binary
         run: go build -v ./cmd/api
+
+      - name: Install Hurl
+        run: |
+          HURL_VERSION=8.0.0
+          curl --fail --silent --show-error --location \
+            "https://github.com/Orange-OpenSource/hurl/releases/download/${HURL_VERSION}/hurl-${HURL_VERSION}-x86_64-unknown-linux-gnu.tar.gz" \
+            | tar --extract --gzip --directory /tmp
+          echo "/tmp/hurl-${HURL_VERSION}-x86_64-unknown-linux-gnu/bin" >> "$GITHUB_PATH"
+
+      - name: Run PostgreSQL API smoke test
+        env:
+          DATABASE_URL: postgres://foodlink:foodlink@localhost:5432/foodlink?sslmode=disable
+          DEMO_JWT_SECRET: ci-smoke-secret
+        run: |
+          set -euo pipefail
+          go run ./cmd/api --migrate
+          go run ./cmd/api > /tmp/foodlink-api.log 2>&1 &
+          api_pid=$!
+          trap 'kill "$api_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:8080/health > /dev/null; then
+              break
+            fi
+            if ! kill -0 "$api_pid" 2>/dev/null; then
+              cat /tmp/foodlink-api.log
+              exit 1
+            fi
+            sleep 1
+          done
+          curl --fail --silent http://127.0.0.1:8080/health > /dev/null
+          hurl --test --variable base_url=http://127.0.0.1:8080 smoke/api.hurl
 
   frontend-ci:
     name: Frontend CI

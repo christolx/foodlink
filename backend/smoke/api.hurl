@@ -89,6 +89,7 @@ Content-Type: application/json
 {
   "title": "[SMOKE_TEST] Hurl smoke test rice and vegetables",
   "description": "API smoke test donation",
+  "imageUrl": "https://res.cloudinary.com/foodlink-demo/image/upload/v1/donations/smoke-test.jpg",
   "quantity": "10 portions",
   "pickupLocation": {
     "addressLine1": "Jl. Smoke Test 1",
