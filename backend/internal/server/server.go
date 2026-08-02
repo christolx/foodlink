@@ -5,11 +5,14 @@ import (
 	"strings"
 
 	"foodlink-be/internal/api"
+	"foodlink-be/internal/donations"
 	"foodlink-be/internal/store"
 )
 
 type Server struct {
 	store     *store.Store
+	donations *donations.Service
+	*donations.HTTPHandler
 	jwtSecret []byte
 	hub       *messageHub
 }
@@ -19,7 +22,14 @@ type Options struct {
 }
 
 func New(st *store.Store, jwtSecret string) *Server {
-	return &Server{store: st, jwtSecret: []byte(jwtSecret), hub: newMessageHub()}
+	srv := &Server{
+		store:     st,
+		donations: donations.New(st),
+		jwtSecret: []byte(jwtSecret),
+		hub:       newMessageHub(),
+	}
+	srv.HTTPHandler = donations.NewHTTPHandler(srv.donations, srv.authUser)
+	return srv
 }
 
 func Handler(st *store.Store, jwtSecret string) http.Handler {

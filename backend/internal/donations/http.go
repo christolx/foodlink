@@ -1,18 +1,26 @@
-package server
+package donations
 
 import (
 	"context"
 	"errors"
-	"strings"
-	"time"
 
 	"foodlink-be/internal/api"
 	"foodlink-be/internal/models"
 	"foodlink-be/internal/store"
 )
 
-func (s *Server) ListDonations(ctx context.Context, request api.ListDonationsRequestObject) (api.ListDonationsResponseObject, error) {
-	user, ok := s.authUser(ctx)
+// HTTPHandler adapts generated OpenAPI requests to donation use cases.
+type HTTPHandler struct {
+	service      *Service
+	authenticate func(context.Context) (models.User, bool)
+}
+
+func NewHTTPHandler(service *Service, authenticate func(context.Context) (models.User, bool)) *HTTPHandler {
+	return &HTTPHandler{service: service, authenticate: authenticate}
+}
+
+func (h *HTTPHandler) ListDonations(ctx context.Context, request api.ListDonationsRequestObject) (api.ListDonationsResponseObject, error) {
+	user, ok := h.authenticate(ctx)
 	if !ok {
 		return api.ListDonations401JSONResponse{UnauthorizedJSONResponse: unauthorized()}, nil
 	}
@@ -20,7 +28,7 @@ func (s *Server) ListDonations(ctx context.Context, request api.ListDonationsReq
 	if err != nil {
 		return api.ListDonations400JSONResponse{BadRequestJSONResponse: badRequest(err.Error())}, nil
 	}
-	donations, total, err := s.store.ListDonations(page, pageSize, request.Params.Status, user)
+	donations, total, err := h.service.List(page, pageSize, request.Params.Status, user)
 	if err != nil {
 		return api.ListDonations500JSONResponse{InternalServerErrorJSONResponse: internalError()}, nil
 	}
@@ -31,51 +39,42 @@ func (s *Server) ListDonations(ctx context.Context, request api.ListDonationsReq
 	return api.ListDonations200JSONResponse{Items: items, Page: page, PageSize: pageSize, Total: int(total)}, nil
 }
 
-func (s *Server) CreateDonation(ctx context.Context, request api.CreateDonationRequestObject) (api.CreateDonationResponseObject, error) {
-	user, ok := s.authUser(ctx)
+func (h *HTTPHandler) CreateDonation(ctx context.Context, request api.CreateDonationRequestObject) (api.CreateDonationResponseObject, error) {
+	user, ok := h.authenticate(ctx)
 	if !ok {
 		return api.CreateDonation401JSONResponse{UnauthorizedJSONResponse: unauthorized()}, nil
 	}
 	if user.Role != string(api.Donor) {
 		return api.CreateDonation403JSONResponse{ForbiddenJSONResponse: forbidden("donor role required")}, nil
 	}
-	if request.Body == nil || strings.TrimSpace(request.Body.Title) == "" || strings.TrimSpace(request.Body.Quantity) == "" {
+	if request.Body == nil {
 		return api.CreateDonation400JSONResponse{BadRequestJSONResponse: badRequest("title and quantity are required")}, nil
 	}
-	if !request.Body.AvailableUntil.After(request.Body.AvailableFrom) {
-		return api.CreateDonation400JSONResponse{BadRequestJSONResponse: badRequest("availableUntil must be after availableFrom")}, nil
-	}
-	imageURL, err := requiredCloudinaryImageURL(request.Body.ImageUrl)
-	if err != nil {
-		return api.CreateDonation400JSONResponse{BadRequestJSONResponse: badRequest(err.Error())}, nil
-	}
-	now := time.Now().UTC()
-	donation := models.Donation{
-		ID:                  store.NewID("donation"),
+	donation, err := h.service.Create(CreateInput{
 		DonorID:             user.ID,
 		Title:               request.Body.Title,
 		Description:         request.Body.Description,
 		Quantity:            request.Body.Quantity,
-		ImageURL:            &imageURL,
-		Status:              string(api.DonationStatusAvailable),
+		ImageURL:            request.Body.ImageUrl,
 		PickupLocation:      locationModel(request.Body.PickupLocation),
 		AvailableFrom:       request.Body.AvailableFrom,
 		AvailableUntil:      request.Body.AvailableUntil,
 		SpecialInstructions: request.Body.SpecialInstructions,
-		CreatedAt:           now,
-		UpdatedAt:           now,
+	})
+	if errors.Is(err, ErrInvalidInput) {
+		return api.CreateDonation400JSONResponse{BadRequestJSONResponse: badRequest(err.Error())}, nil
 	}
-	if err := s.store.CreateDonation(donation); err != nil {
+	if err != nil {
 		return api.CreateDonation500JSONResponse{InternalServerErrorJSONResponse: internalError()}, nil
 	}
 	return api.CreateDonation201JSONResponse(donationDTO(donation)), nil
 }
 
-func (s *Server) GetDonation(ctx context.Context, request api.GetDonationRequestObject) (api.GetDonationResponseObject, error) {
-	if _, ok := s.authUser(ctx); !ok {
+func (h *HTTPHandler) GetDonation(ctx context.Context, request api.GetDonationRequestObject) (api.GetDonationResponseObject, error) {
+	if _, ok := h.authenticate(ctx); !ok {
 		return api.GetDonation401JSONResponse{UnauthorizedJSONResponse: unauthorized()}, nil
 	}
-	donation, err := s.store.DonationByID(request.Id)
+	donation, err := h.service.Get(request.Id)
 	if errors.Is(err, store.ErrNotFound) {
 		return api.GetDonation404JSONResponse{NotFoundJSONResponse: notFound("donation not found")}, nil
 	}

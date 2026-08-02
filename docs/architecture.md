@@ -14,8 +14,16 @@
 ## Principle
 
 - Monolith-first
+- Modular-monolith boundaries: each feature owns its use cases and repository interface.
 - Service-ready later
 - Split only when boundary and load justify it
+
+## Module Boundaries
+
+- HTTP handlers adapt OpenAPI requests and responses only.
+- Feature services own validation and application use cases.
+- Feature repositories are interfaces owned by the feature; PostgreSQL/GORM remains an adapter.
+- `internal/donations` is first migrated boundary. Other feature areas migrate incrementally without changing API contracts.
 
 ## Why
 
