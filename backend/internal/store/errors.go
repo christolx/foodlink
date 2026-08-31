@@ -16,6 +16,11 @@ func ErrConflict(code string) error {
 	return ConflictError{Code: code}
 }
 
+func IsConflict(err error) bool {
+	var target ConflictError
+	return errors.As(err, &target)
+}
+
 type ForbiddenError struct {
 	Code string
 }
@@ -26,4 +31,9 @@ func (e ForbiddenError) Error() string {
 
 func ErrForbidden(code string) error {
 	return ForbiddenError{Code: code}
+}
+
+func IsForbidden(err error) bool {
+	var target ForbiddenError
+	return errors.As(err, &target)
 }

@@ -1,6 +1,7 @@
 package server_test
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -219,6 +220,11 @@ func TestRoleGatesAndProposalRejection(t *testing.T) {
 		t.Fatalf("donor list receivers status = %d, want %d", status, http.StatusForbidden)
 	}
 
+	status, _ = doJSON(t, handler, http.MethodPost, "/api/v1/delivery-proposals", map[string]string{}, donorToken)
+	if status != http.StatusForbidden {
+		t.Fatalf("donor create malformed proposal status = %d, want %d", status, http.StatusForbidden)
+	}
+
 	status, _ = doJSON(t, handler, http.MethodPost, "/api/v1/delivery-proposals", api.CreateDeliveryProposalRequest{
 		DonationId: donation.Id,
 		ReceiverId: "user_receiver",
@@ -384,6 +390,114 @@ func TestChatSSERejectsInvalidToken(t *testing.T) {
 	handler.ServeHTTP(res, req)
 	if res.Code != http.StatusUnauthorized {
 		t.Fatalf("SSE invalid token status = %d body = %s", res.Code, res.Body.String())
+	}
+}
+
+func TestChatSSEStreamsMessagesImmediately(t *testing.T) {
+	handler := newTestHandler(t)
+	donorToken := login(t, handler, api.Donor)
+	receiverToken := login(t, handler, api.Receiver)
+
+	status, body := doJSON(t, handler, http.MethodPost, "/api/v1/chat/conversations", map[string]string{
+		"otherUserId": "user_receiver",
+	}, donorToken)
+	if status != http.StatusOK {
+		t.Fatalf("create conversation status = %d body = %s", status, body)
+	}
+	var conv chatConversation
+	decode(t, body, &conv)
+
+	testServer := httptest.NewServer(handler)
+	defer testServer.Close()
+	streamCtx, cancelStream := context.WithCancel(context.Background())
+	defer cancelStream()
+	req, err := http.NewRequestWithContext(streamCtx, http.MethodGet, testServer.URL+"/api/v1/chat/conversations/"+conv.ID+"/events?token="+receiverToken, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	type streamResponse struct {
+		response *http.Response
+		err      error
+	}
+	responseCh := make(chan streamResponse, 1)
+	go func() {
+		response, requestErr := http.DefaultClient.Do(req)
+		responseCh <- streamResponse{response: response, err: requestErr}
+	}()
+
+	var response *http.Response
+	select {
+	case result := <-responseCh:
+		if result.err != nil {
+			t.Fatal(result.err)
+		}
+		response = result.response
+	case <-time.After(time.Second):
+		t.Fatal("SSE response headers were not flushed")
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		t.Fatalf("SSE status = %d", response.StatusCode)
+	}
+	if got := response.Header.Get("Content-Type"); !strings.HasPrefix(got, "text/event-stream") {
+		t.Fatalf("SSE Content-Type = %q", got)
+	}
+
+	messageBody := "live SSE message"
+	status, body = doJSON(t, handler, http.MethodPost, "/api/v1/chat/conversations/"+conv.ID+"/messages", map[string]string{
+		"body": messageBody,
+	}, donorToken)
+	if status != http.StatusCreated {
+		t.Fatalf("send message status = %d body = %s", status, body)
+	}
+
+	eventCh := make(chan string, 1)
+	go func() {
+		scanner := bufio.NewScanner(response.Body)
+		for scanner.Scan() {
+			if strings.HasPrefix(scanner.Text(), "data: ") {
+				eventCh <- scanner.Text()
+				return
+			}
+		}
+		eventCh <- ""
+	}()
+	select {
+	case event := <-eventCh:
+		if !strings.Contains(event, messageBody) {
+			t.Fatalf("SSE event = %q", event)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("SSE message was not flushed")
+	}
+}
+
+func TestListStatusFiltersValidateAndQualifyStatus(t *testing.T) {
+	handler := newTestHandler(t)
+	donorToken := login(t, handler, api.Donor)
+	volunteerToken := login(t, handler, api.Volunteer)
+
+	status, body := doJSON(t, handler, http.MethodGet, "/api/v1/delivery-proposals?status=pending", nil, donorToken)
+	if status != http.StatusOK {
+		t.Fatalf("donor proposal status filter status = %d body = %s", status, body)
+	}
+
+	tests := []struct {
+		name  string
+		path  string
+		token string
+	}{
+		{name: "donations", path: "/api/v1/donations?status=invalid", token: donorToken},
+		{name: "proposals", path: "/api/v1/delivery-proposals?status=invalid", token: donorToken},
+		{name: "pickups", path: "/api/v1/pickups?status=invalid", token: volunteerToken},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			status, body := doJSON(t, handler, http.MethodGet, test.path, nil, test.token)
+			if status != http.StatusBadRequest {
+				t.Fatalf("status = %d, want %d; body = %s", status, http.StatusBadRequest, body)
+			}
+		})
 	}
 }
 

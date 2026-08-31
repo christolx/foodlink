@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"foodlink-be/internal/api"
+	"foodlink-be/internal/httpx"
 	"foodlink-be/internal/models"
 	"foodlink-be/internal/store"
 )
@@ -27,6 +28,9 @@ func (h *HTTPHandler) ListDonations(ctx context.Context, request api.ListDonatio
 	page, pageSize, err := pagination(request.Params.Page, request.Params.PageSize)
 	if err != nil {
 		return api.ListDonations400JSONResponse{BadRequestJSONResponse: badRequest(err.Error())}, nil
+	}
+	if !httpx.ValidDonationStatus(request.Params.Status) {
+		return api.ListDonations400JSONResponse{BadRequestJSONResponse: badRequest("invalid status")}, nil
 	}
 	donations, total, err := h.service.List(page, pageSize, request.Params.Status, user)
 	if err != nil {

@@ -69,7 +69,7 @@ func (s *Store) ListDeliveryProposals(page, pageSize int, status *api.ProposalSt
 	var proposals []models.DeliveryProposal
 	query := s.db.Model(&models.DeliveryProposal{})
 	if status != nil {
-		query = query.Where("status = ?", string(*status))
+		query = query.Where("delivery_proposals.status = ?", string(*status))
 	}
 	switch user.Role {
 	case string(api.Donor):
