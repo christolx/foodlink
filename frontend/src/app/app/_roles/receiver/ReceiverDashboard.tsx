@@ -68,6 +68,13 @@ export function ReceiverDashboard({
     data.pickups.find(
       (pickup) => pickup.status === "assigned" || pickup.status === "picked_up",
     ) ?? data.pickups[0];
+  const timelineProposal = activePickup
+    ? data.proposals.find((proposal) => proposal.id === activePickup.proposalId)
+    : acceptedProposals[0];
+  const timelineDonation = timelineProposal
+    ? (timelineProposal.donation ??
+      donationsById.get(timelineProposal.donationId))
+    : activePickup?.donation;
   const activeDonation = activeProposal
     ? (activeProposal.donation ?? donationsById.get(activeProposal.donationId))
     : undefined;
@@ -82,6 +89,8 @@ export function ReceiverDashboard({
         activeDonation={activeDonation}
         activePickup={activePickup}
         activeProposal={activeProposal}
+        timelineDonation={timelineDonation}
+        timelineProposal={timelineProposal}
         deliveredMeals={deliveredMeals}
         donationsById={donationsById}
         pendingCount={pendingProposals.length}
@@ -110,8 +119,8 @@ export function ReceiverDashboard({
           />
           <div className="grid gap-4">
             <ReceiverTimelineCard
-              proposal={activeProposal}
-              donation={activePickup?.donation ?? activeDonation}
+              proposal={timelineProposal}
+              donation={activePickup?.donation ?? timelineDonation}
               pickup={activePickup}
               allProposals={data.proposals}
               donationsById={donationsById}

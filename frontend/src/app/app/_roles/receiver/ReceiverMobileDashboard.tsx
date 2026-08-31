@@ -39,6 +39,8 @@ export function ReceiverMobileDashboard({
   activeDonation,
   activePickup,
   activeProposal,
+  timelineDonation,
+  timelineProposal,
   deliveredMeals,
   donationsById,
   pendingCount,
@@ -51,6 +53,8 @@ export function ReceiverMobileDashboard({
   activeDonation?: Donation;
   activePickup?: Pickup;
   activeProposal?: DeliveryProposal;
+  timelineDonation?: Donation;
+  timelineProposal?: DeliveryProposal;
   deliveredMeals: number;
   donationsById: Map<string, Donation>;
   pendingCount: number;
@@ -75,9 +79,9 @@ export function ReceiverMobileDashboard({
       />
       <ReceiverCompactTimeline
         activePickup={activePickup}
-        donation={activePickup?.donation ?? activeDonation}
+        donation={activePickup?.donation ?? timelineDonation}
         donationsById={donationsById}
-        proposal={activeProposal}
+        proposal={timelineProposal}
         proposals={proposals}
         runAction={runAction}
         token={token}
