@@ -62,6 +62,20 @@ function uploadErrorMessage(error: unknown) {
   return "Image upload failed.";
 }
 
+function localDateTimeValue(timestamp: number) {
+  const date = new Date(timestamp);
+  const timezoneOffset = date.getTimezoneOffset() * 60 * 1000;
+  return new Date(timestamp - timezoneOffset).toISOString().slice(0, 16);
+}
+
+function nextDonationWindow() {
+  const availableFrom = Date.now() + 15 * 60 * 1000;
+  return {
+    from: localDateTimeValue(availableFrom),
+    until: localDateTimeValue(availableFrom + 4 * 60 * 60 * 1000),
+  };
+}
+
 export function DonorDashboard({
   data,
   token,
@@ -92,9 +106,11 @@ export function DonorDashboard({
   ]);
   const [geocoding, setGeocoding] = useState(false);
   const locationInputRef = useRef<HTMLInputElement>(null);
+  const submissionErrorRef = useRef<HTMLParagraphElement>(null);
 
   const [defaultFrom, setDefaultFrom] = useState("");
   const [defaultUntil, setDefaultUntil] = useState("");
+  const [submissionError, setSubmissionError] = useState("");
   const availableCount = data.donations.filter(
     (donation) => donation.status === "available",
   ).length;
@@ -106,11 +122,9 @@ export function DonorDashboard({
   ).length;
 
   useEffect(() => {
-    const tzoffset = new Date().getTimezoneOffset() * 60000;
-    const localNow = new Date(Date.now() - tzoffset);
-    const localLater = new Date(Date.now() - tzoffset + 4 * 60 * 60 * 1000);
-    setDefaultFrom(localNow.toISOString().slice(0, 16));
-    setDefaultUntil(localLater.toISOString().slice(0, 16));
+    const window = nextDonationWindow();
+    setDefaultFrom(window.from);
+    setDefaultUntil(window.until);
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) =>
@@ -126,6 +140,7 @@ export function DonorDashboard({
 
   async function handleCreateDonation(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setSubmissionError("");
     const formElement = event.currentTarget;
     const form = new FormData(event.currentTarget);
     const now = new Date();
@@ -136,31 +151,58 @@ export function DonorDashboard({
     const fromDate = fromVal ? new Date(String(fromVal)) : now;
     const untilDate = untilVal ? new Date(String(untilVal)) : later;
 
+    function showSubmissionError(message: string) {
+      setSubmissionError(message);
+      requestAnimationFrame(() => submissionErrorRef.current?.focus());
+    }
+
+    if (fromDate.getTime() <= Date.now()) {
+      showSubmissionError("Available from must be in the future.");
+      return;
+    }
+    if (untilDate.getTime() <= fromDate.getTime()) {
+      showSubmissionError("Available until must be after available from.");
+      return;
+    }
+
     await runAction(async () => {
-      await createDonation(token, {
-        title: String(form.get("title") || "Fresh prepared meals"),
-        description: String(
-          form.get("description") || "Safe surplus food ready for pickup.",
-        ),
-        quantity: String(form.get("quantity") || "10 packs"),
-        imageUrl: uploadedImageUrl || defaultDonationImage,
-        pickupLocation: {
-          ...demoLocation,
-          addressLine1:
-            locationInputRef.current?.value || demoLocation.addressLine1,
-          ...(locationMode === "map" && pickedCoords
-            ? { latitude: pickedCoords.lat, longitude: pickedCoords.lng }
-            : locationMode === "gps" && donorCoords
-              ? { latitude: donorCoords.lat, longitude: donorCoords.lng }
-              : {}),
-        },
-        availableFrom: fromDate.toISOString(),
-        availableUntil: untilDate.toISOString(),
-        specialInstructions: String(form.get("instructions") || ""),
-      });
+      try {
+        await createDonation(token, {
+          title: String(form.get("title") || "Fresh prepared meals"),
+          description: String(
+            form.get("description") || "Safe surplus food ready for pickup.",
+          ),
+          quantity: String(form.get("quantity") || "10 packs"),
+          imageUrl: uploadedImageUrl || defaultDonationImage,
+          pickupLocation: {
+            ...demoLocation,
+            addressLine1:
+              locationInputRef.current?.value || demoLocation.addressLine1,
+            ...(locationMode === "map" && pickedCoords
+              ? { latitude: pickedCoords.lat, longitude: pickedCoords.lng }
+              : locationMode === "gps" && donorCoords
+                ? { latitude: donorCoords.lat, longitude: donorCoords.lng }
+                : {}),
+          },
+          availableFrom: fromDate.toISOString(),
+          availableUntil: untilDate.toISOString(),
+          specialInstructions: String(form.get("instructions") || ""),
+        });
+      } catch (error) {
+        showSubmissionError(
+          error instanceof Error
+            ? error.message
+            : "Donation could not be posted.",
+        );
+        throw error;
+      }
       formElement.reset();
+      const window = nextDonationWindow();
+      setDefaultFrom(window.from);
+      setDefaultUntil(window.until);
       setUploadedImageUrl("");
       setUploadError("");
+      setSubmissionError("");
       setPickedCoords(null);
     }, "Donation posted.");
   }
@@ -350,7 +392,9 @@ export function DonorDashboard({
                       className={cx(input, "pl-10 pr-8")}
                       name="availableFrom"
                       type="datetime-local"
-                      defaultValue={defaultFrom}
+                      value={defaultFrom}
+                      onChange={(event) => setDefaultFrom(event.target.value)}
+                      required
                     />
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#46534a] pointer-events-none">
                       <AppIcon name="chevron" className="h-4 w-4" />
@@ -367,7 +411,9 @@ export function DonorDashboard({
                       className={cx(input, "pl-10 pr-8")}
                       name="availableUntil"
                       type="datetime-local"
-                      defaultValue={defaultUntil}
+                      value={defaultUntil}
+                      onChange={(event) => setDefaultUntil(event.target.value)}
+                      required
                     />
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#46534a] pointer-events-none">
                       <AppIcon name="chevron" className="h-4 w-4" />
@@ -424,6 +470,16 @@ export function DonorDashboard({
               {uploadError ? (
                 <p className="text-xs font-black text-[#80251d]">
                   {uploadError}
+                </p>
+              ) : null}
+              {submissionError ? (
+                <p
+                  className="rounded-md border border-[#f0a59b] bg-[#fff0eb] px-3 py-2 text-xs font-black text-[#80251d] outline-none focus:ring-2 focus:ring-[#80251d]"
+                  ref={submissionErrorRef}
+                  role="alert"
+                  tabIndex={-1}
+                >
+                  {submissionError}
                 </p>
               ) : null}
 
