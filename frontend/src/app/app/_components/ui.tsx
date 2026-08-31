@@ -58,7 +58,8 @@ export const ghostButton =
 export const badgeBase =
   "inline-flex min-h-6 items-center rounded-[0.45rem] px-2.5 text-xs font-black";
 
-export const defaultDonationImage = "/landing/cards/donate-card.webp";
+export const defaultDonationImage =
+  "https://res.cloudinary.com/dewgvguem/image/upload/v1780918205/swappy-20260608-182956_skxtwu.png";
 
 export function cx(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ");
