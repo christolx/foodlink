@@ -23,7 +23,8 @@
 - HTTP handlers adapt OpenAPI requests and responses only.
 - Feature services own validation and application use cases.
 - Feature repositories are interfaces owned by the feature; PostgreSQL/GORM remains an adapter.
-- `internal/donations` is first migrated boundary. Other feature areas migrate incrementally without changing API contracts.
+- Feature modules: `auth`, `chat`, `donations`, `notifications`, `pickups`, `profiles`, and `proposals` each own HTTP adaptation, use cases, and repository interfaces. `internal/server` is routing, authentication middleware, and composition only.
+- `internal/dashboard` owns cross-feature, read-only dashboard projections. It does not own state transitions or feature persistence contracts.
 
 ## Why
 
