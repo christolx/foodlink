@@ -1,6 +1,14 @@
 # AWS EC2 IaC
 
-Backend deployment infrastructure.
+Historical backend deployment infrastructure.
+
+**Status:** Retired after Vercel preview and production switched to self-hosted k3s API. User approved Terraform destroy in account `794467105667`, region `ap-southeast-3`.
+
+## Retirement record
+
+Live `terraform plan -destroy` proposed **0 add, 0 change, 9 destroy**. Apply completed with nine destroyed resources: EC2 `i-0dd8a7b12e4d70394` (`t3.micro`), RDS `foodlink-prod-postgres`, Elastic IP `16.79.8.241`, EIP association, API and DB security groups, DB subnet group, DB ingress rule, and generated DB password. RDS had deletion protection disabled; final snapshot was skipped as approved. Terraform state is empty. AWS reports RDS not found, EC2 terminated, and Elastic IP allocation not found.
+
+Terraform AWS provider did not read AWS CLI's `login` credential cache directly; temporary credentials were exported into Terraform's process environment for plan and apply. Saved plan file was removed after successful verification. Current Vercel frontend uses k3s API; old AWS IP is no longer a rollback target.
 
 Scope:
 
@@ -104,6 +112,8 @@ ssh_allowed_cidr_blocks = ["203.0.113.10/32"]
 ```
 
 ## Usage
+
+Historical provisioning instructions below. Running `terraform apply` against this configuration would recreate retired AWS resources. Current backend deploy uses `deploy/k8s/`.
 
 ```sh
 cp terraform.tfvars.example terraform.tfvars

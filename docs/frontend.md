@@ -31,7 +31,7 @@ Next.js frontend app for FoodLink.
 
 ## Environment Variables
 
-- `FOODLINK_API_ORIGIN`: backend origin for Next.js rewrites, for example `http://localhost:8080`.
+- `FOODLINK_API_ORIGIN`: backend origin for Next.js rewrites, for example `http://localhost:8080` locally or FoodLink Cloudflare Tunnel HTTPS hostname on Vercel.
 - `NEXT_PUBLIC_API_BASE_URL`: optional browser-visible API origin. Use HTTPS for HTTPS frontend deploys.
 - `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`: Cloudinary cloud name for client-side image uploads.
 - `NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET`: unsigned upload preset for client-side image uploads.

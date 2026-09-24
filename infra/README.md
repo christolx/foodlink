@@ -1,41 +1,21 @@
 # FoodLink Infrastructure
 
-Terraform for deploying FoodLink frontend and backend.
+Infrastructure for Vercel frontend and self-hosted k3s backend. AWS EC2/RDS deployment has been retired.
 
 ## Layout
 
-- `aws/`: backend EC2 runtime and PostgreSQL RDS.
+- `aws/`: historical backend EC2 and PostgreSQL RDS Terraform.
 - `vercel/`: frontend project/config target.
+- `../deploy/k8s/`: self-hosted API and PostgreSQL manifests for CartLabs k3s host.
 - `shared/`: notes or reusable modules later.
 
-## Intended Split
+## Current Deployment
 
-- AWS owns backend runtime, networking, and PostgreSQL.
+- Existing CartLabs k3s host runs FoodLink API and PostgreSQL in `foodlink` namespace. Existing Cloudflare Tunnel and Traefik publish API hostname.
 - Vercel owns Next.js frontend project, domains, and frontend env vars.
 
 ## Usage
 
-Deploy backend first, then pass its output to Vercel.
+Backend deploy and operations: `deploy/k8s/README.md`. Vercel origin and rollback: `vercel/README.md`. Current Vercel project has no Terraform state in this checkout; import its resources before any Terraform apply. `infra/vercel/` Terraform remains a template for new projects or imported state.
 
-```sh
-cd infra/aws
-cp terraform.tfvars.example terraform.tfvars
-# edit terraform.tfvars
-terraform init
-terraform plan
-terraform apply
-
-terraform output -raw backend_api_url
-```
-
-```sh
-cd ../vercel
-cp terraform.tfvars.example terraform.tfvars
-# set api_url to backend_api_url
-terraform init
-terraform plan
-terraform apply
-```
-
-Keep provider credentials, JWT secret, real `*.tfvars`, and Terraform state
-outside git. Terraform state contains the generated RDS password.
+Keep provider credentials, JWT secret, real `*.tfvars`, and Terraform state outside git. `infra/aws/` remains as historical configuration; its live resources were destroyed.
