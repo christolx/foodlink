@@ -1,0 +1,51 @@
+# Apply manually only for a fresh, empty DB. --migrate also seeds/updates demo rows.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: foodlink-bootstrap
+  namespace: foodlink
+spec:
+  backoffLimit: 2
+  activeDeadlineSeconds: 900
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/part-of: foodlink
+        app.kubernetes.io/component: bootstrap
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: bootstrap
+          image: ghcr.io/christolx/foodlink-api:sha-c3b396d
+          imagePullPolicy: IfNotPresent
+          args: ["--migrate"]
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: foodlink-secrets
+                  key: DATABASE_URL
+            - name: DEMO_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: foodlink-secrets
+                  key: DEMO_JWT_SECRET
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+            readOnlyRootFilesystem: true

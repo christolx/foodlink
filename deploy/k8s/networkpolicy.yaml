@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: foodlink-postgresql
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: foodlink-postgresql
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: foodlink
+      ports:
+        - protocol: TCP
+          port: 5432
