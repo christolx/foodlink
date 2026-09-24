@@ -13,9 +13,10 @@ who need it, coordinated through donors, receivers, and volunteers.
 | --- | --- |
 | `frontend/` | Next.js app with React, TypeScript, Tailwind CSS, and Biome. |
 | `backend/` | Go API service with demo JWT auth and PostgreSQL persistence. |
+| `deploy/k8s/` | FoodLink API and PostgreSQL manifests for existing k3s host. |
 | `contracts/` | Shared OpenAPI contract for `/api/v1`. |
 | `docs/` | Product scope, architecture, frontend, backend, and contract notes. |
-| `infra/` | Terraform IaC for AWS backend runtime and Vercel frontend config. |
+| `infra/` | Vercel Terraform config and existing AWS Terraform deployment. |
 | `.github/workflows/` | GitHub Actions CI/CD workflow definitions. |
 
 ## Stack & Direction
@@ -31,7 +32,7 @@ who need it, coordinated through donors, receivers, and volunteers.
 | Maps | Leaflet with OpenStreetMap tiles, plus Google Maps handoff links for volunteer navigation. |
 | Asset storage | Cloudinary for donation image uploads. |
 | CI/CD | GitHub Actions for frontend CI, backend CI, and backend image publishing. |
-| IaC | Terraform for AWS EC2, PostgreSQL RDS, and Vercel frontend configuration. |
+| Deployment | Vercel frontend; self-hosted k3s API/PostgreSQL behind Cloudflare Tunnel and Traefik. Old AWS stack retired. |
 
 ## Local Development
 
@@ -74,13 +75,14 @@ go build ./cmd/api
 
 | Variable | App | Required | Notes |
 | --- | --- | --- | --- |
-| `FOODLINK_API_ORIGIN` | Frontend | No | Server-side backend origin for Next.js rewrites, for example `http://localhost:8080`. |
+| `FOODLINK_API_ORIGIN` | Frontend | No | Server-side backend origin for Next.js rewrites; use Cloudflare Tunnel HTTPS hostname on Vercel. |
 | `NEXT_PUBLIC_API_BASE_URL` | Frontend | No | Optional browser-visible API origin. Use only with HTTPS backends in HTTPS deployments. |
 | `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` | Frontend | Yes, for uploads | Cloudinary cloud name for client-side image uploads. |
 | `NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET` | Frontend | Yes, for uploads | Unsigned upload preset for client-side image uploads. |
 | `PORT` | Backend | No | API port, default `8080`. |
 | `DATABASE_URL` | Backend | Yes | PostgreSQL connection string. |
 | `DEMO_JWT_SECRET` | Backend | Yes | JWT signing secret for demo auth. |
+| `FOODLINK_ALLOWED_ORIGINS` | Backend | No | CORS allowlist for direct browser-to-API calls; same-origin Vercel rewrite needs no extra origin. |
 
 See [frontend/README.md](frontend/README.md) for Cloudinary setup details and [backend/README.md](backend/README.md) for backend usage examples.
 
@@ -93,4 +95,5 @@ See [frontend/README.md](frontend/README.md) for Cloudinary setup details and [b
 | [Architecture](docs/architecture.md) | System shape, runtime boundaries, and split candidates. |
 | [Contracts](contracts/README.md) | API contract conventions and generation targets. |
 | [OpenAPI spec](contracts/openapi.yaml) | Source of truth for `/api/v1`. |
-| [Infrastructure](infra/README.md) | Terraform deploy flow for AWS backend and Vercel frontend. |
+| [k3s deployment](deploy/k8s/README.md) | API/PostgreSQL manifests, seed bootstrap, and tunnel routing. |
+| [Infrastructure](infra/README.md) | Vercel config and existing AWS Terraform. |

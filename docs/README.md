@@ -10,3 +10,4 @@ API contract decisions. Keep these aligned with current repo behavior.
 - [frontend.md](./frontend.md) - routes, client state, dashboards, maps, and env config.
 - [backend.md](./backend.md) - service runtime, persistence, role gates, and local operations.
 - [contracts.md](./contracts.md) - OpenAPI source of truth, DTOs, endpoints, and contract rules.
+- [k3s-migration-summary.md](./k3s-migration-summary.md) - completed migration and verification summary.
